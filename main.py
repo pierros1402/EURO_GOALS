@@ -416,11 +416,8 @@ UPLOAD_FOLDER = "backups"
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 @app.post("/upload_backup")
-async def upload_backup(
-    token: str = Form(...),
-    file: UploadFile = File(...)
-):
-    """Ανέβασμα backup αρχείου στο Render"""
+async def upload_backup(token: str = Form(...), file: UploadFile = File(...)):
+    """Ανέβασμα backup αρχείων στο Render"""
     admin_token = os.getenv("ADMIN_TOKEN")
     if token != admin_token:
         return {"status": "error", "message": "Μη έγκυρο token"}
@@ -429,5 +426,9 @@ async def upload_backup(
     with open(file_path, "wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
 
-    return {"status": "ok", "message": f"Το αρχείο {file.filename} ανέβηκε επιτυχώς!"}
+    return {
+        "status": "ok",
+        "message": f"Το αρχείο {file.filename} ανέβηκε επιτυχώς!"
+    }
+
 
