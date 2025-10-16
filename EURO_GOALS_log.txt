@@ -1,0 +1,4 @@
+[2025-10-12 01:07:51] EURO_GOALS v6f_debug — start (FS+SS, 7 days) → Excel: C:\Users\pierr\Desktop\EURO_GOALS\EURO_GOALS_2025-10-12.xlsx
+[2025-10-12 01:07:51] [FETCH/FS] ENG1 — England / Premier League
+[2025-10-12 01:11:10] EURO_GOALS v6f_debug — start (FS+SS, 7 days) → Excel: C:\Users\pierr\Desktop\EURO_GOALS\EURO_GOALS_2025-10-12.xlsx
+[2025-10-12 01:11:10] [FETCH/FS] ENG1 — England / Premier League

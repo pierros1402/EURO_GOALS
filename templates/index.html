@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>EURO_GOALS Mode</title>
+    <style>
+        body {
+            background-color: #121212;
+            color: white;
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin-top: 100px;
+        }
+        .banner {
+            font-weight: bold;
+            padding: 15px;
+            border-radius: 10px;
+            width: fit-content;
+            margin: auto;
+            background-color: {% if mode == 'Online' %}#28a745{% else %}#dc3545{% endif %};
+            color: white;
+            font-size: 22px;
+            box-shadow: 0 0 12px rgba(0,0,0,0.4);
+        }
+        h1 {
+            margin-bottom: 40px;
+            color: #00bfff;
+        }
+    </style>
+</head>
+<body>
+    <h1>⚽ EURO_GOALS Connection Status</h1>
+    <div class="banner">MODE: {{ mode }}</div>
+</body>
+</html>
