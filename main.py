@@ -425,7 +425,7 @@ async def refresh_database(token: str = Form(...)):
 
 
 @app.post("/upload_backup")
-async def upload_backup(token: str = Form(...), file: UploadFile = File(...)):
+async def upload_backup(token: str = Form(...), file: UploadFile = File(...):
     """Ανέβασμα backup αρχείων στο Render"""
     admin_token = os.getenv("ADMIN_TOKEN")
     if token != admin_token:
