@@ -438,3 +438,12 @@ async def upload_backup(token: str = Form(...), file: UploadFile = File(...)):
     return {
         "status": "ok",
         "message": f"Το αρχείο {file.filename} ανέβηκε επιτυχώς!"
+    }
+
+
+import uvicorn
+import os
+
+if __name__ == "__main__":
+    port = int(os.environ.get("PORT", 5000))
+    uvicorn.run("main:app", host="0.0.0.0", port=port)
