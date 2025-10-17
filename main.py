@@ -337,7 +337,7 @@ UPLOAD_FOLDER = "backups"
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 @app.post("/upload_backup")
-async def upload_backup(
+async def upload_backup(token: str = Form(...), file: UploadFile = File(...)):
 
 
 @app.post("/refresh_database")
