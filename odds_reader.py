@@ -95,6 +95,7 @@ def get_odds_bundle(bundle: str):
     Επιστρέφει ενωμένα δεδομένα αποδόσεων για ομάδες διοργανώσεων.
     Π.χ. england_all, greece_1_2_3, germany_1_2_3, europe_1_2
     """
+
     bundles = {
         "england_all": [
             "soccer_epl",
@@ -104,27 +105,25 @@ def get_odds_bundle(bundle: str):
         ],
         "greece_1_2_3": [
             "soccer_greece_super_league",
-            "soccer_greece_league_one",
-            "soccer_greece_league_two"
+            "soccer_greece_super_league_2"   # ✅ Διορθωμένο (υπάρχει αυτό)
         ],
         "germany_1_2_3": [
             "soccer_germany_bundesliga",
-            "soccer_germany_bundesliga2",
-            "soccer_germany_bundesliga3"
+            "soccer_germany_bundesliga2"     # ✅ Αυτές μόνο υπάρχουν
         ],
         "europe_1_2": [
-            "soccer_spain_la_liga",
-            "soccer_spain_segunda_division",
-            "soccer_italy_serie_a",
-            "soccer_italy_serie_b",
             "soccer_france_ligue_one",
             "soccer_france_ligue_two",
+            "soccer_italy_serie_a",
+            "soccer_italy_serie_b",
+            "soccer_spain_la_liga",
+            "soccer_spain_segunda_division",
             "soccer_portugal_primeira_liga",
-            "soccer_belgium_first_div",
             "soccer_netherlands_eredivisie",
-            "soccer_austria_bundesliga",
-            "soccer_switzerland_superleague",
             "soccer_turkey_super_league",
+            "soccer_switzerland_superleague",
+            "soccer_austria_bundesliga",
+            "soccer_belgium_first_div",
             "soccer_norway_eliteserien",
             "soccer_sweden_allsvenskan",
             "soccer_denmark_superliga"
@@ -137,9 +136,11 @@ def get_odds_bundle(bundle: str):
     for key in leagues:
         try:
             data = get_odds(key)
+            if not data:
+                continue
             combined["events"].extend(data.get("events", []))
             combined["count"] += data.get("count", 0)
         except Exception as e:
-            print(f"[get_odds_bundle] Error fetching {key}: {e}")
+            print(f"[get_odds_bundle] ⚠️ Skipped {key} ({e})")
 
     return combined
