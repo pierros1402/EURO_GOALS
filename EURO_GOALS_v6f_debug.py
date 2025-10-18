@@ -103,8 +103,27 @@ def main():
 # ===============================================================
 # 7️⃣ Entry point for local & Render environments
 # ===============================================================
+# ===============================================================
+# 🔹 FastAPI endpoint για odds
+# ===============================================================
+from odds_reader import get_odds
+
+@app.get("/odds/{sport_key}")
+def odds_route(sport_key: str, mode: str = "simple"):
+    """
+    Παίρνει αποδόσεις & pseudo-trend index.
+    Παραδείγματα:
+      /odds/soccer_epl?mode=simple
+      /odds/soccer_epl?mode=combined
+    """
+    data = get_odds(sport_key, mode)
+    return data
+
+
+# ===============================================================
+# Entry point for local & Render environments
+# ===============================================================
 if __name__ == "__main__":
-    main()
+    import os, uvicorn
     port = int(os.environ.get("PORT", 10000))
-    import uvicorn
     uvicorn.run("EURO_GOALS_v6f_render_final:app", host="0.0.0.0", port=port)
