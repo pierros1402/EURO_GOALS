@@ -106,10 +106,32 @@ def main():
 # ===============================================================
 # 🔹 FastAPI endpoint για odds
 # ===============================================================
-from odds_reader import get_odds
+from odds_reader import get_odds, get_odds_bundle
 
 @app.get("/odds/{sport_key}")
 def odds_route(sport_key: str, mode: str = "simple"):
+    """
+    Παίρνει αποδόσεις & pseudo-trend index.
+    Παραδείγματα:
+    /odds/soccer_epl?mode=simple
+    /odds/soccer_epl?mode=combined
+    """
+    data = get_odds(sport_key, mode)
+    return data
+
+
+@app.get("/odds_bundle/{bundle}")
+def odds_bundle_route(bundle: str):
+    """
+    Παράδειγμα κλήσεων:
+    /odds_bundle/england_all
+    /odds_bundle/greece_1_2_3
+    /odds_bundle/germany_1_2_3
+    /odds_bundle/europe_1_2
+    """
+    return get_odds_bundle(bundle)
+
+
     """
     Παίρνει αποδόσεις & pseudo-trend index.
     Παραδείγματα:
