@@ -273,3 +273,30 @@ def main():
 
 if __name__ == "__main__":
     main()
+import requests
+
+def get_live_odds(bundle: str = "europe_1_2"):
+    """
+    Διαβάζει live αποδόσεις από το Render API
+    Π.χ. bundles: england_all, greece_1_2_3, germany_1_2_3, europe_1_2
+    """
+    try:
+        url = f"https://euro-goals.onrender.com/odds_bundle/{bundle}"
+        response = requests.get(url, timeout=10)
+        if response.status_code == 200:
+            data = response.json()
+            print(f"[EURO_GOALS] ✅ Loaded {data.get('count', 0)} matches from {bundle}")
+            return data
+        else:
+            print(f"[EURO_GOALS] ⚠️ Error {response.status_code} from {url}")
+            return None
+    except Exception as e:
+        print(f"[EURO_GOALS] ❌ Failed to fetch odds: {e}")
+        return None
+
+
+if __name__ == "__main__":
+    # Δοκιμαστική εκτέλεση
+    result = get_live_odds("greece_1_2_3")
+    if result:
+        print(f"Total events: {result.get('count', 0)}")

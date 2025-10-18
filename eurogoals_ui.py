@@ -5,9 +5,59 @@ from datetime import datetime
 
 import pandas as pd
 import streamlit as st
+import requests
+
+# ============================
+#  LIVE ODDS API (Render)
+# ============================
+
+def get_live_odds(bundle: str = "europe_1_2"):
+    """
+    Διαβάζει live αποδόσεις από το Render API (TheOddsAPI)
+    Π.χ. bundles: england_all, greece_1_2_3, germany_1_2_3, europe_1_2
+    """
+    try:
+        url = f"https://euro-goals.onrender.com/odds_bundle/{bundle}"
+        response = requests.get(url, timeout=10)
+        if response.status_code == 200:
+            data = response.json()
+            st.success(f"✅ Φορτώθηκαν {data.get('count', 0)} αγώνες από {bundle}")
+            return data
+        else:
+            st.warning(f"⚠️ Σφάλμα {response.status_code} από {url}")
+            return None
+    except Exception as e:
+        st.error(f"❌ Σφάλμα κατά τη λήψη αποδόσεων: {e}")
+        return None
+
 
 EXCEL_PATH = r"C:\EURO_GOALS\EURO_GOALS_v6d.xlsx"
 MATCHES_SHEET = "Matches"
+
+# =======================================
+# LIVE ODDS API (Render integration)
+# =======================================
+import requests
+
+def get_live_odds(bundle: str = "europe_1_2"):
+    """
+    Διαβάζει live αποδόσεις από το Render API (TheOddsAPI)
+    Π.χ. bundles: england_all, greece_1_2_3, germany_1_2_3, europe_1_2
+    """
+    try:
+        url = f"https://euro-goals.onrender.com/odds_bundle/{bundle}"
+        response = requests.get(url, timeout=10)
+        if response.status_code == 200:
+            data = response.json()
+            st.success(f"✅ Φορτώθηκαν {data.get('count', 0)} αγώνες από {bundle}")
+            return data
+        else:
+            st.warning(f"⚠️ Σφάλμα {response.status_code} από {url}")
+            return None
+    except Exception as e:
+        st.error(f"❌ Σφάλμα κατά τη λήψη αποδόσεων: {e}")
+        return None
+
 
 # --- Streamlit page config (dark mode friendly) ---
 st.set_page_config(

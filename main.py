@@ -386,8 +386,8 @@ async def refresh_database(token: str = Form(...), background_tasks: BackgroundT
         "message": f"Νέα βάση {new_db_name} δημιουργήθηκε και επαναφέρθηκε επιτυχώς."
     }
     token: str = Form(...),
-    file: UploadFile = File(...)
-):
+  @app.post("/upload_backup")
+async def upload_backup(token: str = Form(...), file: UploadFile = File(...)):
     # Έλεγχος δικαιώματος
     admin_token = os.getenv("ADMIN_TOKEN")
     if token != admin_token:
@@ -404,6 +404,7 @@ async def refresh_database(token: str = Form(...), background_tasks: BackgroundT
         "message": f"Backup {file.filename} ανέβηκε επιτυχώς στο Render!",
         "path": file_path
     }
+
 
 
 # =====================================
@@ -439,7 +440,6 @@ async def upload_backup(token: str = Form(...), file: UploadFile = File(...)):
         "status": "ok",
         "message": f"Το αρχείο {file.filename} ανέβηκε επιτυχώς!"
     }
-
 
 import uvicorn
 import os
