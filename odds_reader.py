@@ -165,7 +165,6 @@ def fetch_odds_for_key(sport_key: str):
         })
     return {"sport_key": sport_key, "count": len(events), "events": events}
 
-def get_odds_bundle(bundle: str):
 # ==============================================================
 # Bundle odds fetcher (multiple leagues)
 # ==============================================================
@@ -176,17 +175,37 @@ def get_odds_bundle(bundle: str):
     """
 
     bundles = {
-        "england_all": ["soccer_epl", "soccer_england_championship", "soccer_england_league1", "soccer_england_league2"],
-        "greece_1_2_3": ["soccer_greece_super_league", "soccer_greece_league_one", "soccer_greece_league_two"],
-        "germany_1_2_3": ["soccer_germany_bundesliga", "soccer_germany_bundesliga2", "soccer_germany_bundesliga3"],
+        "england_all": [
+            "soccer_epl",
+            "soccer_england_championship",
+            "soccer_england_league1",
+            "soccer_england_league2"
+        ],
+        "greece_1_2_3": [
+            "soccer_greece_super_league",
+            "soccer_greece_league_one",
+            "soccer_greece_league_two"
+        ],
+        "germany_1_2_3": [
+            "soccer_germany_bundesliga",
+            "soccer_germany_bundesliga2",
+            "soccer_germany_bundesliga3"
+        ],
         "europe_1_2": [
-            "soccer_spain_la_liga", "soccer_spain_segunda_division",
-            "soccer_italy_serie_a", "soccer_italy_serie_b",
-            "soccer_france_ligue_one", "soccer_france_ligue_two",
-            "soccer_portugal_primeira_liga", "soccer_belgium_first_div",
-            "soccer_netherlands_eredivisie", "soccer_austria_bundesliga",
-            "soccer_switzerland_superleague", "soccer_turkey_super_league",
-            "soccer_norway_eliteserien", "soccer_sweden_allsvenskan",
+            "soccer_spain_la_liga",
+            "soccer_spain_segunda_division",
+            "soccer_italy_serie_a",
+            "soccer_italy_serie_b",
+            "soccer_france_ligue_one",
+            "soccer_france_ligue_two",
+            "soccer_portugal_primeira_liga",
+            "soccer_belgium_first_div",
+            "soccer_netherlands_eredivisie",
+            "soccer_austria_bundesliga",
+            "soccer_switzerland_superleague",
+            "soccer_turkey_super_league",
+            "soccer_norway_eliteserien",
+            "soccer_sweden_allsvenskan",
             "soccer_denmark_superliga"
         ]
     }
@@ -195,9 +214,12 @@ def get_odds_bundle(bundle: str):
     combined = {"count": 0, "events": []}
 
     for key in leagues:
-        data = get_odds(key)
-        combined["events"].extend(data.get("events", []))
-        combined["count"] += data.get("count", 0)
+        try:
+            data = get_odds(key)
+            combined["events"].extend(data.get("events", []))
+            combined["count"] += data.get("count", 0)
+        except Exception as e:
+            print(f"[get_odds_bundle] Error fetching {key}: {e}")
 
     return combined
 
