@@ -256,4 +256,8 @@ def main():
     log("EURO_GOALS v6f_debug — done ✅", logfile)
 
 if __name__ == "__main__":
-    main()
+    import os
+    import uvicorn
+
+    port = int(os.environ.get("PORT", 10000))
+    uvicorn.run("EURO_GOALS_v6f_debug:app", host="0.0.0.0", port=port)
