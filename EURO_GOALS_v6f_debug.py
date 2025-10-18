@@ -8,7 +8,7 @@ def home():
 
 print("⚽ EURO_GOALS ξεκινά κανονικά...")
 # ("Πατήστε Enter για έξοδο")
-=======
+
 # EURO_GOALS v6f_render_final.py
 # Stable version for Render (FastAPI + Flashscore + Sofascore + Excel Export)
 # Works both locally and on Render.com
