@@ -149,3 +149,32 @@ if __name__ == "__main__":
     import os, uvicorn
     port = int(os.environ.get("PORT", 10000))
     uvicorn.run("EURO_GOALS_v6f_render_final:app", host="0.0.0.0", port=port)
+# ==========================================================
+# AUTO REFRESH CACHE THREAD (every 10 minutes)
+# ==========================================================
+import threading
+import time
+import requests
+
+def auto_refresh_cache():
+    urls = [
+        "https://euro-goals.onrender.com/odds_bundle/england_all",
+        "https://euro-goals.onrender.com/odds_bundle/greece_1_2_3",
+        "https://euro-goals.onrender.com/odds_bundle/germany_1_2_3",
+        "https://euro-goals.onrender.com/odds_bundle/europe_1_2",
+    ]
+    while True:
+        print("[AUTO REFRESH] Refreshing odds bundles...")
+        for url in urls:
+            try:
+                r = requests.get(url, timeout=20)
+                if r.status_code == 200:
+                    print(f"[AUTO REFRESH] ✅ Updated: {url}")
+                else:
+                    print(f"[AUTO REFRESH] ⚠️ {url} returned {r.status_code}")
+            except Exception as e:
+                print(f"[AUTO REFRESH] ❌ Error for {url}: {e}")
+        time.sleep(600)  # 10 λεπτά
+
+threading.Thread(target=auto_refresh_cache, daemon=True).start()
+
