@@ -155,6 +155,7 @@ if __name__ == "__main__":
 import threading
 import time
 import requests
+from asian_reader import detect_smart_money
 
 def auto_refresh_cache():
     urls = [
@@ -175,6 +176,9 @@ def auto_refresh_cache():
             except Exception as e:
                 print(f"[AUTO REFRESH] ❌ Error for {url}: {e}")
         time.sleep(600)  # 10 λεπτά
+
+        # --- Smart Money Check ---
+        detect_smart_money()
 
 threading.Thread(target=auto_refresh_cache, daemon=True).start()
 
