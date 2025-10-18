@@ -1,5 +1,13 @@
+from fastapi import FastAPI
+app = FastAPI()
+print("🚀 Render new deploy check")
+
+@app.get("/")
+def home():
+    return {"status": "ok", "message": "EURO_GOALS Render online ✅"}
+
 print("⚽ EURO_GOALS ξεκινά κανονικά...")
-input("Πατήστε Enter για έξοδο")
+# ("Πατήστε Enter για έξοδο")
 
 # EURO_GOALS v6f_debug — Dual Source (Flashscore + Sofascore)
 # See comments inside for features and usage.
@@ -253,7 +261,7 @@ def main():
 
     unified = unify(pd.concat(frames, ignore_index=True))
     save_excel(unified, logfile)
-    log("EURO_GOALS v6f_debug — done ✅", logfile)
+    log("EURO_GOALS v6f_debug – done ✅", logfile)
+# input("Πατήστε Enter για έξοδο")
 
-if __name__ == "__main__":
-    main()
+
