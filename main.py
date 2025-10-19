@@ -49,17 +49,39 @@ async def ui_home(request: Request):
 @app.on_event("startup")
 def startup_event():
     with engine.connect() as conn:
-        conn.execute(text("""
-        CREATE TABLE IF NOT EXISTS matches (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            date TEXT,
-            league TEXT,
-            home_team TEXT,
-            away_team TEXT,
-            odds TEXT,
-            smart_money TEXT
-        )
-        """))
+        # Ανάλογα με τον τύπο βάσης, φτιάχνουμε το σωστό SQL
+create_sqlite = """
+CREATE TABLE IF NOT EXISTS matches (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    date TEXT,
+    league TEXT,
+    home_team TEXT,
+    away_team TEXT,
+    odds TEXT,
+    smart_money TEXT
+)
+"""
+
+create_postgres = """
+CREATE TABLE IF NOT EXISTS matches (
+    id SERIAL PRIMARY KEY,
+    date TEXT,
+    league TEXT,
+    home_team TEXT,
+    away_team TEXT,
+    odds TEXT,
+    smart_money TEXT
+)
+"""
+
+with engine.connect() as conn:
+    # Αντιλαμβάνεται ποια βάση χρησιμοποιείται
+    if "postgres" in str(engine.url):
+        conn.execute(text(create_postgres))
+    else:
+        conn.execute(text(create_sqlite))
+    conn.commit()
+
         conn.commit()
 
 # GET: Επιστροφή όλων των αγώνων (ή ανά λίγκα)
