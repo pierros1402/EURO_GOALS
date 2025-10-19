@@ -1,0 +1,95 @@
+/* ==============================
+   EURO_GOALS v6f - Dark UI Style
+   ============================== */
+
+body {
+    font-family: "Segoe UI", Roboto, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #0d1117;
+    color: #e6edf3;
+}
+
+/* --- Header --- */
+header {
+    text-align: center;
+    background-color: #161b22;
+    padding: 25px 10px;
+    border-bottom: 2px solid #30363d;
+}
+
+header h1 {
+    font-size: 1.8em;
+    margin: 0;
+    color: #58a6ff;
+}
+
+header p {
+    font-size: 1em;
+    color: #8b949e;
+}
+
+/* --- Controls --- */
+#controls {
+    margin: 20px auto;
+    text-align: center;
+}
+
+label {
+    font-weight: bold;
+    margin-right: 5px;
+}
+
+select, button {
+    background-color: #21262d;
+    color: #e6edf3;
+    border: 1px solid #30363d;
+    padding: 8px 14px;
+    margin: 5px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.95em;
+}
+
+select:hover, button:hover {
+    background-color: #30363d;
+}
+
+/* --- Table --- */
+table {
+    width: 90%;
+    margin: 20px auto;
+    border-collapse: collapse;
+    background-color: #161b22;
+    border: 1px solid #30363d;
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+thead {
+    background-color: #21262d;
+}
+
+th, td {
+    padding: 10px 12px;
+    border-bottom: 1px solid #30363d;
+    text-align: center;
+}
+
+th {
+    color: #58a6ff;
+}
+
+tr:hover {
+    background-color: #1f242d;
+}
+
+/* --- Footer --- */
+footer {
+    text-align: center;
+    padding: 15px;
+    color: #8b949e;
+    font-size: 0.9em;
+    border-top: 1px solid #30363d;
+    margin-top: 40px;
+}
