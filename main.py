@@ -80,4 +80,4 @@ class Match(BaseModel):
     home_team: str
     away_team: str
     odds: str | None = None
-    smart_money:_
+    smart_money: str | None = None
