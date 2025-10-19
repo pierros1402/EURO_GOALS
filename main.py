@@ -87,19 +87,38 @@ with engine.connect() as conn:
 # GET: Επιστροφή όλων των αγώνων (ή ανά λίγκα)
 @app.get("/api/matches")
 def get_matches(league: str = None):
-    with engine.connect() as conn:
-        if league:
-            result = conn.execute(text("SELECT * FROM matches WHERE league = :league"), {"league": league})
-        else:
-            result = conn.execute(text("SELECT * FROM matches"))
-        data = [dict(row._mapping) for row in result]
-    return {"count": len(data), "matches": data}
+    # =====================================
+#  Δημιουργία πίνακα matches
+# =====================================
+with engine.connect() as conn:
+    create_sqlite = """
+    CREATE TABLE IF NOT EXISTS matches (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        date TEXT,
+        league TEXT,
+        home_team TEXT,
+        away_team TEXT,
+        odds TEXT,
+        smart_money TEXT
+    )
+    """
 
-# POST: Προσθήκη νέου αγώνα
-class Match(BaseModel):
-    date: str
-    league: str
-    home_team: str
-    away_team: str
-    odds: str | None = None
-    smart_money: str | None = None
+    create_postgres = """
+    CREATE TABLE IF NOT EXISTS matches (
+        id SERIAL PRIMARY KEY,
+        date TEXT,
+        league TEXT,
+        home_team TEXT,
+        away_team TEXT,
+        odds TEXT,
+        smart_money TEXT
+    )
+    """
+
+    # Αντιλαμβάνεται ποια βάση χρησιμοποιείται
+    if "postgres" in str(engine.url):
+        conn.execute(text(create_postgres))
+    else:
+        conn.execute(text(create_sqlite))
+    conn.commit()
+
