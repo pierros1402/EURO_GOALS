@@ -1,35 +1,58 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="el">
 <head>
     <meta charset="UTF-8">
-    <title>EURO_GOALS Mode</title>
-    <style>
-        body {
-            background-color: #121212;
-            color: white;
-            font-family: Arial, sans-serif;
-            text-align: center;
-            margin-top: 100px;
-        }
-        .banner {
-            font-weight: bold;
-            padding: 15px;
-            border-radius: 10px;
-            width: fit-content;
-            margin: auto;
-            background-color: {% if mode == 'Online' %}#28a745{% else %}#dc3545{% endif %};
-            color: white;
-            font-size: 22px;
-            box-shadow: 0 0 12px rgba(0,0,0,0.4);
-        }
-        h1 {
-            margin-bottom: 40px;
-            color: #00bfff;
-        }
-    </style>
+    <title>EURO_GOALS v6f</title>
+    <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
-    <h1>⚽ EURO_GOALS Connection Status</h1>
-    <div class="banner">MODE: {{ mode }}</div>
+    <header>
+        <h1>⚽ EURO_GOALS Dashboard</h1>
+        <p>Ανάλυση & Προβλέψεις Ευρωπαϊκών Αγώνων</p>
+    </header>
+
+    <main>
+        <section id="controls">
+            <label for="league">Λίγκα:</label>
+            <select id="league">
+                <option value="england_all">Αγγλία</option>
+                <option value="germany_1_2_3">Γερμανία</option>
+                <option value="greece_1_2_3">Ελλάδα</option>
+                <option value="spain_1_2">Ισπανία</option>
+                <option value="italy_1_2">Ιταλία</option>
+                <option value="france_1_2">Γαλλία</option>
+                <option value="europe_1_2">Όλη η Ευρώπη</option>
+            </select>
+            <button id="loadMatches">Φόρτωση Αγώνων</button>
+            <button id="exportExcel">Εξαγωγή σε Excel</button>
+        </section>
+
+        <section id="matches">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Ημερομηνία</th>
+                        <th>Λίγκα</th>
+                        <th>Αγώνας</th>
+                        <th>Αποδόσεις</th>
+                        <th>Smart Money</th>
+                    </tr>
+                </thead>
+                <tbody id="matchData">
+                    <tr>
+                        <td colspan="5" style="text-align:center;">
+                            🔍 Επιλέξτε λίγκα και πατήστε "Φόρτωση Αγώνων"
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+    </main>
+
+    <footer>
+        <p>EURO_GOALS v6f © 2025 — Render Edition</p>
+    </footer>
+
+    <script src="/static/script.js"></script>
 </body>
 </html>

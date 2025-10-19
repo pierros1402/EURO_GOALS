@@ -1,0 +1,4 @@
+# Ignore Google Drive temp files
+.tmp.driveupload*
+desktop.ini
+Thumbs.db
