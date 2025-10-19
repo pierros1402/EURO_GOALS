@@ -1,3 +1,14 @@
+from fastapi import FastAPI
+app = FastAPI()
+print("🚀 Render new deploy check")
+
+@app.get("/")
+def home():
+    return {"status": "ok", "message": "EURO_GOALS Render online ✅"}
+
+print("⚽ EURO_GOALS ξεκινά κανονικά...")
+# ("Πατήστε Enter για έξοδο")
+
 # EURO_GOALS v6f_render_final.py
 # Stable version for Render (FastAPI + Flashscore + Sofascore + Excel Export)
 # Works both locally and on Render.com
@@ -97,6 +108,12 @@ def main():
         return
 
     unified = unify(pd.concat(frames, ignore_index=True))
+    save_excel(unified, logfile)
+    log("EURO_GOALS v6f_debug – done ✅", logfile)
+# input("Πατήστε Enter για έξοδο")
+
+
+=======
     save_excel(unified, DEFAULT_LOG)
     log("EURO_GOALS v6f_render_final – done ✅", DEFAULT_LOG)
 
@@ -142,9 +159,9 @@ def odds_bundle_route(bundle: str):
     return data
 
 
-# ===============================================================
+
 # Entry point for local & Render environments
-# ===============================================================
+
 if __name__ == "__main__":
     import os, uvicorn
     port = int(os.environ.get("PORT", 10000))
