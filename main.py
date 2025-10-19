@@ -79,3 +79,48 @@ def startup_event():
         else:
             conn.execute(text(create_sqlite))
         conn.commit()
+# =====================================
+#  HEALTH + MATCHES ENDPOINTS (API)
+# =====================================
+
+from pydantic import BaseModel
+from sqlalchemy import text
+
+@app.get("/api/health")
+def api_health():
+    return {"status": "ok"}
+
+@app.get("/api/matches")
+def api_get_matches():
+    with engine.connect() as conn:
+        result = conn.execute(text("SELECT * FROM matches"))
+        data = [dict(row._mapping) for row in result]
+    return {"count": len(data), "matches": data}
+
+class Match(BaseModel):
+    date: str
+    league: str
+    home_team: str
+    away_team: str
+    odds: str | None = None
+    smart_money: str | None = None
+
+@app.post("/api/matches")
+def api_add_match(match: Match):
+    with engine.connect() as conn:
+        conn.execute(text("""
+            INSERT INTO matches (date, league, home_team, away_team, odds, smart_money)
+            VALUES (:date, :league, :home_team, :away_team, :odds, :smart_money)
+        """), match.dict())
+        conn.commit()
+    return {"status": "ok", "data": match.dict()}
+
+
+# =====================================
+#  ΕΝΑΡΞΗ ΕΦΑΡΜΟΓΗΣ
+# =====================================
+if __name__ == "__main__":
+    import uvicorn
+    port = int(os.getenv("PORT", 5000))
+    uvicorn.run("main:app", host="0.0.0.0", port=port)
+
