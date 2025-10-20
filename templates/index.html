@@ -1,58 +1,140 @@
 <!DOCTYPE html>
 <html lang="el">
 <head>
-    <meta charset="UTF-8">
-    <title>EURO_GOALS v6f</title>
-    <link rel="stylesheet" href="/static/style.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>⚽ EURO_GOALS Dashboard</title>
+  <style>
+    body {
+      background-color: #121212;
+      color: #e0e0e0;
+      font-family: "Segoe UI", Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+    }
+    header {
+      text-align: center;
+      padding: 20px;
+      background-color: #1e1e1e;
+      color: #82b1ff;
+      font-size: 1.5rem;
+      font-weight: bold;
+    }
+    main {
+      padding: 20px;
+      text-align: center;
+    }
+    select, button {
+      margin: 8px;
+      padding: 8px 14px;
+      border-radius: 6px;
+      border: none;
+      font-size: 14px;
+    }
+    select {
+      background-color: #1e1e1e;
+      color: #fff;
+    }
+    button {
+      cursor: pointer;
+      background-color: #1976d2;
+      color: #fff;
+      transition: 0.3s;
+    }
+    button:hover {
+      background-color: #42a5f5;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+      font-size: 15px;
+    }
+    th, td {
+      padding: 10px;
+      border-bottom: 1px solid #333;
+    }
+    th {
+      background-color: #1e1e1e;
+      color: #82b1ff;
+    }
+    tr:hover {
+      background-color: #2a2a2a;
+    }
+  </style>
 </head>
+
 <body>
-    <header>
-        <h1>⚽ EURO_GOALS Dashboard</h1>
-        <p>Ανάλυση & Προβλέψεις Ευρωπαϊκών Αγώνων</p>
-    </header>
+  <header>⚽ EURO_GOALS Dashboard</header>
+  <main>
+    <p>Ανάλυση & Προβλέψεις Ευρωπαϊκών Αγώνων</p>
 
-    <main>
-        <section id="controls">
-            <label for="league">Λίγκα:</label>
-            <select id="league">
-                <option value="england_all">Αγγλία</option>
-                <option value="germany_1_2_3">Γερμανία</option>
-                <option value="greece_1_2_3">Ελλάδα</option>
-                <option value="spain_1_2">Ισπανία</option>
-                <option value="italy_1_2">Ιταλία</option>
-                <option value="france_1_2">Γαλλία</option>
-                <option value="europe_1_2">Όλη η Ευρώπη</option>
-            </select>
-            <button id="loadMatches">Φόρτωση Αγώνων</button>
-            <button id="exportExcel">Εξαγωγή σε Excel</button>
-        </section>
+    <div>
+      <label for="league">Λίγκα:</label>
+      <select id="league">
+        <option value="Αγγλία">Αγγλία</option>
+        <option value="Ισπανία">Ισπανία</option>
+        <option value="Ιταλία">Ιταλία</option>
+        <option value="Γερμανία">Γερμανία</option>
+        <option value="Ελλάδα">Ελλάδα</option>
+      </select>
+      <button onclick="loadMatches()">Φόρτωση Αγώνων</button>
+      <button onclick="exportExcel()">Εξαγωγή σε Excel</button>
+    </div>
 
-        <section id="matches">
-            <table>
-                <thead>
-                    <tr>
-                        <th>Ημερομηνία</th>
-                        <th>Λίγκα</th>
-                        <th>Αγώνας</th>
-                        <th>Αποδόσεις</th>
-                        <th>Smart Money</th>
-                    </tr>
-                </thead>
-                <tbody id="matchData">
-                    <tr>
-                        <td colspan="5" style="text-align:center;">
-                            🔍 Επιλέξτε λίγκα και πατήστε "Φόρτωση Αγώνων"
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
-        </section>
-    </main>
+    <table>
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Αγώνας</th>
+          <th>1</th>
+          <th>Χ</th>
+          <th>2</th>
+        </tr>
+      </thead>
+      <tbody id="matches-body">
+        <tr><td colspan="5">Επιλέξτε λίγκα και πατήστε "Φόρτωση Αγώνων"</td></tr>
+      </tbody>
+    </table>
+  </main>
 
-    <footer>
-        <p>EURO_GOALS v6f © 2025 — Render Edition</p>
-    </footer>
+  <script>
+  async function loadMatches() {
+    const league = document.querySelector("#league").value;
+    const tableBody = document.querySelector("#matches-body");
+    tableBody.innerHTML = "<tr><td colspan='5'>⏳ Φόρτωση...</td></tr>";
 
-    <script src="/static/script.js"></script>
+    try {
+      const res = await fetch("/api/matches");
+      if (!res.ok) throw new Error("Σφάλμα φόρτωσης API");
+      const data = await res.json();
+
+      tableBody.innerHTML = "";
+      if (data.count === 0) {
+        tableBody.innerHTML = "<tr><td colspan='5'>Δεν βρέθηκαν αγώνες</td></tr>";
+        return;
+      }
+
+      data.matches.forEach(match => {
+        const row = document.createElement("tr");
+        row.innerHTML = `
+          <td>${match.id}</td>
+          <td>${match.home_team} - ${match.away_team}</td>
+          <td>${match.home_odds ?? "-"}</td>
+          <td>${match.draw_odds ?? "-"}</td>
+          <td>${match.away_odds ?? "-"}</td>
+        `;
+        tableBody.appendChild(row);
+      });
+    } catch (err) {
+      console.error(err);
+      tableBody.innerHTML = "<tr><td colspan='5'>⚠️ Δεν είναι διαθέσιμο το API</td></tr>";
+    }
+  }
+
+  function exportExcel() {
+    alert("🧾 Εξαγωγή σε Excel – υπό κατασκευή...");
+  }
+  </script>
 </body>
 </html>
