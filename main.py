@@ -119,6 +119,30 @@ def api_add_match(match: Match):
 # =====================================
 #  ΕΝΑΡΞΗ ΕΦΑΡΜΟΓΗΣ
 # =====================================
+# =====================================
+#  ΕΞΑΓΩΓΗ ΣΕ EXCEL
+# =====================================
+from fastapi.responses import FileResponse
+import pandas as pd
+
+@app.get("/api/export_excel")
+def export_excel():
+    """Εξάγει όλους τους αγώνες σε Excel (.xlsx)"""
+    try:
+        with engine.connect() as conn:
+            result = conn.execute(text("SELECT * FROM matches"))
+            data = [dict(row._mapping) for row in result]
+
+        if not data:
+            return {"error": "Η βάση είναι άδεια"}
+
+        df = pd.DataFrame(data)
+        filepath = "matches_export.xlsx"
+        df.to_excel(filepath, index=False)
+        return FileResponse(filepath, filename="EURO_GOALS_Matches.xlsx", media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+    except Exception as e:
+        return {"error": str(e)}
+
 if __name__ == "__main__":
     import uvicorn
     port = int(os.getenv("PORT", 5000))
