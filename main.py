@@ -62,4 +62,20 @@ def health_check():
 @app.get("/api/matches")
 def get_matches():
     with engine.connect() as conn:
-        result = conn.execute(text("SELECT * FROM matches O*
+        result = conn.execute(text("SELECT * FROM matches ORDER BY id"))
+        matches = [
+            {
+                "id": row[0],
+                "date": row[1],
+                "league": row[2],
+                "home_team": row[3],
+                "away_team": row[4],
+                "home_odds": row[5],
+                "draw_odds": row[6],
+                "away_odds": row[7],
+                "result": row[8],
+            }
+            for row in result.fetchall()
+        ]
+        return {"count": len(matches), "matches": matches}
+
