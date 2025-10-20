@@ -57,4 +57,23 @@ def smart_money(league: str = "epl"):
     })
 
 
+# -----------------------------------------
+# Smart Money Alerts route (Auto Mode)
+# -----------------------------------------
+from auto_mode import get_alerts
+
+@app.get("/alerts")
+def alerts():
+    """
+    Επιστρέφει τα Smart Money Alerts από το Auto Mode engine.
+    """
+    data = get_alerts()
+    return {
+        "status": "ok",
+        "last_update": data["last_update"],
+        "alerts": data["alerts"]
+    }
+
+
+
 print("🌍 EURO_GOALS_v6f Debug server ready (Render Edition)")
