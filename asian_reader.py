@@ -109,7 +109,6 @@ LEAGUE_URLS = {
     "uel": "soccer_uefa_europa_league",
     "uecl": "soccer_uefa_europa_conf_league"
 }
-}
 
 # -----------------------------
 # Cache για το Smart Money
