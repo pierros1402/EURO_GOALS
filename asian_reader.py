@@ -1,73 +1,70 @@
 # ==============================================
 # ASIAN READER MODULE (Smart Money Detector)
-# EURO_GOALS v6f – Auto Refresh Edition
+# EURO_GOALS v6f – OddsAPI Live Data Edition
 # ==============================================
 
-import requests
-import json
-import threading
-import time
+import os, requests, json, threading, time
 from datetime import datetime
+from dotenv import load_dotenv
 
-# -----------------------------
-# Global cache (τελευταία δεδομένα)
-# -----------------------------
+load_dotenv()
+
+API_KEY = os.getenv("ODDS_API_KEY")
+API_URL = "https://api.the-odds-api.com/v4/sports/soccer_epl/odds/"
+
 SMART_MONEY_CACHE = {
     "last_update": None,
     "results": []
 }
 
-# -----------------------------
-# Κύρια συνάρτηση ανίχνευσης
-# -----------------------------
 def detect_smart_money():
     """
-    Ανιχνεύει έντονες μεταβολές αποδόσεων/ασιατικών γραμμών.
-    Προς το παρόν χρησιμοποιεί mock δεδομένα.
+    Λήψη πραγματικών αποδόσεων από OddsAPI
+    και απλή ανίχνευση μεταβολών (demo).
     """
-    print("[SMART MONEY] 🔍 Checking Asian market data...")
+    print("[SMART MONEY] 🔍 Checking real market data...")
 
     try:
-        # (Προσωρινά URLs / placeholder APIs)
-        sources = [
-            "https://example-asian-api.com/odds_feed",
-            "https://example-sbo-api.com/data"
-        ]
+        params = {
+            "apiKey": API_KEY,
+            "regions": "eu",
+            "markets": "h2h",
+            "oddsFormat": "decimal"
+        }
+        res = requests.get(API_URL, params=params, timeout=10)
 
+        if res.status_code != 200:
+            print(f"[SMART MONEY] ⚠️ API error: {res.status_code}")
+            return []
+
+        data = res.json()
         results = []
-        for src in sources:
-            # Εικονικά δεδομένα (μέχρι να μπουν πραγματικά API)
-            sample = {
-                "match": "Olympiacos - AEK",
-                "change": "-0.25",
-                "time": str(datetime.now().strftime("%H:%M:%S"))
-            }
-            results.append(sample)
-            results.append({
-                "match": "PAOK - Aris",
-                "change": "+0.5",
-                "time": str(datetime.now().strftime("%H:%M:%S"))
-            })
 
-        # Αποθήκευση στο global cache
+        for match in data[:5]:  # δείξε μόνο 5 πρώτους αγώνες για demo
+            home = match["home_team"]
+            away = match["away_team"]
+            bookmaker = match["bookmakers"][0]
+            odds = bookmaker["markets"][0]["outcomes"]
+
+            entry = {
+                "match": f"{home} - {away}",
+                "bookmaker": bookmaker["title"],
+                "odds": {o["name"]: o["price"] for o in odds},
+                "time": datetime.now().strftime("%H:%M:%S")
+            }
+            results.append(entry)
+
         SMART_MONEY_CACHE["last_update"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         SMART_MONEY_CACHE["results"] = results
 
-        print(f"[SMART MONEY] ✅ Updated {len(results)} market moves.")
+        print(f"[SMART MONEY] ✅ Updated {len(results)} live matches.")
         return results
 
     except Exception as e:
         print("[SMART MONEY] ❌ Error:", e)
         return []
 
-# -----------------------------
-# Συνάρτηση για αυτόματη ανανέωση
-# -----------------------------
 def auto_refresh(interval_minutes=5):
-    """
-    Εκτελεί το detect_smart_money() κάθε X λεπτά αυτόματα.
-    Τρέχει σε ξεχωριστό thread στο παρασκήνιο.
-    """
     def loop():
         while True:
             detect_smart_money()
@@ -77,20 +74,10 @@ def auto_refresh(interval_minutes=5):
     thread.start()
     print(f"[SMART MONEY] 🔁 Auto-refresh active (every {interval_minutes} minutes)")
 
-# -----------------------------
-# Συνάρτηση για ανάγνωση cache
-# -----------------------------
 def get_smart_money_data():
-    """
-    Επιστρέφει τα τελευταία αποθηκευμένα δεδομένα Smart Money
-    χωρίς να ξανακαλέσει APIs (χρησιμοποιείται από το route).
-    """
     return {
         "last_update": SMART_MONEY_CACHE["last_update"],
         "results": SMART_MONEY_CACHE["results"]
     }
 
-# -----------------------------
-# Εκκίνηση background auto-refresh
-# -----------------------------
-auto_refresh(5)  # κάθε 5 λεπτά
+auto_refresh(5)
