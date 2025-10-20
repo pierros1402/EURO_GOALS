@@ -46,3 +46,114 @@
     }
     table {
       width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+      font-size: 15px;
+    }
+    th, td {
+      padding: 10px;
+      border-bottom: 1px solid #333;
+    }
+    th {
+      background-color: #1e1e1e;
+      color: #82b1ff;
+    }
+    tr:hover {
+      background-color: #2a2a2a;
+    }
+  </style>
+</head>
+
+<body>
+  <header>⚽ EURO_GOALS Dashboard</header>
+  <main>
+    <p>Ανάλυση & Προβλέψεις Ευρωπαϊκών Αγώνων</p>
+
+    <div>
+      <label for="league">Λίγκα:</label>
+      <select id="league">
+        <option value="Αγγλία">Αγγλία</option>
+        <option value="Ισπανία">Ισπανία</option>
+        <option value="Ιταλία">Ιταλία</option>
+        <option value="Γερμανία">Γερμανία</option>
+        <option value="Ελλάδα">Ελλάδα</option>
+        <option value="Δοκιμή">Δοκιμή</option>
+      </select>
+
+      <button onclick="loadMatches()">Φόρτωση Αγώνων</button>
+      <button onclick="addMatch()">➕ Προσθήκη Αγώνα</button>
+      <button onclick="exportExcel()">📊 Εξαγωγή σε Excel</button>
+    </div>
+
+    <table id="matchesTable">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Εντός</th>
+          <th>Εκτός</th>
+          <th>1</th>
+          <th>X</th>
+          <th>2</th>
+          <th>Αποτέλεσμα</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </main>
+
+  <script>
+    async function loadMatches() {
+      const res = await fetch("/api/matches");
+      const data = await res.json();
+      const tbody = document.querySelector("#matchesTable tbody");
+      tbody.innerHTML = "";
+
+      data.matches.forEach(match => {
+        const row = `<tr>
+          <td>${match.id}</td>
+          <td>${match.home_team}</td>
+          <td>${match.away_team}</td>
+          <td>${match.home_odds}</td>
+          <td>${match.draw_odds}</td>
+          <td>${match.away_odds}</td>
+          <td>${match.result || "-"}</td>
+        </tr>`;
+        tbody.innerHTML += row;
+      });
+    }
+
+    async function addMatch() {
+      const newMatch = {
+        home_team: "Arsenal",
+        away_team: "Chelsea",
+        home_odds: 2.2,
+        draw_odds: 3.3,
+        away_odds: 3.1,
+        result: null
+      };
+      const res = await fetch("/api/matches", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(newMatch)
+      });
+      if (res.ok) {
+        alert("✅ Αγώνας προστέθηκε!");
+        loadMatches();
+      }
+    }
+
+    async function exportExcel() {
+      const res = await fetch("/api/export_excel");
+      if (res.ok) {
+        const blob = await res.blob();
+        const link = document.createElement("a");
+        link.href = URL.createObjectURL(blob);
+        link.download = "matches.xlsx";
+        link.click();
+      } else {
+        alert("⚠️ Σφάλμα κατά την εξαγωγή Excel.");
+      }
+    }
+  </script>
+</body>
+</html>
