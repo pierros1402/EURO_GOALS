@@ -61,6 +61,40 @@
     tr:hover {
       background-color: #2a2a2a;
     }
+
+    /* --- Smart Money Section --- */
+    #smartMoneyTable {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+    }
+    #smartMoneyTable th, #smartMoneyTable td {
+      padding: 6px 8px;
+      border: 1px solid #444;
+      text-align: center;
+    }
+    #smartMoneyTable th {
+      background-color: #1e1e1e;
+      color: #ffca28;
+    }
+    .action-btn {
+      background-color: #007bff;
+      color: white;
+      padding: 6px 10px;
+      margin-right: 5px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    .action-btn:hover {
+      background-color: #0056b3;
+    }
+    #lastUpdate {
+      font-size: 0.9rem;
+      color: #bbb;
+      margin-top: 6px;
+      margin-bottom: 10px;
+    }
   </style>
 </head>
 
@@ -83,6 +117,7 @@
       <button onclick="loadMatches()">Φόρτωση Αγώνων</button>
       <button onclick="addMatch()">➕ Προσθήκη Αγώνα</button>
       <button onclick="exportExcel()">📊 Εξαγωγή σε Excel</button>
+      <button id="smartMoneyBtn" class="action-btn">💰 Smart Money</button>
     </div>
 
     <table id="matchesTable">
@@ -99,6 +134,21 @@
       </thead>
       <tbody></tbody>
     </table>
+
+    <!-- ✅ Νέα ενότητα Smart Money -->
+    <h3 style="margin-top:40px; color:#ffca28;">💰 Smart Money Movements</h3>
+    <div id="lastUpdate">Τελευταία ενημέρωση: --</div>
+    <table id="smartMoneyTable">
+      <thead>
+        <tr>
+          <th>Match</th>
+          <th>Change</th>
+          <th>Time</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+
   </main>
 
   <script>
@@ -154,6 +204,50 @@
         alert("⚠️ Σφάλμα κατά την εξαγωγή Excel.");
       }
     }
+
+    // ✅ Smart Money Handler + Last Update
+    document.getElementById("smartMoneyBtn").addEventListener("click", async () => {
+      const btn = document.getElementById("smartMoneyBtn");
+      btn.disabled = true;
+      btn.innerText = "Φόρτωση...";
+      try {
+        const res = await fetch("/smart_money");
+        const data = await res.json();
+        const tableBody = document.querySelector("#smartMoneyTable tbody");
+        const lastUpdateDiv = document.getElementById("lastUpdate");
+        tableBody.innerHTML = "";
+
+        // Ενημέρωση χρόνου
+        lastUpdateDiv.textContent = `Τελευταία ενημέρωση: ${data.last_update || "--"}`;
+
+        if (data.results && data.results.length > 0) {
+          data.results.forEach(item => {
+            const row = document.createElement("tr");
+            row.innerHTML = `
+              <td>${item.match}</td>
+              <td>${item.change}</td>
+              <td>${item.time}</td>
+            `;
+            tableBody.appendChild(row);
+          });
+        } else {
+          const row = document.createElement("tr");
+          row.innerHTML = `<td colspan="3" style="text-align:center;">Δεν βρέθηκαν δεδομένα</td>`;
+          tableBody.appendChild(row);
+        }
+      } catch (error) {
+        console.error(error);
+        alert("⚠️ Σφάλμα κατά τη φόρτωση Smart Money δεδομένων.");
+      } finally {
+        btn.disabled = false;
+        btn.innerText = "💰 Smart Money";
+      }
+    });
+
+    // ✅ Αυτόματη ανάκτηση δεδομένων κάθε 5 λεπτά
+    setInterval(() => {
+      document.getElementById("smartMoneyBtn").click();
+    }, 5 * 60 * 1000); // 5 λεπτά
   </script>
 </body>
 </html>

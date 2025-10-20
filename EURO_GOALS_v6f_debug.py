@@ -1,16 +1,18 @@
 # ==========================================================
-# EURO_GOALS_v6f_debug.py  (Render working version - UI Ready)
+# EURO_GOALS_v6f_debug.py  (Render working version - UI + Smart Money)
 # ==========================================================
 
 from fastapi import FastAPI, Request
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
-import os, sys, time, json, random, threading, requests
-import pandas as pd
-from datetime import datetime, timedelta
+import os, json
+from datetime import datetime
 from typing import Dict
+
+# Εισαγωγή Smart Money Module
+from asian_reader import detect_smart_money, get_smart_money_data
 
 print("🚀 Render new deploy check")
 
@@ -40,4 +42,23 @@ def home(request: Request):
 def ping():
     return {"status": "ok", "message": "EURO_GOALS Render online ✅"}
 
-print("🌍 EURO_GOALS ξεκινά κανονικά...")
+# -----------------------------------------
+# Smart Money route (UI + auto-refresh)
+# -----------------------------------------
+@app.get("/smart_money")
+def smart_money_check():
+    """
+    Επιστρέφει τα τελευταία αποθηκευμένα δεδομένα Smart Money
+    (από το asian_reader.py background thread).
+    """
+    data = get_smart_money_data()
+    return JSONResponse({
+        "status": "ok",
+        "last_update": data["last_update"],
+        "results": data["results"]
+    })
+
+# -----------------------------------------
+# Startup message
+# -----------------------------------------
+print("🌍 EURO_GOALS ξεκινά κανονικά με Smart Money auto-refresh ✅")
