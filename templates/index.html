@@ -72,17 +72,103 @@
 <body>
   <header>⚽ EURO_GOALS v6f – Smart Money Dashboard</header>
   <main>
-    <p>Ανάλυση & Ζωντανά Δεδομένα Αποδόσεων</p>
+    <p>Ανάλυση & Ζωντανά Δεδομένα Αποδόσεων Ευρώπης</p>
 
     <div>
       <label for="smartLeague">Λίγκα:</label>
       <select id="smartLeague">
-        <option value="epl">Premier League</option>
-        <option value="laliga">La Liga</option>
-        <option value="seriea">Serie A</option>
-        <option value="bundesliga">Bundesliga</option>
-        <option value="greece">Super League Ελλάδα</option>
-        <option value="ucl">Champions League</option>
+        <optgroup label="Αγγλία 🇬🇧">
+          <option value="eng1">Premier League</option>
+          <option value="eng2">Championship</option>
+          <option value="eng3">League One</option>
+          <option value="eng4">League Two</option>
+        </optgroup>
+
+        <optgroup label="Γερμανία 🇩🇪">
+          <option value="ger1">Bundesliga</option>
+          <option value="ger2">2. Bundesliga</option>
+          <option value="ger3">3. Liga</option>
+        </optgroup>
+
+        <optgroup label="Ελλάδα 🇬🇷">
+          <option value="gr1">Super League 1</option>
+          <option value="gr2">Super League 2</option>
+        </optgroup>
+
+        <optgroup label="Ισπανία 🇪🇸">
+          <option value="es1">La Liga</option>
+          <option value="es2">Segunda División</option>
+        </optgroup>
+
+        <optgroup label="Ιταλία 🇮🇹">
+          <option value="it1">Serie A</option>
+          <option value="it2">Serie B</option>
+        </optgroup>
+
+        <optgroup label="Γαλλία 🇫🇷">
+          <option value="fr1">Ligue 1</option>
+          <option value="fr2">Ligue 2</option>
+        </optgroup>
+
+        <optgroup label="Ολλανδία 🇳🇱">
+          <option value="nl1">Eredivisie</option>
+          <option value="nl2">Eerste Divisie</option>
+        </optgroup>
+
+        <optgroup label="Βέλγιο 🇧🇪">
+          <option value="be1">First Division A</option>
+          <option value="be2">First Division B</option>
+        </optgroup>
+
+        <optgroup label="Ελβετία 🇨🇭">
+          <option value="ch1">Super League</option>
+          <option value="ch2">Challenge League</option>
+        </optgroup>
+
+        <optgroup label="Αυστρία 🇦🇹">
+          <option value="at1">Bundesliga</option>
+          <option value="at2">2. Liga</option>
+        </optgroup>
+
+        <optgroup label="Βόρεια Ευρώπη 🇩🇰🇸🇪🇳🇴🇫🇮">
+          <option value="dk1">Δανία Superliga</option>
+          <option value="dk2">Δανία 1η Κατηγορία</option>
+          <option value="se1">Σουηδία Allsvenskan</option>
+          <option value="se2">Σουηδία Superettan</option>
+          <option value="no1">Νορβηγία Eliteserien</option>
+          <option value="no2">Νορβηγία 1η Κατηγορία</option>
+          <option value="fi1">Φινλανδία Veikkausliiga</option>
+          <option value="fi2">Φινλανδία Ykkonen</option>
+        </optgroup>
+
+        <optgroup label="Κεντρική & Ανατολική Ευρώπη 🇵🇱🇨🇿🇭🇺🇷🇴">
+          <option value="pl1">Πολωνία Ekstraklasa</option>
+          <option value="pl2">Πολωνία 1η Κατηγορία</option>
+          <option value="cz1">Τσεχία FNL</option>
+          <option value="cz2">Τσεχία 2η Κατηγορία</option>
+          <option value="hu1">Ουγγαρία NB I</option>
+          <option value="hu2">Ουγγαρία NB II</option>
+          <option value="ro1">Ρουμανία Liga I</option>
+          <option value="ro2">Ρουμανία Liga II</option>
+        </optgroup>
+
+        <optgroup label="Ιρλανδία & Ισλανδία 🇮🇪🇮🇸">
+          <option value="ie1">Ιρλανδία Premier Division</option>
+          <option value="ie2">Ιρλανδία First Division</option>
+          <option value="is1">Ισλανδία Úrvalsdeild</option>
+          <option value="is2">Ισλανδία 1η Κατηγορία</option>
+        </optgroup>
+
+        <optgroup label="Πορτογαλία 🇵🇹">
+          <option value="pt1">Primeira Liga</option>
+          <option value="pt2">Segunda Liga</option>
+        </optgroup>
+
+        <optgroup label="Ευρωπαϊκές Διοργανώσεις 🌍">
+          <option value="ucl">Champions League</option>
+          <option value="uel">Europa League</option>
+          <option value="uecl">Conference League</option>
+        </optgroup>
       </select>
 
       <button onclick="loadSmartMoney()">💰 Smart Money</button>
@@ -116,6 +202,7 @@
 
       if (!data.results || data.results.length === 0) {
         tbody.innerHTML = `<tr><td colspan="6">⚠️ Δεν βρέθηκαν αγώνες</td></tr>`;
+        document.getElementById("lastUpdate").textContent = "Τελευταία ενημέρωση: -";
         return;
       }
 
