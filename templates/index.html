@@ -86,5 +86,77 @@
     </div>
 
     <table>
+      </thead>
+      <tbody id="matchesTable">
+        <tr><td colspan="5">🔍 Επιλέξτε λίγκα και πατήστε "Φόρτωση Αγώνων"</td></tr>
+      </tbody>
+    </table>
+  </main>
+
+  <script>
+    // ✅ Φόρτωση αγώνων από το backend
+    async function loadMatches() {
+      const tableBody = document.getElementById("matchesTable");
+      tableBody.innerHTML = "<tr><td colspan='5'>⏳ Φόρτωση...</td></tr>";
+
+      try {
+        const res = await fetch("/api/matches");
+        const data = await res.json();
+
+        if (!data.matches || data.matches.length === 0) {
+          tableBody.innerHTML = "<tr><td colspan='5'>Δεν βρέθηκαν αγώνες.</td></tr>";
+          return;
+        }
+
+        tableBody.innerHTML = "";
+        data.matches.forEach(match => {
+          const row = `
+            <tr>
+              <td>${match.home_team}</td>
+              <td>${match.away_team}</td>
+              <td>${match.home_odds}</td>
+              <td>${match.draw_odds}</td>
+              <td>${match.away_odds}</td>
+            </tr>`;
+          tableBody.innerHTML += row;
+        });
+      } catch (error) {
+        tableBody.innerHTML = `<tr><td colspan='5'>⚠️ Σφάλμα φόρτωσης δεδομένων</td></tr>`;
+      }
+    }
+
+    // ✅ Προσθήκη αγώνα (δοκιμαστικά)
+    async function addMatch() {
+      const sampleMatch = {
+        home_team: "Olympiacos",
+        away_team: "AEK",
+        home_odds: 2.1,
+        draw_odds: 3.4,
+        away_odds: 3.2,
+        result: null
+      };
+
+      try {
+        const res = await fetch("/api/matches", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(sampleMatch)
+        });
+        const data = await res.json();
+        alert("✅ Αγώνας προστέθηκε!");
+        console.log(data);
+      } catch (error) {
+        alert("⚠️ Σφάλμα κατά την προσθήκη αγώνα!");
+      }
+    }
+
+    // ✅ Εξαγωγή σε Excel (απευθείας λήψη)
+    function exportExcel() {
+      window.location.href = "/api/export_excel";
+    }
+  </script>
+</body>
+</html>
+
       <thead>
         <
