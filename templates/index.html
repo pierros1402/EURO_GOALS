@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>⚽ EURO_GOALS Dashboard</title>
+  <title>⚽ EURO_GOALS v6f – Smart Money Dashboard</title>
   <style>
     body {
       background-color: #121212;
@@ -17,7 +17,7 @@
       padding: 20px;
       background-color: #1e1e1e;
       color: #82b1ff;
-      font-size: 1.5rem;
+      font-size: 1.6rem;
       font-weight: bold;
     }
     main {
@@ -61,193 +61,83 @@
     tr:hover {
       background-color: #2a2a2a;
     }
-
-    /* --- Smart Money Section --- */
-    #smartMoneyTable {
-      width: 100%;
-      border-collapse: collapse;
+    .update-time {
       margin-top: 10px;
-    }
-    #smartMoneyTable th, #smartMoneyTable td {
-      padding: 6px 8px;
-      border: 1px solid #444;
-      text-align: center;
-    }
-    #smartMoneyTable th {
-      background-color: #1e1e1e;
-      color: #ffca28;
-    }
-    .action-btn {
-      background-color: #007bff;
-      color: white;
-      padding: 6px 10px;
-      margin-right: 5px;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-    }
-    .action-btn:hover {
-      background-color: #0056b3;
-    }
-    #lastUpdate {
+      color: #90caf9;
       font-size: 0.9rem;
-      color: #bbb;
-      margin-top: 6px;
-      margin-bottom: 10px;
     }
   </style>
 </head>
 
 <body>
-  <header>⚽ EURO_GOALS Dashboard</header>
+  <header>⚽ EURO_GOALS v6f – Smart Money Dashboard</header>
   <main>
-    <p>Ανάλυση & Προβλέψεις Ευρωπαϊκών Αγώνων</p>
+    <p>Ανάλυση & Ζωντανά Δεδομένα Αποδόσεων</p>
 
     <div>
-      <label for="league">Λίγκα:</label>
-      <select id="league">
-        <option value="Αγγλία">Αγγλία</option>
-        <option value="Ισπανία">Ισπανία</option>
-        <option value="Ιταλία">Ιταλία</option>
-        <option value="Γερμανία">Γερμανία</option>
-        <option value="Ελλάδα">Ελλάδα</option>
-        <option value="Δοκιμή">Δοκιμή</option>
+      <label for="smartLeague">Λίγκα:</label>
+      <select id="smartLeague">
+        <option value="epl">Premier League</option>
+        <option value="laliga">La Liga</option>
+        <option value="seriea">Serie A</option>
+        <option value="bundesliga">Bundesliga</option>
+        <option value="greece">Super League Ελλάδα</option>
+        <option value="ucl">Champions League</option>
       </select>
 
-      <button onclick="loadMatches()">Φόρτωση Αγώνων</button>
-      <button onclick="addMatch()">➕ Προσθήκη Αγώνα</button>
-      <button onclick="exportExcel()">📊 Εξαγωγή σε Excel</button>
-      <button id="smartMoneyBtn" class="action-btn">💰 Smart Money</button>
+      <button onclick="loadSmartMoney()">💰 Smart Money</button>
     </div>
 
-    <table id="matchesTable">
+    <div class="update-time" id="lastUpdate">Τελευταία ενημέρωση: -</div>
+
+    <table id="smartTable">
       <thead>
         <tr>
-          <th>ID</th>
-          <th>Εντός</th>
-          <th>Εκτός</th>
+          <th>Αγώνας</th>
+          <th>Bookmaker</th>
           <th>1</th>
           <th>X</th>
           <th>2</th>
-          <th>Αποτέλεσμα</th>
+          <th>Ώρα</th>
         </tr>
       </thead>
       <tbody></tbody>
     </table>
-
-    <!-- ✅ Νέα ενότητα Smart Money -->
-    <h3 style="margin-top:40px; color:#ffca28;">💰 Smart Money Movements</h3>
-    <div id="lastUpdate">Τελευταία ενημέρωση: --</div>
-    <table id="smartMoneyTable">
-      <thead>
-        <tr>
-          <th>Match</th>
-          <th>Change</th>
-          <th>Time</th>
-        </tr>
-      </thead>
-      <tbody></tbody>
-    </table>
-
   </main>
 
   <script>
-    async function loadMatches() {
-      const res = await fetch("/api/matches");
+    async function loadSmartMoney() {
+      const league = document.getElementById("smartLeague").value;
+      const res = await fetch(`/smart_money?league=${league}`);
       const data = await res.json();
-      const tbody = document.querySelector("#matchesTable tbody");
+
+      const tbody = document.querySelector("#smartTable tbody");
       tbody.innerHTML = "";
 
-      data.matches.forEach(match => {
-        const row = `<tr>
-          <td>${match.id}</td>
-          <td>${match.home_team}</td>
-          <td>${match.away_team}</td>
-          <td>${match.home_odds}</td>
-          <td>${match.draw_odds}</td>
-          <td>${match.away_odds}</td>
-          <td>${match.result || "-"}</td>
-        </tr>`;
-        tbody.innerHTML += row;
+      if (!data.results || data.results.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="6">⚠️ Δεν βρέθηκαν αγώνες</td></tr>`;
+        return;
+      }
+
+      data.results.forEach(row => {
+        const odds = row.odds || {};
+        const tr = `
+          <tr>
+            <td>${row.match}</td>
+            <td>${row.bookmaker}</td>
+            <td>${odds["Home"] || "-"}</td>
+            <td>${odds["Draw"] || "-"}</td>
+            <td>${odds["Away"] || "-"}</td>
+            <td>${row.time}</td>
+          </tr>
+        `;
+        tbody.innerHTML += tr;
       });
+
+      const time = data.last_update ? data.last_update : "-";
+      document.getElementById("lastUpdate").textContent =
+        `Τελευταία ενημέρωση: ${time}`;
     }
-
-    async function addMatch() {
-      const newMatch = {
-        home_team: "Arsenal",
-        away_team: "Chelsea",
-        home_odds: 2.2,
-        draw_odds: 3.3,
-        away_odds: 3.1,
-        result: null
-      };
-      const res = await fetch("/api/matches", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(newMatch)
-      });
-      if (res.ok) {
-        alert("✅ Αγώνας προστέθηκε!");
-        loadMatches();
-      }
-    }
-
-    async function exportExcel() {
-      const res = await fetch("/api/export_excel");
-      if (res.ok) {
-        const blob = await res.blob();
-        const link = document.createElement("a");
-        link.href = URL.createObjectURL(blob);
-        link.download = "matches.xlsx";
-        link.click();
-      } else {
-        alert("⚠️ Σφάλμα κατά την εξαγωγή Excel.");
-      }
-    }
-
-    // ✅ Smart Money Handler + Last Update
-    document.getElementById("smartMoneyBtn").addEventListener("click", async () => {
-      const btn = document.getElementById("smartMoneyBtn");
-      btn.disabled = true;
-      btn.innerText = "Φόρτωση...";
-      try {
-        const res = await fetch("/smart_money");
-        const data = await res.json();
-        const tableBody = document.querySelector("#smartMoneyTable tbody");
-        const lastUpdateDiv = document.getElementById("lastUpdate");
-        tableBody.innerHTML = "";
-
-        // Ενημέρωση χρόνου
-        lastUpdateDiv.textContent = `Τελευταία ενημέρωση: ${data.last_update || "--"}`;
-
-        if (data.results && data.results.length > 0) {
-          data.results.forEach(item => {
-            const row = document.createElement("tr");
-            row.innerHTML = `
-              <td>${item.match}</td>
-              <td>${item.change}</td>
-              <td>${item.time}</td>
-            `;
-            tableBody.appendChild(row);
-          });
-        } else {
-          const row = document.createElement("tr");
-          row.innerHTML = `<td colspan="3" style="text-align:center;">Δεν βρέθηκαν δεδομένα</td>`;
-          tableBody.appendChild(row);
-        }
-      } catch (error) {
-        console.error(error);
-        alert("⚠️ Σφάλμα κατά τη φόρτωση Smart Money δεδομένων.");
-      } finally {
-        btn.disabled = false;
-        btn.innerText = "💰 Smart Money";
-      }
-    });
-
-    // ✅ Αυτόματη ανάκτηση δεδομένων κάθε 5 λεπτά
-    setInterval(() => {
-      document.getElementById("smartMoneyBtn").click();
-    }, 5 * 60 * 1000); // 5 λεπτά
   </script>
 </body>
 </html>
