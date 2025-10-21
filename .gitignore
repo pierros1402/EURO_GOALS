@@ -1,4 +1,52 @@
-# Ignore Google Drive temp files
-.tmp.driveupload*
-desktop.ini
-Thumbs.db
+# =======================================
+# EURO_GOALS Project .gitignore
+# =======================================
+
+# Python cache & virtual environments
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+venv/
+env/
+.venv/
+
+# Databases
+*.db
+*.sqlite3
+
+# Local environment variables
+.env
+
+# Backups
+BACKUPS/
+*.sql
+
+# Local executables / installers
+*.exe
+*.bat
+*.vbs
+*.lnk
+
+# Logs & runtime files
+*.log
+runtime.txt
+version_local.txt
+version_online.txt
+
+# Local data folders
+.tmp.driveupload/
+.cache/
+.DS_Store
+
+# Shortcuts folder (keep empty)
+shortcuts/
+!shortcuts/.keep
+
+# IDE / Editor folders
+.vscode/
+.idea/
+
+# GitHub / Render artifacts
+.gitignore
+.git/
