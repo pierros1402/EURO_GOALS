@@ -91,16 +91,47 @@ def system_check():
         status["feeds"] = {"sofascore_api": f"error {e}"}
         status["status"] = "warning"
 
-    # ✅ Threads check (basic confirmation)
+    # ✅ Threads check
     status["threads"] = {
         "sofascore": "running",
         "flashscore": "running",
+        "verifier": "running",
         "backup": "ok"
     }
 
-    # ✅ Host info
     status["host"] = socket.gethostname()
     return JSONResponse(status)
+
+# ----------------------------------------------
+# API: Cross Verification Discrepancies
+# ----------------------------------------------
+@app.get("/api/discrepancies")
+def get_discrepancies():
+    """
+    Επιστρέφει αγώνες όπου διαπιστώθηκε διαφορά σκορ
+    ή λείπει δεδομένο από μία πηγή.
+    """
+    try:
+        with engine.connect() as conn:
+            result = conn.execute(text("""
+                SELECT home, away, sofa_score, flash_score, note
+                FROM verifier_state
+                WHERE note LIKE 'disagree%' OR note LIKE 'only_%'
+                ORDER BY updated_at DESC
+                LIMIT 50;
+            """)).mappings().all()
+
+        discrepancies = [dict(r) for r in result]
+
+        return JSONResponse({
+            "count": len(discrepancies),
+            "discrepancies": discrepancies,
+            "timestamp": datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
+        })
+
+    except Exception as e:
+        return JSONResponse({"error": str(e)}, status_code=500)
+
 
 # ----------------------------------------------
 # Web Page: Live Matches UI
