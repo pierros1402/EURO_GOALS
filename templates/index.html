@@ -71,13 +71,29 @@
     }
     tr:hover { background-color: #2a2a2a; }
     #lastUpdate { color: #a5d6a7; margin-bottom: 10px; font-size: 14px; }
-    .league { color: #ffca28; font-weight: bold; }
     .alert { color: #ef5350; font-weight: bold; }
+
+    #logPanel {
+      background-color: #1e1e1e;
+      color: #bdbdbd;
+      padding: 10px;
+      margin: 30px 20px;
+      border-radius: 8px;
+      font-size: 13px;
+      max-height: 180px;
+      overflow-y: auto;
+      border: 1px solid #333;
+    }
+    #logPanel h3 {
+      margin: 0 0 8px 0;
+      font-size: 14px;
+      color: #82b1ff;
+    }
     footer {
       text-align: center;
       font-size: 13px;
       color: #757575;
-      margin-top: 40px;
+      margin: 20px 0 10px;
     }
   </style>
 </head>
@@ -88,7 +104,6 @@
     <div id="statusIndicator" class="offline"><span></span>Offline</div>
   </header>
 
-  <!-- ΖΩΝΤΑΝΗ ΜΠΑΡΑ ΚΑΤΑΣΤΑΣΗΣ -->
   <div id="statusBar">
     🕒 <span id="liveClock">--:--:--</span> | Next league in: <span id="countdown">05:00</span>
   </div>
@@ -113,18 +128,33 @@
       <thead><tr><th>Αγώνας</th><th>Σήμα</th><th>Ώρα</th></tr></thead>
       <tbody></tbody>
     </table>
+
+    <!-- ΖΩΝΤΑΝΟ LOG PANEL -->
+    <div id="logPanel">
+      <h3>🧠 Live Log Panel</h3>
+      <div id="logs"></div>
+    </div>
   </main>
 
   <footer>
-    EURO_GOALS v6f | Auto Rotation + Fallback + Alerts | © Pierros 2025
+    EURO_GOALS v6f | Rotation + Fallback + Alerts + Live Log | © Pierros 2025
   </footer>
 
   <script>
     const statusEl = document.getElementById("statusIndicator");
     const liveClock = document.getElementById("liveClock");
     const countdownEl = document.getElementById("countdown");
+    const logPanel = document.getElementById("logs");
 
     let countdownSeconds = 5 * 60; // 5 λεπτά rotation
+
+    function addLog(message) {
+      const time = new Date().toLocaleTimeString("el-GR");
+      const entry = document.createElement("div");
+      entry.textContent = `[${time}] ${message}`;
+      logPanel.prepend(entry); // νεότερο πάνω
+      if (logPanel.children.length > 25) logPanel.removeChild(logPanel.lastChild);
+    }
 
     function setStatus(state, text) {
       statusEl.className = state;
@@ -140,6 +170,7 @@
       countdownSeconds--;
       if (countdownSeconds <= 0) {
         countdownSeconds = 5 * 60;
+        addLog("🔄 League rotation triggered");
       }
       const minutes = String(Math.floor(countdownSeconds / 60)).padStart(2, "0");
       const seconds = String(countdownSeconds % 60).padStart(2, "0");
@@ -153,8 +184,13 @@
         if (!res.ok) throw new Error("HTTP " + res.status);
         const data = await res.json();
 
-        if (data.status === "ok") setStatus("online", "Online");
-        else setStatus("offline", "Error");
+        if (data.status === "ok") {
+          setStatus("online", "Online");
+          addLog(`✅ Dashboard updated (${data.current_league || "-"})`);
+        } else {
+          setStatus("offline", "Error");
+          addLog("⚠️ Data status not OK");
+        }
 
         document.getElementById("lastUpdate").innerHTML =
           "🕒 Τελευταία ενημέρωση: " + data.timestamp;
@@ -199,6 +235,7 @@
       } catch (err) {
         console.error("Dashboard load error:", err);
         setStatus("offline", "Offline");
+        addLog("❌ Dashboard connection error");
       }
     }
 
