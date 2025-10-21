@@ -1,155 +1,69 @@
 # ==============================================
-# MARKET READER MODULE (Stake Volume Detector)
-# EURO_GOALS v6f – Mock Edition (Pinnacle + Betfair)
+# MARKET READER MODULE – Betfair Volumes Integration
+# EURO_GOALS v6g – Live Data + Safe Fallback
 # ==============================================
 
-import threading
-import time
 from datetime import datetime
+from betfair_client import BetfairClient
 import random
 
-# -----------------------------
-# Global cache
-# -----------------------------
 MARKET_CACHE = {
     "last_update": None,
     "markets": []
 }
 
-# -----------------------------
-# Mock data sources (θα αντικατασταθούν με APIs)
-# -----------------------------
-def fetch_from_pinnacle():
+def get_market_data():
     """
-    Εικονικά δεδομένα Pinnacle – odds + volume
+    Προσπαθεί να αντλήσει live markets από Betfair Exchange.
+    Αν δεν υπάρχουν credentials ή αποτύχει το API, γυρίζει mock δεδομένα.
     """
-    sample = [
-        {
-            "match": "Olympiacos - AEK",
-            "market": "1X2",
-            "home_odds": 2.10,
-            "draw_odds": 3.45,
-            "away_odds": 3.00,
-            "home_volume": random.randint(50000, 150000),
-            "draw_volume": random.randint(20000, 80000),
-            "away_volume": random.randint(40000, 120000),
-        },
-        {
-            "match": "PAOK - Aris",
-            "market": "1X2",
-            "home_odds": 2.05,
-            "draw_odds": 3.20,
-            "away_odds": 3.50,
-            "home_volume": random.randint(60000, 180000),
-            "draw_volume": random.randint(30000, 70000),
-            "away_volume": random.randint(45000, 100000),
-        }
-    ]
-    return sample
-
-
-def fetch_from_betfair():
-    """
-    Εικονικά δεδομένα Betfair – back/lay volumes
-    """
-    sample = [
-        {
-            "match": "Manchester City - Liverpool",
-            "market": "1X2",
-            "home_odds": 1.90,
-            "draw_odds": 3.60,
-            "away_odds": 4.00,
-            "home_volume": random.randint(200000, 400000),
-            "draw_volume": random.randint(80000, 150000),
-            "away_volume": random.randint(120000, 250000),
-        }
-    ]
-    return sample
-
-
-def fetch_from_sbobet():
-    """
-    Εικονικά δεδομένα SBOBET – Asian Handicap / Over-Under
-    """
-    sample = [
-        {
-            "match": "Panathinaikos - Lamia",
-            "market": "Asian Handicap",
-            "line": "-0.75",
-            "home_odds": 1.93,
-            "away_odds": 1.95,
-            "home_volume": random.randint(40000, 100000),
-            "away_volume": random.randint(40000, 90000),
-        }
-    ]
-    return sample
-
-
-# -----------------------------
-# Core detector function
-# -----------------------------
-def detect_market_volumes():
-    """
-    Συλλέγει δεδομένα από πολλαπλές πηγές (mock)
-    και υπολογίζει πού πέφτει το "βαρύ" στοίχημα.
-    """
-    print("[MARKET READER] 🔍 Checking volume data...")
-
     try:
-        sources = []
-        sources.extend(fetch_from_pinnacle())
-        sources.extend(fetch_from_betfair())
-        sources.extend(fetch_from_sbobet())
+        bf = BetfairClient()
+        if not bf.is_configured():
+            print("[MARKET READER] ⚠️ Betfair keys not found – using mock data.")
+            return _generate_mock()
 
-        # Υπολογισμός “dominant side” (ποιο σημείο έχει το μεγαλύτερο stake)
-        results = []
-        for s in sources:
-            side_volumes = {
-                "1": s.get("home_volume", 0),
-                "X": s.get("draw_volume", 0),
-                "2": s.get("away_volume", 0)
-            }
-            dominant = max(side_volumes, key=side_volumes.get)
-            s["dominant_side"] = dominant
-            s["total_volume"] = sum(side_volumes.values())
-            results.append(s)
+        print("[MARKET READER] 🔍 Fetching live Betfair markets...")
+        data = bf.get_match_odds_snapshot(max_results=6)
+
+        if not data:
+            print("[MARKET READER] ⚠️ Empty response – fallback to mock.")
+            return _generate_mock()
 
         MARKET_CACHE["last_update"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        MARKET_CACHE["markets"] = results
+        MARKET_CACHE["markets"] = data
 
-        print(f"[MARKET READER] ✅ Updated {len(results)} market entries.")
-        return results
+        print(f"[MARKET READER] ✅ Updated {len(data)} markets from Betfair.")
+        return MARKET_CACHE
 
     except Exception as e:
-        print("[MARKET READER] ❌ Error:", e)
-        return []
+        print("[MARKET READER] ❌ Error fetching Betfair data:", e)
+        return _generate_mock()
 
 
 # -----------------------------
-# Auto-refresh thread
+# Mock fallback (default mode)
 # -----------------------------
-def auto_refresh(interval_minutes=5):
-    def loop():
-        while True:
-            detect_market_volumes()
-            time.sleep(interval_minutes * 60)
+def _generate_mock():
+    sample_matches = [
+        "Olympiacos - AEK", "PAOK - Aris", "Panathinaikos - Lamia",
+        "Man City - Liverpool", "Real Madrid - Barcelona", "PSG - Lyon",
+        "Bayern - Dortmund", "Juventus - Inter", "Porto - Benfica"
+    ]
 
-    thread = threading.Thread(target=loop, daemon=True)
-    thread.start()
-    print(f"[MARKET READER] 🔁 Auto-refresh active (every {interval_minutes} minutes)")
+    rows = []
+    for m in random.sample(sample_matches, k=5):
+        home, away = m.split(" - ")
+        rows.append({
+            "match": m,
+            "home_odds": round(random.uniform(1.75, 2.40), 2),
+            "draw_odds": round(random.uniform(3.00, 3.70), 2),
+            "away_odds": round(random.uniform(2.80, 3.60), 2),
+            "total_volume": random.randint(15000, 80000),
+            "kickoff": datetime.now().strftime("%H:%M:%S")
+        })
 
-
-# -----------------------------
-# Getter for Render routes
-# -----------------------------
-def get_market_data():
-    return {
-        "last_update": MARKET_CACHE["last_update"],
-        "markets": MARKET_CACHE["markets"]
-    }
-
-
-# -----------------------------
-# Start background auto-refresh
-# -----------------------------
-auto_refresh(5)
+    MARKET_CACHE["last_update"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    MARKET_CACHE["markets"] = rows
+    print(f"[MARKET READER] 🧩 Mock data active – {len(rows)} markets.")
+    return MARKET_CACHE
