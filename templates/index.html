@@ -13,13 +13,31 @@
       padding: 0;
     }
     header {
-      text-align: center;
-      padding: 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
       background-color: #1e1e1e;
       color: #82b1ff;
-      font-size: 1.6rem;
+      padding: 15px 25px;
+      font-size: 1.4rem;
       font-weight: bold;
     }
+    #statusIndicator {
+      font-size: 14px;
+      font-weight: normal;
+      color: #a5d6a7;
+    }
+    #statusIndicator span {
+      display: inline-block;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      margin-right: 6px;
+    }
+    .online span { background-color: #00e676; }
+    .updating span { background-color: #ffeb3b; }
+    .offline span { background-color: #f44336; }
+
     main {
       padding: 20px;
     }
@@ -44,22 +62,10 @@
       background-color: #1e1e1e;
       color: #82b1ff;
     }
-    tr:hover {
-      background-color: #2a2a2a;
-    }
-    #lastUpdate {
-      color: #a5d6a7;
-      margin-bottom: 10px;
-      font-size: 14px;
-    }
-    .league {
-      color: #ffca28;
-      font-weight: bold;
-    }
-    .alert {
-      color: #ef5350;
-      font-weight: bold;
-    }
+    tr:hover { background-color: #2a2a2a; }
+    #lastUpdate { color: #a5d6a7; margin-bottom: 10px; font-size: 14px; }
+    .league { color: #ffca28; font-weight: bold; }
+    .alert { color: #ef5350; font-weight: bold; }
     footer {
       text-align: center;
       font-size: 13px;
@@ -70,31 +76,29 @@
 </head>
 
 <body>
-  <header>⚽ EURO_GOALS Unified Dashboard</header>
+  <header>
+    ⚽ EURO_GOALS Unified Dashboard
+    <div id="statusIndicator" class="offline"><span></span>Offline</div>
+  </header>
+
   <main>
     <div id="lastUpdate">Φόρτωση δεδομένων...</div>
 
     <h2>🔹 Smart Money (<span id="league"></span>)</h2>
     <table id="smartTable">
-      <thead>
-        <tr><th>Αγώνας</th><th>1</th><th>X</th><th>2</th><th>Ώρα</th></tr>
-      </thead>
+      <thead><tr><th>Αγώνας</th><th>1</th><th>X</th><th>2</th><th>Ώρα</th></tr></thead>
       <tbody></tbody>
     </table>
 
     <h2>📊 Market Reader</h2>
     <table id="marketTable">
-      <thead>
-        <tr><th>Αγώνας</th><th>Stake Volume</th><th>Απόδοση 1</th><th>Απόδοση 2</th></tr>
-      </thead>
+      <thead><tr><th>Αγώνας</th><th>Stake Volume</th><th>Απόδοση 1</th><th>Απόδοση 2</th></tr></thead>
       <tbody></tbody>
     </table>
 
     <h2>🚨 Smart Money Alerts</h2>
     <table id="alertsTable">
-      <thead>
-        <tr><th>Αγώνας</th><th>Σήμα</th><th>Ώρα</th></tr>
-      </thead>
+      <thead><tr><th>Αγώνας</th><th>Σήμα</th><th>Ώρα</th></tr></thead>
       <tbody></tbody>
     </table>
   </main>
@@ -104,10 +108,25 @@
   </footer>
 
   <script>
+    const statusEl = document.getElementById("statusIndicator");
+
+    function setStatus(state, text) {
+      statusEl.className = state;
+      statusEl.innerHTML = `<span></span>${text}`;
+    }
+
     async function loadDashboard() {
       try {
+        setStatus("updating", "Updating...");
         const res = await fetch("/dashboard_data");
+        if (!res.ok) throw new Error("HTTP " + res.status);
         const data = await res.json();
+
+        if (data.status === "ok") {
+          setStatus("online", "Online");
+        } else {
+          setStatus("offline", "Error");
+        }
 
         document.getElementById("lastUpdate").innerHTML =
           "🕒 Τελευταία ενημέρωση: " + data.timestamp;
@@ -135,9 +154,9 @@
           marketBody.innerHTML += `
             <tr>
               <td>${m.match ?? "-"}</td>
-              <td>${m.volume ?? "-"}</td>
-              <td>${m.odds1 ?? "-"}</td>
-              <td>${m.odds2 ?? "-"}</td>
+              <td>${m.total_volume?.toLocaleString() ?? "-"}</td>
+              <td>${m.home_odds ?? "-"}</td>
+              <td>${m.away_odds ?? "-"}</td>
             </tr>`;
         });
 
@@ -154,6 +173,7 @@
         });
       } catch (err) {
         console.error("Dashboard load error:", err);
+        setStatus("offline", "Offline");
       }
     }
 
