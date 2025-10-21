@@ -1,249 +1,81 @@
 <!DOCTYPE html>
-<html lang="el">
+<html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>⚽ EURO_GOALS Dashboard v6f</title>
-  <style>
-    body {
-      background-color: #121212;
-      color: #e0e0e0;
-      font-family: "Segoe UI", Arial, sans-serif;
-      margin: 0;
-      padding: 0;
-    }
-    header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      background-color: #1e1e1e;
-      color: #82b1ff;
-      padding: 15px 25px;
-      font-size: 1.4rem;
-      font-weight: bold;
-    }
-    #statusIndicator {
-      font-size: 14px;
-      font-weight: normal;
-      color: #a5d6a7;
-    }
-    #statusIndicator span {
-      display: inline-block;
-      width: 10px;
-      height: 10px;
-      border-radius: 50%;
-      margin-right: 6px;
-    }
-    .online span { background-color: #00e676; }
-    .updating span { background-color: #ffeb3b; }
-    .offline span { background-color: #f44336; }
-
-    #statusBar {
-      background-color: #1e1e1e;
-      color: #bdbdbd;
-      font-size: 14px;
-      text-align: center;
-      padding: 8px;
-      border-bottom: 1px solid #333;
-    }
-
-    main { padding: 20px; }
-    h2 {
-      color: #90caf9;
-      border-bottom: 1px solid #333;
-      padding-bottom: 6px;
-      margin-top: 40px;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 10px;
-      font-size: 15px;
-    }
-    th, td {
-      padding: 10px;
-      border-bottom: 1px solid #333;
-      text-align: center;
-    }
-    th {
-      background-color: #1e1e1e;
-      color: #82b1ff;
-    }
-    tr:hover { background-color: #2a2a2a; }
-    #lastUpdate { color: #a5d6a7; margin-bottom: 10px; font-size: 14px; }
-    .alert { color: #ef5350; font-weight: bold; }
-
-    #logPanel {
-      background-color: #1e1e1e;
-      color: #bdbdbd;
-      padding: 10px;
-      margin: 30px 20px;
-      border-radius: 8px;
-      font-size: 13px;
-      max-height: 180px;
-      overflow-y: auto;
-      border: 1px solid #333;
-    }
-    #logPanel h3 {
-      margin: 0 0 8px 0;
-      font-size: 14px;
-      color: #82b1ff;
-    }
-    footer {
-      text-align: center;
-      font-size: 13px;
-      color: #757575;
-      margin: 20px 0 10px;
-    }
-  </style>
-</head>
-
-<body>
-  <header>
-    ⚽ EURO_GOALS Unified Dashboard
-    <div id="statusIndicator" class="offline"><span></span>Offline</div>
-  </header>
-
-  <div id="statusBar">
-    🕒 <span id="liveClock">--:--:--</span> | Next league in: <span id="countdown">05:00</span>
-  </div>
-
-  <main>
-    <div id="lastUpdate">Φόρτωση δεδομένων...</div>
-
-    <h2>🔹 Smart Money (<span id="league"></span>)</h2>
-    <table id="smartTable">
-      <thead><tr><th>Αγώνας</th><th>1</th><th>X</th><th>2</th><th>Ώρα</th></tr></thead>
-      <tbody></tbody>
-    </table>
-
-    <h2>📊 Market Reader</h2>
-    <table id="marketTable">
-      <thead><tr><th>Αγώνας</th><th>Stake Volume</th><th>Απόδοση 1</th><th>Απόδοση 2</th></tr></thead>
-      <tbody></tbody>
-    </table>
-
-    <h2>🚨 Smart Money Alerts</h2>
-    <table id="alertsTable">
-      <thead><tr><th>Αγώνας</th><th>Σήμα</th><th>Ώρα</th></tr></thead>
-      <tbody></tbody>
-    </table>
-
-    <!-- ΖΩΝΤΑΝΟ LOG PANEL -->
-    <div id="logPanel">
-      <h3>🧠 Live Log Panel</h3>
-      <div id="logs"></div>
-    </div>
-  </main>
-
-  <footer>
-    EURO_GOALS v6f | Rotation + Fallback + Alerts + Live Log | © Pierros 2025
-  </footer>
-
-  <script>
-    const statusEl = document.getElementById("statusIndicator");
-    const liveClock = document.getElementById("liveClock");
-    const countdownEl = document.getElementById("countdown");
-    const logPanel = document.getElementById("logs");
-
-    let countdownSeconds = 5 * 60; // 5 λεπτά rotation
-
-    function addLog(message) {
-      const time = new Date().toLocaleTimeString("el-GR");
-      const entry = document.createElement("div");
-      entry.textContent = `[${time}] ${message}`;
-      logPanel.prepend(entry); // νεότερο πάνω
-      if (logPanel.children.length > 25) logPanel.removeChild(logPanel.lastChild);
-    }
-
-    function setStatus(state, text) {
-      statusEl.className = state;
-      statusEl.innerHTML = `<span></span>${text}`;
-    }
-
-    function updateClock() {
-      const now = new Date();
-      liveClock.textContent = now.toLocaleTimeString("el-GR");
-    }
-
-    function updateCountdown() {
-      countdownSeconds--;
-      if (countdownSeconds <= 0) {
-        countdownSeconds = 5 * 60;
-        addLog("🔄 League rotation triggered");
-      }
-      const minutes = String(Math.floor(countdownSeconds / 60)).padStart(2, "0");
-      const seconds = String(countdownSeconds % 60).padStart(2, "0");
-      countdownEl.textContent = `${minutes}:${seconds}`;
-    }
-
-    async function loadDashboard() {
-      try {
-        setStatus("updating", "Updating...");
-        const res = await fetch("/dashboard_data");
-        if (!res.ok) throw new Error("HTTP " + res.status);
-        const data = await res.json();
-
-        if (data.status === "ok") {
-          setStatus("online", "Online");
-          addLog(`✅ Dashboard updated (${data.current_league || "-"})`);
-        } else {
-          setStatus("offline", "Error");
-          addLog("⚠️ Data status not OK");
+    <meta charset="UTF-8">
+    <title>EURO_GOALS v7</title>
+    <link rel="icon" type="image/x-icon" href="/static/EURO_GOALS.ico">
+    <style>
+        body {
+            background-color: #121212;
+            color: #e0e0e0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            text-align: center;
+            margin: 0;
+            padding: 0;
         }
+        h1 {
+            color: #00c853;
+            margin-top: 30px;
+            font-size: 2em;
+        }
+        p.version {
+            color: #aaa;
+            font-size: 0.9em;
+        }
+        .button-container {
+            margin-top: 40px;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 15px;
+        }
+        button {
+            background-color: #00c853;
+            color: white;
+            border: none;
+            padding: 12px 22px;
+            border-radius: 10px;
+            font-size: 1em;
+            cursor: pointer;
+            transition: background-color 0.2s ease-in-out, transform 0.1s;
+            box-shadow: 0 3px 6px rgba(0, 0, 0, 0.3);
+        }
+        button:hover {
+            background-color: #009624;
+            transform: scale(1.05);
+        }
+        .footer {
+            margin-top: 40px;
+            font-size: 0.8em;
+            color: #777;
+        }
+        hr {
+            border: 0;
+            height: 1px;
+            background-color: #333;
+            width: 60%;
+            margin: 30px auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>🏆 EURO_GOALS v7 Platform</h1>
+    <p class="version">Live Feeds • Smart Money • Auto Backups</p>
 
-        document.getElementById("lastUpdate").innerHTML =
-          "🕒 Τελευταία ενημέρωση: " + data.timestamp;
-        document.getElementById("league").innerText =
-          data.current_league ? data.current_league.replace("soccer_", "") : "-";
+    <div class="button-container">
+        <!-- Main Navigation Buttons -->
+        <button onclick="window.location.href='/api/live_scores'">📊 API: Live Scores (JSON)</button>
+        <button onclick="window.location.href='/live'">⚽ LIVE MATCHES</button>
+        <button onclick="window.location.href='/smart-money'">💰 Smart Money Detector</button>
+        <button onclick="window.location.href='/backups'">💾 Backups</button>
+        <button onclick="window.location.href='/settings'">⚙️ Settings</button>
+        <button onclick="window.close()">🚪 Exit</button>
+    </div>
 
-        const smartBody = document.querySelector("#smartTable tbody");
-        smartBody.innerHTML = "";
-        data.smart_money.forEach(m => {
-          smartBody.innerHTML += `
-            <tr>
-              <td>${m.match}</td>
-              <td>${m.odds?.Home?.toFixed(2) ?? "-"}</td>
-              <td>${m.odds?.Draw?.toFixed(2) ?? "-"}</td>
-              <td>${m.odds?.Away?.toFixed(2) ?? "-"}</td>
-              <td>${m.time ?? "-"}</td>
-            </tr>`;
-        });
+    <hr>
 
-        const marketBody = document.querySelector("#marketTable tbody");
-        marketBody.innerHTML = "";
-        (data.market_reader || []).forEach(m => {
-          marketBody.innerHTML += `
-            <tr>
-              <td>${m.match ?? "-"}</td>
-              <td>${m.total_volume?.toLocaleString() ?? "-"}</td>
-              <td>${m.home_odds ?? "-"}</td>
-              <td>${m.away_odds ?? "-"}</td>
-            </tr>`;
-        });
-
-        const alertsBody = document.querySelector("#alertsTable tbody");
-        alertsBody.innerHTML = "";
-        (data.alerts || []).forEach(a => {
-          alertsBody.innerHTML += `
-            <tr class="alert">
-              <td>${a.match ?? "-"}</td>
-              <td>${a.signal ?? "⚠️"}</td>
-              <td>${a.time ?? "-"}</td>
-            </tr>`;
-        });
-      } catch (err) {
-        console.error("Dashboard load error:", err);
-        setStatus("offline", "Offline");
-        addLog("❌ Dashboard connection error");
-      }
-    }
-
-    // Ενεργοποίηση όλων των timers
-    loadDashboard();
-    setInterval(loadDashboard, 30000);   // refresh κάθε 30 sec
-    setInterval(updateClock, 1000);       // live clock κάθε 1 sec
-    setInterval(updateCountdown, 1000);   // countdown κάθε 1 sec
-  </script>
+    <div class="footer">
+        <p>EURO_GOALS v7 © 2025 — Auto Live Mode (Sofascore + Flashscore Integration)</p>
+    </div>
 </body>
 </html>
