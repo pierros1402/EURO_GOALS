@@ -9,8 +9,12 @@ from fastapi.templating import Jinja2Templates
 from datetime import datetime
 import os
 
+# Auto ping thread για συνεχή λειτουργία Render
+from keep_alive import keep_alive
+
 # Import από το Smart Money module
 from asian_reader import get_smart_money_data
+
 
 print("🚀 EURO_GOALS v6f (Smart Money League Edition) starting...")
 
@@ -75,5 +79,10 @@ def alerts():
     }
 
 
+# -----------------------------------------
+# Keep Render awake (auto ping thread)
+# -----------------------------------------
+from keep_alive import keep_alive
+keep_alive()
 
 print("🌍 EURO_GOALS_v6f Debug server ready (Render Edition)")
