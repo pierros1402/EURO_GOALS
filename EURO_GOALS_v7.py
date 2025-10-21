@@ -37,7 +37,6 @@ engine = create_engine(
 app = FastAPI()
 templates = Jinja2Templates(directory="templates")
 
-
 # ----------------------------------------------
 # Homepage
 # ----------------------------------------------
@@ -45,9 +44,8 @@ templates = Jinja2Templates(directory="templates")
 def home(request: Request):
     return templates.TemplateResponse("index.html", {"request": request, "version": "v7"})
 
-
 # ----------------------------------------------
-# API: Live Scores (συνδυάζει Sofascore + Flashscore)
+# API: Live Scores (Συνδυάζει Sofascore + Flashscore)
 # ----------------------------------------------
 @app.get("/api/live_scores")
 def get_live_scores():
@@ -66,6 +64,12 @@ def get_live_scores():
     except Exception as e:
         return JSONResponse({"error": str(e)}, status_code=500)
 
+# ----------------------------------------------
+# Web Page: Live Matches UI
+# ----------------------------------------------
+@app.get("/live", response_class=HTMLResponse)
+def live_page(request: Request):
+    return templates.TemplateResponse("live.html", {"request": request})
 
 # ----------------------------------------------
 # Background Threads για Live Modules
@@ -89,7 +93,6 @@ def start_backup_manager():
     print("[THREAD] 💾 Backup manager active (monthly check)")
     backup_manager.check_auto_backup()
 
-
 # ----------------------------------------------
 # Εκκίνηση όλων των background services
 # ----------------------------------------------
@@ -105,7 +108,6 @@ def startup_event():
     threading.Thread(target=start_backup_manager, daemon=True).start()
 
     print("[SYSTEM] ✅ All background threads launched!")
-
 
 # ----------------------------------------------
 # Τοπική εκτέλεση

@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>EURO_GOALS v7 – Live Matches</title>
+    <link rel="icon" type="image/x-icon" href="/static/EURO_GOALS.ico">
+    <style>
+        body {
+            background-color: #121212;
+            color: #e0e0e0;
+            font-family: 'Segoe UI', Tahoma, sans-serif;
+            text-align: center;
+            margin: 0;
+            padding: 0;
+        }
+        h1 {
+            color: #00c853;
+            margin-top: 20px;
+        }
+        table {
+            margin: 20px auto;
+            border-collapse: collapse;
+            width: 90%;
+            max-width: 1000px;
+            background: #1e1e1e;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        th, td {
+            padding: 10px 12px;
+            border-bottom: 1px solid #333;
+        }
+        th {
+            background-color: #263238;
+            color: #00e676;
+        }
+        tr:hover {
+            background-color: #2a2a2a;
+        }
+        .source {
+            color: #81d4fa;
+            font-size: 0.9em;
+        }
+        .status {
+            color: #ffeb3b;
+            font-weight: bold;
+        }
+        .updated {
+            font-size: 0.8em;
+            color: #aaa;
+        }
+        #last-update {
+            margin-top: 10px;
+            font-size: 0.85em;
+            color: #bbb;
+        }
+        button {
+            margin-top: 15px;
+            background-color: #00c853;
+            color: #fff;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1em;
+        }
+        button:hover {
+            background-color: #009624;
+        }
+    </style>
+</head>
+<body>
+    <h1>⚽ LIVE MATCHES (EURO_GOALS v7)</h1>
+    <p id="last-update">Loading live data...</p>
+    <table id="live-table">
+        <thead>
+            <tr>
+                <th>Home</th>
+                <th>Away</th>
+                <th>Score</th>
+                <th>Status</th>
+                <th>Source</th>
+                <th>Updated</th>
+            </tr>
+        </thead>
+        <tbody id="live-body"></tbody>
+    </table>
+    <button onclick="window.location.href='/'">🏠 Back to Home</button>
+
+    <script>
+        async function loadLiveScores() {
+            try {
+                const response = await fetch('/api/live_scores');
+                const data = await response.json();
+
+                const tbody = document.getElementById('live-body');
+                tbody.innerHTML = '';
+
+                if (data.matches && data.matches.length > 0) {
+                    data.matches.forEach(match => {
+                        const tr = document.createElement('tr');
+                        tr.innerHTML = `
+                            <td>${match.home}</td>
+                            <td>${match.away}</td>
+                            <td><strong>${match.score}</strong></td>
+                            <td class="status">${match.status}</td>
+                            <td class="source">${match.source}</td>
+                            <td class="updated">${new Date(match.updated_at).toLocaleTimeString()}</td>
+                        `;
+                        tbody.appendChild(tr);
+                    });
+                    document.getElementById('last-update').innerText =
+                        `Last update: ${new Date().toLocaleTimeString()} (${data.count} matches)`;
+                } else {
+                    tbody.innerHTML = `<tr><td colspan="6">No live matches found</td></tr>`;
+                    document.getElementById('last-update').innerText = "No live data available";
+                }
+            } catch (err) {
+                console.error(err);
+                document.getElementById('last-update').innerText = "⚠️ Error fetching live data";
+            }
+        }
+
+        // Αρχικό φόρτωμα και auto-refresh κάθε 30 δευτερόλεπτα
+        loadLiveScores();
+        setInterval(loadLiveScores, 30000);
+    </script>
+</body>
+</html>
