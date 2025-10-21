@@ -180,6 +180,24 @@ def startup_event():
 # ----------------------------------------------
 # Local run
 # ----------------------------------------------
+# ==============================================
+# BETFAIR TEST ENDPOINTS
+# ==============================================
+
+@app.get("/api/betfair/test")
+def api_betfair_test():
+    """Returns mock Betfair markets (for proxy test)."""
+    data = betfair_reader.fetch_markets()
+    return JSONResponse(content=data)
+
+
+@app.get("/api/smart_money/test")
+def api_smart_money_test():
+    """Returns mock Smart Money analysis (placeholder)."""
+    data = smart_money_refiner.refine_smart_money()
+    return JSONResponse(content=data)
+
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    uvicorn.run(app, host="0.0.0.0", port=int(os.getenv("PORT", 10000)))
+
