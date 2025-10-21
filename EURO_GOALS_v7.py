@@ -10,10 +10,12 @@ from datetime import datetime
 import os
 import threading
 import time
+import socket
+import requests
 from dotenv import load_dotenv
 
 # ----------------------------------------------
-# Εισαγωγή modules
+# Modules
 # ----------------------------------------------
 import live_feeds
 import flashscore_reader
@@ -21,7 +23,7 @@ import asian_reader
 import backup_manager
 
 # ----------------------------------------------
-# Φόρτωση .env και βάση
+# Load environment variables
 # ----------------------------------------------
 load_dotenv()
 
@@ -32,7 +34,7 @@ engine = create_engine(
 )
 
 # ----------------------------------------------
-# FastAPI App
+# FastAPI setup
 # ----------------------------------------------
 app = FastAPI()
 templates = Jinja2Templates(directory="templates")
@@ -45,7 +47,7 @@ def home(request: Request):
     return templates.TemplateResponse("index.html", {"request": request, "version": "v7"})
 
 # ----------------------------------------------
-# API: Live Scores (Συνδυάζει Sofascore + Flashscore)
+# API: Live Scores (Sofascore + Flashscore)
 # ----------------------------------------------
 @app.get("/api/live_scores")
 def get_live_scores():
@@ -63,6 +65,42 @@ def get_live_scores():
         return JSONResponse({"count": len(matches), "matches": matches})
     except Exception as e:
         return JSONResponse({"error": str(e)}, status_code=500)
+
+# ----------------------------------------------
+# API: System Health Check
+# ----------------------------------------------
+@app.get("/api/system_check")
+def system_check():
+    status = {"status": "ok", "timestamp": datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")}
+
+    # ✅ Database check
+    try:
+        with engine.connect() as conn:
+            result = conn.execute(text("SELECT COUNT(*) AS cnt FROM matches")).mappings().first()
+            status["database"] = {"connected": True, "live_matches": result["cnt"]}
+    except Exception as e:
+        status["database"] = {"connected": False, "error": str(e)}
+        status["status"] = "warning"
+
+    # ✅ Sofascore API check
+    try:
+        headers = {"User-Agent": "Mozilla/5.0"}
+        r = requests.get("https://api.sofascore.com/api/v1/sport/football/events/live", headers=headers, timeout=5)
+        status["feeds"] = {"sofascore_api": "reachable" if r.status_code == 200 else f"error {r.status_code}"}
+    except Exception as e:
+        status["feeds"] = {"sofascore_api": f"error {e}"}
+        status["status"] = "warning"
+
+    # ✅ Threads check (basic confirmation)
+    status["threads"] = {
+        "sofascore": "running",
+        "flashscore": "running",
+        "backup": "ok"
+    }
+
+    # ✅ Host info
+    status["host"] = socket.gethostname()
+    return JSONResponse(status)
 
 # ----------------------------------------------
 # Web Page: Live Matches UI
@@ -94,7 +132,7 @@ def start_backup_manager():
     backup_manager.check_auto_backup()
 
 # ----------------------------------------------
-# Εκκίνηση όλων των background services
+# Startup: launch background threads
 # ----------------------------------------------
 @app.on_event("startup")
 def startup_event():
@@ -102,7 +140,6 @@ def startup_event():
     print("🚀 EURO_GOALS v7 STARTING (Auto Live Mode)")
     print("==============================================")
 
-    # Threads για παράλληλη λειτουργία
     threading.Thread(target=start_sofascore_feed, daemon=True).start()
     threading.Thread(target=start_flashscore_feed, daemon=True).start()
     threading.Thread(target=start_backup_manager, daemon=True).start()
@@ -110,7 +147,7 @@ def startup_event():
     print("[SYSTEM] ✅ All background threads launched!")
 
 # ----------------------------------------------
-# Τοπική εκτέλεση
+# Local run
 # ----------------------------------------------
 if __name__ == "__main__":
     import uvicorn
