@@ -11,17 +11,22 @@ from sqlalchemy import create_engine, text
 import os
 from dotenv import load_dotenv
 
+# ----------------------------------------------
+# Φόρτωση .env και βάση δεδομένων
+# ----------------------------------------------
 load_dotenv()
 
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///matches.db")
-engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False} if "sqlite" in DATABASE_URL else {})
+engine = create_engine(
+    DATABASE_URL,
+    connect_args={"check_same_thread": False} if "sqlite" in DATABASE_URL else {}
+)
 
-# ------------------------------
-# Πηγή δεδομένων (placeholder)
-# ------------------------------
-FLASHCORE_URL = "https://example-flashscore-api.com/live_matches"
-SOFASCORE_URL = "https://example-sofascore-api.com/live"
-BETFAIR_URL = "https://example-betfair-api.com/live_odds"
+# ----------------------------------------------
+# Πραγματικό Sofascore Live Feed
+# ----------------------------------------------
+SOFASCORE_URL = "https://api.sofascore.com/api/v1/sport/football/events/live"
+
 
 def fetch_feed(source_url):
     """
@@ -35,66 +40,70 @@ def fetch_feed(source_url):
         else:
             print(f"[LIVE_FEEDS] ❌ Error {response.status_code} από {source_url}")
     except Exception as e:
-        print(f"[LIVE_FEEDS] ⚠️ Σφάλμα: {e}")
+        print(f"[LIVE_FEEDS] ⚠️ Σφάλμα κατά τη λήψη: {e}")
     return None
 
 
-def update_database(feed_data, source_name):
+def update_sofascore_data():
     """
-    Ενημερώνει τους πίνακες matches/odds στη βάση.
+    Ενημερώνει τη βάση με ζωντανά δεδομένα από Sofascore.
     """
+    data = fetch_feed(SOFASCORE_URL)
+    if not data:
+        print("[LIVE_FEEDS] ⚠️ Δεν βρέθηκαν δεδομένα από Sofascore.")
+        return
+
+    events = data.get("events", [])
+    updated_count = 0
+
     try:
         with engine.begin() as conn:
-            for match in feed_data.get("matches", []):
+            for ev in events:
+                match_id = ev.get("id")
+                home = ev["homeTeam"]["name"]
+                away = ev["awayTeam"]["name"]
+                home_score = ev.get("homeScore", {}).get("current", 0)
+                away_score = ev.get("awayScore", {}).get("current", 0)
+                score = f"{home_score}-{away_score}"
+                status = ev.get("status", {}).get("type", "unknown")
+                start_time = datetime.utcfromtimestamp(ev.get("startTimestamp", 0)).strftime("%Y-%m-%d %H:%M:%S")
+
                 conn.execute(
                     text("""
-                        INSERT INTO matches (match_id, home, away, score, status, source, updated_at)
-                        VALUES (:id, :home, :away, :score, :status, :source, :updated)
+                        INSERT INTO matches (match_id, home, away, score, status, start_time, source, updated_at)
+                        VALUES (:id, :home, :away, :score, :status, :start, 'Sofascore', :updated)
                         ON CONFLICT(match_id) DO UPDATE SET
                             score = excluded.score,
                             status = excluded.status,
                             updated_at = excluded.updated;
                     """),
                     {
-                        "id": match.get("id"),
-                        "home": match.get("home"),
-                        "away": match.get("away"),
-                        "score": match.get("score", "-"),
-                        "status": match.get("status", "pending"),
-                        "source": source_name,
+                        "id": match_id,
+                        "home": home,
+                        "away": away,
+                        "score": score,
+                        "status": status,
+                        "start": start_time,
                         "updated": datetime.utcnow().isoformat()
                     }
                 )
-        print(f"[LIVE_FEEDS] ✅ {source_name} ενημερώθηκε ({len(feed_data.get('matches', []))} αγώνες)")
+                updated_count += 1
+
+        print(f"[LIVE_FEEDS] ✅ Sofascore ενημερώθηκε ({updated_count} αγώνες)")
     except Exception as e:
-        print(f"[LIVE_FEEDS] ❌ Σφάλμα DB update ({source_name}):", e)
+        print(f"[LIVE_FEEDS] ❌ Σφάλμα DB ενημέρωσης:", e)
 
 
-def live_updater(interval=60):
+def live_updater(interval=120):
     """
     Κύριος βρόχος ανανέωσης ανά X δευτερόλεπτα.
     """
     while True:
         print(f"\n[LIVE_FEEDS] 🔄 Checking live data ({datetime.now().strftime('%H:%M:%S')})")
-        
-        # Ενημέρωση από Flashscore
-        flash_data = fetch_feed(FLASHCORE_URL)
-        if flash_data:
-            update_database(flash_data, "Flashscore")
-
-        # Ενημέρωση από Sofascore
-        sofa_data = fetch_feed(SOFASCORE_URL)
-        if sofa_data:
-            update_database(sofa_data, "Sofascore")
-
-        # Ενημέρωση από Betfair
-        betfair_data = fetch_feed(BETFAIR_URL)
-        if betfair_data:
-            update_database(betfair_data, "Betfair")
-
-        time.sleep(interval)  # αναμονή πριν τον επόμενο κύκλο
+        update_sofascore_data()
+        time.sleep(interval)
 
 
 if __name__ == "__main__":
-    print("[LIVE_FEEDS] 🚀 Starting live updater...")
+    print("[LIVE_FEEDS] 🚀 Starting live updater (Sofascore)...")
     live_updater(interval=120)
