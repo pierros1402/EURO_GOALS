@@ -1,129 +1,230 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>EURO_GOALS v7 – Live Matches</title>
-    <link rel="icon" type="image/x-icon" href="/static/EURO_GOALS.ico">
-    <style>
-        body {
-            background-color: #121212;
-            color: #e0e0e0;
-            font-family: 'Segoe UI', Tahoma, sans-serif;
-            text-align: center;
-            margin: 0;
-            padding: 0;
-        }
-        h1 {
-            color: #00c853;
-            margin-top: 20px;
-        }
-        table {
-            margin: 20px auto;
-            border-collapse: collapse;
-            width: 90%;
-            max-width: 1000px;
-            background: #1e1e1e;
-            border-radius: 10px;
-            overflow: hidden;
-        }
-        th, td {
-            padding: 10px 12px;
-            border-bottom: 1px solid #333;
-        }
-        th {
-            background-color: #263238;
-            color: #00e676;
-        }
-        tr:hover {
-            background-color: #2a2a2a;
-        }
-        .source {
-            color: #81d4fa;
-            font-size: 0.9em;
-        }
-        .status {
-            color: #ffeb3b;
-            font-weight: bold;
-        }
-        .updated {
-            font-size: 0.8em;
-            color: #aaa;
-        }
-        #last-update {
-            margin-top: 10px;
-            font-size: 0.85em;
-            color: #bbb;
-        }
-        button {
-            margin-top: 15px;
-            background-color: #00c853;
-            color: #fff;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 1em;
-        }
-        button:hover {
-            background-color: #009624;
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <title>EURO_GOALS v7.2 – Live Matches</title>
+  <link rel="icon" type="image/x-icon" href="/static/EURO_GOALS.ico" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root{
+      --bg:#121212; --panel:#1e1e1e; --panel2:#171717;
+      --txt:#e0e0e0; --muted:#a9a9a9; --soft:#cfcfcf;
+      --ok:#00e676; --warn:#ffeb3b; --err:#ff5252; --brand:#00c853; --link:#81d4fa;
+      --line:#2a2a2a;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0; background:var(--bg); color:var(--txt);
+      font-family: "Segoe UI", Tahoma, Arial, sans-serif;
+    }
+    header{
+      padding:18px 16px; text-align:center; background:var(--panel2);
+      border-bottom:1px solid var(--line);
+    }
+    h1{margin:0; font-size:1.6rem; color:var(--brand)}
+    .sub{margin-top:6px; color:var(--muted); font-size:.9rem}
+    main{max-width:1100px; margin:20px auto; padding:0 12px}
+    .card{
+      background:var(--panel);
+      border:1px solid var(--line);
+      border-radius:14px;
+      box-shadow:0 6px 14px rgba(0,0,0,.28);
+      padding:16px;
+      margin-bottom:18px;
+    }
+    .card h2{margin:0 0 10px; font-size:1.2rem; color:#00e676}
+    .toolbar{display:flex; gap:10px; align-items:center; justify-content:space-between; margin:6px 0 12px}
+    .btn{
+      background:var(--brand); color:#fff; border:none; border-radius:10px;
+      padding:10px 14px; cursor:pointer; font-weight:600;
+    }
+    .btn:hover{filter:brightness(0.95)}
+    .btn.secondary{background:#2b2b2b}
+    .meta{color:var(--muted); font-size:.85rem}
+    table{width:100%; border-collapse:collapse; background:#161616; border-radius:12px; overflow:hidden}
+    th,td{padding:10px 12px; border-bottom:1px solid var(--line); text-align:left}
+    th{background:#222c; color:#aef1c4; font-weight:700}
+    tr:hover{background:#1a1a1a}
+    .status{font-weight:700; color:var(--warn)}
+    .src{color:var(--link); font-size:.9rem}
+    .upd{color:var(--muted); font-size:.85rem}
+    .pill{display:inline-block; padding:2px 8px; border-radius:999px; font-size:.8rem}
+    .pill.ok{background:rgba(0,230,118,.12); color:var(--ok); border:1px solid rgba(0,230,118,.35)}
+    .pill.warn{background:rgba(255,235,59,.12); color:var(--warn); border:1px solid rgba(255,235,59,.35)}
+    .pill.err{background:rgba(255,82,82,.12); color:var(--err); border:1px solid rgba(255,82,82,.35)}
+    .empty{padding:14px; text-align:center; color:var(--muted)}
+    .list{margin:8px 0 0; padding-left:18px}
+    .list li{margin:6px 0; color:var(--soft)}
+    .grid{display:grid; grid-template-columns:1fr; gap:18px}
+    @media(min-width:860px){ .grid{grid-template-columns: 2fr 1fr;} }
+    a.inline{color:var(--link); text-decoration:none}
+    a.inline:hover{text-decoration:underline}
+  </style>
 </head>
 <body>
-    <h1>⚽ LIVE MATCHES (EURO_GOALS v7)</h1>
-    <p id="last-update">Loading live data...</p>
-    <table id="live-table">
-        <thead>
-            <tr>
+  <header>
+    <h1>⚽ LIVE MATCHES — EURO_GOALS v7.2</h1>
+    <div class="sub">Sofascore + Flashscore · Auto-refresh · Cross Verification</div>
+  </header>
+
+  <main>
+    <div class="toolbar">
+      <div class="meta">
+        <span id="lastUpdate">Last update: —</span>
+      </div>
+      <div>
+        <button class="btn secondary" onclick="location.href='/'">🏠 Home</button>
+        <button class="btn" onclick="refreshAll()">🔄 Refresh</button>
+      </div>
+    </div>
+
+    <div class="grid">
+      <!-- LIVE MATCHES -->
+      <section class="card">
+        <h2>📺 Live Matches</h2>
+        <div id="liveContainer">
+          <table>
+            <thead>
+              <tr>
                 <th>Home</th>
                 <th>Away</th>
                 <th>Score</th>
                 <th>Status</th>
                 <th>Source</th>
                 <th>Updated</th>
-            </tr>
-        </thead>
-        <tbody id="live-body"></tbody>
-    </table>
-    <button onclick="window.location.href='/'">🏠 Back to Home</button>
+              </tr>
+            </thead>
+            <tbody id="liveBody">
+              <tr><td colspan="6" class="empty">Loading live data…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
 
-    <script>
-        async function loadLiveScores() {
-            try {
-                const response = await fetch('/api/live_scores');
-                const data = await response.json();
+      <!-- CROSS VERIFICATION PANEL -->
+      <aside class="card">
+        <h2>⚖️ Cross Verification</h2>
+        <div class="meta">
+          <span>Discrepancies monitor between Sofascore & Flashscore</span>
+        </div>
 
-                const tbody = document.getElementById('live-body');
-                tbody.innerHTML = '';
+        <div style="margin:10px 0">
+          <span id="discBadge" class="pill ok">OK · 0 discrepancies</span>
+        </div>
 
-                if (data.matches && data.matches.length > 0) {
-                    data.matches.forEach(match => {
-                        const tr = document.createElement('tr');
-                        tr.innerHTML = `
-                            <td>${match.home}</td>
-                            <td>${match.away}</td>
-                            <td><strong>${match.score}</strong></td>
-                            <td class="status">${match.status}</td>
-                            <td class="source">${match.source}</td>
-                            <td class="updated">${new Date(match.updated_at).toLocaleTimeString()}</td>
-                        `;
-                        tbody.appendChild(tr);
-                    });
-                    document.getElementById('last-update').innerText =
-                        `Last update: ${new Date().toLocaleTimeString()} (${data.count} matches)`;
-                } else {
-                    tbody.innerHTML = `<tr><td colspan="6">No live matches found</td></tr>`;
-                    document.getElementById('last-update').innerText = "No live data available";
-                }
-            } catch (err) {
-                console.error(err);
-                document.getElementById('last-update').innerText = "⚠️ Error fetching live data";
-            }
+        <div id="discListWrap" class="empty">Loading discrepancies…</div>
+
+        <div class="meta" style="margin-top:10px;">
+          <span id="discUpdated">Last check: —</span> ·
+          <a class="inline" href="/api/discrepancies" target="_blank">Open JSON</a>
+        </div>
+      </aside>
+    </div>
+
+    <!-- FOOT -->
+    <section class="card" style="margin-top:18px">
+      <div class="meta">
+        Tips: If something looks off, check <a class="inline" href="/api/system_check" target="_blank">/api/system_check</a>
+        for backend health. Icons: <span class="pill ok">OK</span> <span class="pill warn">WARN</span> <span class="pill err">ERR</span>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    async function fetchJSON(url){
+      const res = await fetch(url, {cache:"no-store"});
+      if(!res.ok) throw new Error(res.status+" "+res.statusText);
+      return res.json();
+    }
+
+    // -------- LIVE MATCHES --------
+    async function loadLive(){
+      const body = document.getElementById('liveBody');
+      try{
+        const data = await fetchJSON('/api/live_scores');
+        body.innerHTML = '';
+        if(!data.matches || data.matches.length===0){
+          body.innerHTML = `<tr><td colspan="6" class="empty">No live matches found</td></tr>`;
+        }else{
+          data.matches.forEach(m=>{
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+              <td>${escapeHtml(m.home||'-')}</td>
+              <td>${escapeHtml(m.away||'-')}</td>
+              <td><b>${escapeHtml(m.score||'-')}</b></td>
+              <td class="status">${escapeHtml(m.status||'-')}</td>
+              <td class="src">${escapeHtml(m.source||'-')}</td>
+              <td class="upd">${fmtTime(m.updated_at)}</td>
+            `;
+            body.appendChild(tr);
+          });
         }
+        document.getElementById('lastUpdate').innerText =
+          'Last update: '+ new Date().toLocaleTimeString();
+      }catch(e){
+        body.innerHTML = `<tr><td colspan="6" class="empty">⚠️ Error loading live data</td></tr>`;
+      }
+    }
 
-        // Αρχικό φόρτωμα και auto-refresh κάθε 30 δευτερόλεπτα
-        loadLiveScores();
-        setInterval(loadLiveScores, 30000);
-    </script>
+    // -------- DISCREPANCIES PANEL --------
+    async function loadDiscrepancies(){
+      const wrap = document.getElementById('discListWrap');
+      const badge = document.getElementById('discBadge');
+      const stamp = document.getElementById('discUpdated');
+
+      try{
+        const data = await fetchJSON('/api/discrepancies');
+
+        const n = data.count || 0;
+        if(n===0){
+          badge.className = 'pill ok';
+          badge.textContent = 'OK · 0 discrepancies';
+          wrap.className = 'empty';
+          wrap.textContent = '✅ No discrepancies detected';
+        }else{
+          badge.className = n <= 3 ? 'pill warn' : 'pill err';
+          badge.textContent = `${n} ${n===1?'discrepancy':'discrepancies'} detected`;
+          // build list
+          const items = (data.discrepancies || []).map(d=>{
+            const h = esc(d.home), a = esc(d.away);
+            const s = d.sofa_score ? esc(d.sofa_score) : '-';
+            const f = d.flash_score ? esc(d.flash_score) : '-';
+            const note = d.note ? esc(d.note) : '';
+            return `<li><b>${h}</b> vs <b>${a}</b> — Sofascore: ${s} · Flashscore: ${f} <span class="meta">(${note})</span></li>`;
+          }).join('');
+          wrap.className = '';
+          wrap.innerHTML = `<ul class="list">${items}</ul>`;
+        }
+        stamp.textContent = 'Last check: ' + (data.timestamp || new Date().toLocaleTimeString());
+      }catch(e){
+        badge.className = 'pill err';
+        badge.textContent = 'Error';
+        wrap.className = 'empty';
+        wrap.textContent = '⚠️ Failed to load discrepancies';
+        stamp.textContent = 'Last check: —';
+      }
+    }
+
+    // -------- Helpers --------
+    function fmtTime(t){
+      try{
+        const d = new Date(t);
+        if(!isNaN(d.getTime())) return d.toLocaleTimeString();
+      }catch(_){}
+      return '-';
+    }
+    function esc(s){ return escapeHtml(String(s||'')); }
+    function escapeHtml(s){
+      return s.replace(/[&<>"']/g, c=>({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
+    }
+
+    // -------- Refresh orchestration --------
+    function refreshAll(){ loadLive(); loadDiscrepancies(); }
+    // initial
+    refreshAll();
+    // intervals
+    setInterval(loadLive, 30000);          // 30 sec for live scores
+    setInterval(loadDiscrepancies, 120000); // 2 min for discrepancies
+  </script>
 </body>
 </html>
