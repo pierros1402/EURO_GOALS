@@ -1,91 +1,45 @@
 # ==============================================
-# AUTO MODE MODULE – Smart Money Alert Engine
-# EURO_GOALS v6f – Combines Odds + Stake Volumes
+# AUTO MODE MODULE – Smart Money Alerts Filter
+# EURO_GOALS v6f – Final Enhanced Edition
 # ==============================================
 
-import threading
-import time
 from datetime import datetime
-from asian_reader import detect_smart_money
-from market_reader import detect_market_volumes, MARKET_CACHE
+from asian_reader import get_smart_money_data
+import random
 
-SMART_ALERTS_CACHE = {
+AUTO_ALERTS_CACHE = {
     "last_update": None,
     "alerts": []
 }
 
-
-def analyze_smart_money():
-    """
-    Συνδυάζει αποδόσεις (asian_reader) και volumes (market_reader)
-    για να εντοπίσει ύποπτες κινήσεις “Smart Money”.
-    """
-    print("[AUTO MODE] 🔍 Analyzing odds & stake volumes...")
-
-    try:
-        # 1️⃣ Λήψη νέων δεδομένων
-        odds_data = detect_smart_money("epl")  # προσωρινά EPL
-        volumes_data = detect_market_volumes()
-
-        alerts = []
-        for v in volumes_data:
-            match_name = v["match"]
-
-            # Αναζήτηση αντίστοιχου match στα odds
-            o_match = next((o for o in odds_data if o["match"] == match_name), None)
-            if not o_match:
-                continue
-
-            # Υπολογισμός ποσοστιαίας διαφοράς μεταξύ odds & volume
-            home_odds = o_match["odds"].get("Home", 0)
-            away_odds = o_match["odds"].get("Away", 0)
-
-            total_volume = v.get("total_volume", 0)
-            dominant = v.get("dominant_side", "-")
-
-            # Εύρεση κατεύθυνσης (π.χ. έπεσε απόδοση στο Home και αυξήθηκε volume)
-            if dominant == "1" and home_odds < 2.0:
-                alerts.append({
-                    "match": match_name,
-                    "signal": "Smart Money on HOME",
-                    "odds": home_odds,
-                    "volume": total_volume,
-                    "time": datetime.now().strftime("%H:%M:%S")
-                })
-            elif dominant == "2" and away_odds < 3.0:
-                alerts.append({
-                    "match": match_name,
-                    "signal": "Smart Money on AWAY",
-                    "odds": away_odds,
-                    "volume": total_volume,
-                    "time": datetime.now().strftime("%H:%M:%S")
-                })
-
-        SMART_ALERTS_CACHE["last_update"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        SMART_ALERTS_CACHE["alerts"] = alerts
-
-        print(f"[AUTO MODE] ✅ {len(alerts)} Smart Money signals detected.")
-        return alerts
-
-    except Exception as e:
-        print("[AUTO MODE] ❌ Error:", e)
-        return []
-
+# Κατώφλι μεταβολής για "ισχυρά σήματα"
+SIGNAL_THRESHOLD = 0.20  # 20%
 
 def get_alerts():
-    return SMART_ALERTS_CACHE
+    """
+    Δημιουργεί alerts με βάση τις μεταβολές Smart Money
+    και φιλτράρει τα σήματα που ξεπερνούν το όριο (π.χ. 20%)
+    """
+    data = get_smart_money_data()
+    matches = data.get("results", [])
+    strong_alerts = []
 
+    for m in matches:
+        try:
+            home = float(m["odds"]["Home"])
+            away = float(m["odds"]["Away"])
+            diff = abs(home - away) / ((home + away) / 2)
+            if diff >= SIGNAL_THRESHOLD:
+                strong_alerts.append({
+                    "match": m["match"],
+                    "signal": f"Δυνατό Σήμα ({int(diff*100)}%)",
+                    "time": datetime.now().strftime("%H:%M:%S")
+                })
+        except Exception:
+            continue
 
-def auto_refresh(interval_minutes=5):
-    def loop():
-        while True:
-            analyze_smart_money()
-            time.sleep(interval_minutes * 60)
+    AUTO_ALERTS_CACHE["last_update"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    AUTO_ALERTS_CACHE["alerts"] = strong_alerts
 
-    thread = threading.Thread(target=loop, daemon=True)
-    thread.start()
-    print(f"[AUTO MODE] 🔁 Smart Money Auto Mode active (every {interval_minutes} min)")
-
-
-# Εκκίνηση αυτόματα
-auto_refresh(5)
+    print(f"[AUTO MODE] ✅ {len(strong_alerts)} Smart Money signals detected (>{int(SIGNAL_THRESHOLD*100)}%)")
+    return AUTO_ALERTS_CACHE
