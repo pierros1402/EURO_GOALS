@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>⚽ EURO_GOALS v6f – Smart Money Dashboard</title>
+  <title>⚽ EURO_GOALS Dashboard v6f</title>
   <style>
     body {
       background-color: #121212;
@@ -22,37 +22,23 @@
     }
     main {
       padding: 20px;
-      text-align: center;
     }
-    select, button {
-      margin: 8px;
-      padding: 8px 14px;
-      border-radius: 6px;
-      border: none;
-      font-size: 14px;
-    }
-    select {
-      background-color: #1e1e1e;
-      color: #fff;
-    }
-    button {
-      cursor: pointer;
-      background-color: #1976d2;
-      color: #fff;
-      transition: 0.3s;
-    }
-    button:hover {
-      background-color: #42a5f5;
+    h2 {
+      color: #90caf9;
+      border-bottom: 1px solid #333;
+      padding-bottom: 6px;
+      margin-top: 40px;
     }
     table {
       width: 100%;
       border-collapse: collapse;
-      margin-top: 20px;
+      margin-top: 10px;
       font-size: 15px;
     }
     th, td {
       padding: 10px;
       border-bottom: 1px solid #333;
+      text-align: center;
     }
     th {
       background-color: #1e1e1e;
@@ -61,170 +47,118 @@
     tr:hover {
       background-color: #2a2a2a;
     }
-    .update-time {
-      margin-top: 10px;
-      color: #90caf9;
-      font-size: 0.9rem;
+    #lastUpdate {
+      color: #a5d6a7;
+      margin-bottom: 10px;
+      font-size: 14px;
+    }
+    .league {
+      color: #ffca28;
+      font-weight: bold;
+    }
+    .alert {
+      color: #ef5350;
+      font-weight: bold;
+    }
+    footer {
+      text-align: center;
+      font-size: 13px;
+      color: #757575;
+      margin-top: 40px;
     }
   </style>
 </head>
 
 <body>
-  <header>⚽ EURO_GOALS v6f – Smart Money Dashboard</header>
+  <header>⚽ EURO_GOALS Unified Dashboard</header>
   <main>
-    <p>Ανάλυση & Ζωντανά Δεδομένα Αποδόσεων Ευρώπης</p>
+    <div id="lastUpdate">Φόρτωση δεδομένων...</div>
 
-    <div>
-      <label for="smartLeague">Λίγκα:</label>
-      <select id="smartLeague">
-        <optgroup label="Αγγλία 🇬🇧">
-          <option value="eng1">Premier League</option>
-          <option value="eng2">Championship</option>
-          <option value="eng3">League One</option>
-          <option value="eng4">League Two</option>
-        </optgroup>
-
-        <optgroup label="Γερμανία 🇩🇪">
-          <option value="ger1">Bundesliga</option>
-          <option value="ger2">2. Bundesliga</option>
-          <option value="ger3">3. Liga</option>
-        </optgroup>
-
-        <optgroup label="Ελλάδα 🇬🇷">
-          <option value="gr1">Super League 1</option>
-          <option value="gr2">Super League 2</option>
-        </optgroup>
-
-        <optgroup label="Ισπανία 🇪🇸">
-          <option value="es1">La Liga</option>
-          <option value="es2">Segunda División</option>
-        </optgroup>
-
-        <optgroup label="Ιταλία 🇮🇹">
-          <option value="it1">Serie A</option>
-          <option value="it2">Serie B</option>
-        </optgroup>
-
-        <optgroup label="Γαλλία 🇫🇷">
-          <option value="fr1">Ligue 1</option>
-          <option value="fr2">Ligue 2</option>
-        </optgroup>
-
-        <optgroup label="Ολλανδία 🇳🇱">
-          <option value="nl1">Eredivisie</option>
-          <option value="nl2">Eerste Divisie</option>
-        </optgroup>
-
-        <optgroup label="Βέλγιο 🇧🇪">
-          <option value="be1">First Division A</option>
-          <option value="be2">First Division B</option>
-        </optgroup>
-
-        <optgroup label="Ελβετία 🇨🇭">
-          <option value="ch1">Super League</option>
-          <option value="ch2">Challenge League</option>
-        </optgroup>
-
-        <optgroup label="Αυστρία 🇦🇹">
-          <option value="at1">Bundesliga</option>
-          <option value="at2">2. Liga</option>
-        </optgroup>
-
-        <optgroup label="Βόρεια Ευρώπη 🇩🇰🇸🇪🇳🇴🇫🇮">
-          <option value="dk1">Δανία Superliga</option>
-          <option value="dk2">Δανία 1η Κατηγορία</option>
-          <option value="se1">Σουηδία Allsvenskan</option>
-          <option value="se2">Σουηδία Superettan</option>
-          <option value="no1">Νορβηγία Eliteserien</option>
-          <option value="no2">Νορβηγία 1η Κατηγορία</option>
-          <option value="fi1">Φινλανδία Veikkausliiga</option>
-          <option value="fi2">Φινλανδία Ykkonen</option>
-        </optgroup>
-
-        <optgroup label="Κεντρική & Ανατολική Ευρώπη 🇵🇱🇨🇿🇭🇺🇷🇴">
-          <option value="pl1">Πολωνία Ekstraklasa</option>
-          <option value="pl2">Πολωνία 1η Κατηγορία</option>
-          <option value="cz1">Τσεχία FNL</option>
-          <option value="cz2">Τσεχία 2η Κατηγορία</option>
-          <option value="hu1">Ουγγαρία NB I</option>
-          <option value="hu2">Ουγγαρία NB II</option>
-          <option value="ro1">Ρουμανία Liga I</option>
-          <option value="ro2">Ρουμανία Liga II</option>
-        </optgroup>
-
-        <optgroup label="Ιρλανδία & Ισλανδία 🇮🇪🇮🇸">
-          <option value="ie1">Ιρλανδία Premier Division</option>
-          <option value="ie2">Ιρλανδία First Division</option>
-          <option value="is1">Ισλανδία Úrvalsdeild</option>
-          <option value="is2">Ισλανδία 1η Κατηγορία</option>
-        </optgroup>
-
-        <optgroup label="Πορτογαλία 🇵🇹">
-          <option value="pt1">Primeira Liga</option>
-          <option value="pt2">Segunda Liga</option>
-        </optgroup>
-
-        <optgroup label="Ευρωπαϊκές Διοργανώσεις 🌍">
-          <option value="ucl">Champions League</option>
-          <option value="uel">Europa League</option>
-          <option value="uecl">Conference League</option>
-        </optgroup>
-      </select>
-
-      <button onclick="loadSmartMoney()">💰 Smart Money</button>
-    </div>
-
-    <div class="update-time" id="lastUpdate">Τελευταία ενημέρωση: -</div>
-
+    <h2>🔹 Smart Money (<span id="league"></span>)</h2>
     <table id="smartTable">
       <thead>
-        <tr>
-          <th>Αγώνας</th>
-          <th>Bookmaker</th>
-          <th>1</th>
-          <th>X</th>
-          <th>2</th>
-          <th>Ώρα</th>
-        </tr>
+        <tr><th>Αγώνας</th><th>1</th><th>X</th><th>2</th><th>Ώρα</th></tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+
+    <h2>📊 Market Reader</h2>
+    <table id="marketTable">
+      <thead>
+        <tr><th>Αγώνας</th><th>Stake Volume</th><th>Απόδοση 1</th><th>Απόδοση 2</th></tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+
+    <h2>🚨 Smart Money Alerts</h2>
+    <table id="alertsTable">
+      <thead>
+        <tr><th>Αγώνας</th><th>Σήμα</th><th>Ώρα</th></tr>
       </thead>
       <tbody></tbody>
     </table>
   </main>
 
+  <footer>
+    EURO_GOALS v6f | Auto Fallback + League Rotation + Alerts | © Pierros 2025
+  </footer>
+
   <script>
-    async function loadSmartMoney() {
-      const league = document.getElementById("smartLeague").value;
-      const res = await fetch(`/smart_money?league=${league}`);
-      const data = await res.json();
+    async function loadDashboard() {
+      try {
+        const res = await fetch("/dashboard_data");
+        const data = await res.json();
 
-      const tbody = document.querySelector("#smartTable tbody");
-      tbody.innerHTML = "";
+        document.getElementById("lastUpdate").innerHTML =
+          "🕒 Τελευταία ενημέρωση: " + data.timestamp;
+        document.getElementById("league").innerText =
+          data.current_league ? data.current_league.replace("soccer_", "") : "-";
 
-      if (!data.results || data.results.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="6">⚠️ Δεν βρέθηκαν αγώνες</td></tr>`;
-        document.getElementById("lastUpdate").textContent = "Τελευταία ενημέρωση: -";
-        return;
+        // Smart Money
+        const smartBody = document.querySelector("#smartTable tbody");
+        smartBody.innerHTML = "";
+        data.smart_money.forEach(m => {
+          smartBody.innerHTML += `
+            <tr>
+              <td>${m.match}</td>
+              <td>${m.odds?.Home?.toFixed(2) ?? "-"}</td>
+              <td>${m.odds?.Draw?.toFixed(2) ?? "-"}</td>
+              <td>${m.odds?.Away?.toFixed(2) ?? "-"}</td>
+              <td>${m.time ?? "-"}</td>
+            </tr>`;
+        });
+
+        // Market Reader
+        const marketBody = document.querySelector("#marketTable tbody");
+        marketBody.innerHTML = "";
+        (data.market_reader || []).forEach(m => {
+          marketBody.innerHTML += `
+            <tr>
+              <td>${m.match ?? "-"}</td>
+              <td>${m.volume ?? "-"}</td>
+              <td>${m.odds1 ?? "-"}</td>
+              <td>${m.odds2 ?? "-"}</td>
+            </tr>`;
+        });
+
+        // Alerts
+        const alertsBody = document.querySelector("#alertsTable tbody");
+        alertsBody.innerHTML = "";
+        (data.alerts || []).forEach(a => {
+          alertsBody.innerHTML += `
+            <tr class="alert">
+              <td>${a.match ?? "-"}</td>
+              <td>${a.signal ?? "⚠️"}</td>
+              <td>${a.time ?? "-"}</td>
+            </tr>`;
+        });
+      } catch (err) {
+        console.error("Dashboard load error:", err);
       }
-
-      data.results.forEach(row => {
-        const odds = row.odds || {};
-        const tr = `
-          <tr>
-            <td>${row.match}</td>
-            <td>${row.bookmaker}</td>
-            <td>${odds["Home"] || "-"}</td>
-            <td>${odds["Draw"] || "-"}</td>
-            <td>${odds["Away"] || "-"}</td>
-            <td>${row.time}</td>
-          </tr>
-        `;
-        tbody.innerHTML += tr;
-      });
-
-      const time = data.last_update ? data.last_update : "-";
-      document.getElementById("lastUpdate").textContent =
-        `Τελευταία ενημέρωση: ${time}`;
     }
+
+    loadDashboard();
+    setInterval(loadDashboard, 30000); // refresh κάθε 30 sec
   </script>
 </body>
 </html>
