@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="el">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>⚽ EURO_GOALS Dashboard v6f</title>
   <style>
     body {
@@ -38,9 +38,16 @@
     .updating span { background-color: #ffeb3b; }
     .offline span { background-color: #f44336; }
 
-    main {
-      padding: 20px;
+    #statusBar {
+      background-color: #1e1e1e;
+      color: #bdbdbd;
+      font-size: 14px;
+      text-align: center;
+      padding: 8px;
+      border-bottom: 1px solid #333;
     }
+
+    main { padding: 20px; }
     h2 {
       color: #90caf9;
       border-bottom: 1px solid #333;
@@ -81,6 +88,11 @@
     <div id="statusIndicator" class="offline"><span></span>Offline</div>
   </header>
 
+  <!-- ΖΩΝΤΑΝΗ ΜΠΑΡΑ ΚΑΤΑΣΤΑΣΗΣ -->
+  <div id="statusBar">
+    🕒 <span id="liveClock">--:--:--</span> | Next league in: <span id="countdown">05:00</span>
+  </div>
+
   <main>
     <div id="lastUpdate">Φόρτωση δεδομένων...</div>
 
@@ -104,15 +116,34 @@
   </main>
 
   <footer>
-    EURO_GOALS v6f | Auto Fallback + League Rotation + Alerts | © Pierros 2025
+    EURO_GOALS v6f | Auto Rotation + Fallback + Alerts | © Pierros 2025
   </footer>
 
   <script>
     const statusEl = document.getElementById("statusIndicator");
+    const liveClock = document.getElementById("liveClock");
+    const countdownEl = document.getElementById("countdown");
+
+    let countdownSeconds = 5 * 60; // 5 λεπτά rotation
 
     function setStatus(state, text) {
       statusEl.className = state;
       statusEl.innerHTML = `<span></span>${text}`;
+    }
+
+    function updateClock() {
+      const now = new Date();
+      liveClock.textContent = now.toLocaleTimeString("el-GR");
+    }
+
+    function updateCountdown() {
+      countdownSeconds--;
+      if (countdownSeconds <= 0) {
+        countdownSeconds = 5 * 60;
+      }
+      const minutes = String(Math.floor(countdownSeconds / 60)).padStart(2, "0");
+      const seconds = String(countdownSeconds % 60).padStart(2, "0");
+      countdownEl.textContent = `${minutes}:${seconds}`;
     }
 
     async function loadDashboard() {
@@ -122,18 +153,14 @@
         if (!res.ok) throw new Error("HTTP " + res.status);
         const data = await res.json();
 
-        if (data.status === "ok") {
-          setStatus("online", "Online");
-        } else {
-          setStatus("offline", "Error");
-        }
+        if (data.status === "ok") setStatus("online", "Online");
+        else setStatus("offline", "Error");
 
         document.getElementById("lastUpdate").innerHTML =
           "🕒 Τελευταία ενημέρωση: " + data.timestamp;
         document.getElementById("league").innerText =
           data.current_league ? data.current_league.replace("soccer_", "") : "-";
 
-        // Smart Money
         const smartBody = document.querySelector("#smartTable tbody");
         smartBody.innerHTML = "";
         data.smart_money.forEach(m => {
@@ -147,7 +174,6 @@
             </tr>`;
         });
 
-        // Market Reader
         const marketBody = document.querySelector("#marketTable tbody");
         marketBody.innerHTML = "";
         (data.market_reader || []).forEach(m => {
@@ -160,7 +186,6 @@
             </tr>`;
         });
 
-        // Alerts
         const alertsBody = document.querySelector("#alertsTable tbody");
         alertsBody.innerHTML = "";
         (data.alerts || []).forEach(a => {
@@ -177,8 +202,11 @@
       }
     }
 
+    // Ενεργοποίηση όλων των timers
     loadDashboard();
-    setInterval(loadDashboard, 30000); // refresh κάθε 30 sec
+    setInterval(loadDashboard, 30000);   // refresh κάθε 30 sec
+    setInterval(updateClock, 1000);       // live clock κάθε 1 sec
+    setInterval(updateCountdown, 1000);   // countdown κάθε 1 sec
   </script>
 </body>
 </html>
