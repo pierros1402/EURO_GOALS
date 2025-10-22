@@ -7,21 +7,20 @@
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
 
   <style>
-    /* Flash and blink effects */
+    /* Visual Effects */
+    .blink-alert { animation: blink 1s ease-in-out infinite; }
+    @keyframes blink {
+      0%, 100% { background-color: rgba(220, 38, 38, 0.3); }
+      50% { background-color: rgba(220, 38, 38, 0.8); }
+    }
     .flash-change { animation: flash 1s ease-in-out; }
     @keyframes flash {
       0% { background-color: #2563eb; }
       50% { background-color: #10b981; }
       100% { background-color: transparent; }
     }
-    .blink-alert {
-      animation: blink 1s ease-in-out infinite;
-    }
-    @keyframes blink {
-      0%, 100% { background-color: rgba(220, 38, 38, 0.3); }
-      50% { background-color: rgba(220, 38, 38, 0.8); }
-    }
-    /* Floating notifications */
+
+    /* Floating banner */
     #alert-banner {
       position: fixed;
       top: 20px;
@@ -50,17 +49,12 @@
   <div class="max-w-6xl mx-auto py-8">
     <div class="flex justify-between items-center mb-6">
       <h1 class="text-3xl font-bold text-green-400">⚽ EURO_GOALS Live Matches</h1>
-      <div>
-        <button id="alertSettings"
-          class="bg-gray-700 hover:bg-gray-600 text-sm px-3 py-1 rounded-md">
-          ⚙️ Alerts
-        </button>
-      </div>
+      <button id="alertSettings" class="bg-gray-700 hover:bg-gray-600 text-sm px-3 py-1 rounded-md">
+        ⚙️ Alerts
+      </button>
     </div>
 
-    <!-- ============================================== -->
-    <!-- CROSS VERIFICATION SUMMARY BAR -->
-    <!-- ============================================== -->
+    <!-- CROSS VERIFICATION -->
     <div id="cross-summary" class="bg-gray-800 rounded-2xl p-4 mb-5 shadow-md border border-gray-700 transition-all duration-500">
       <h2 class="text-lg font-semibold text-green-400 mb-2">📊 Cross Verification Summary</h2>
       <div class="grid grid-cols-3 gap-4 text-center text-sm font-semibold">
@@ -71,9 +65,7 @@
       <audio id="alertSound" src="https://assets.mixkit.co/sfx/preview/mixkit-alert-quick-chime-766.mp3" preload="auto"></audio>
     </div>
 
-    <!-- ============================================== -->
-    <!-- LIVE MATCHES SECTION -->
-    <!-- ============================================== -->
+    <!-- LIVE MATCHES -->
     <div id="live-container" class="bg-gray-900 p-4 rounded-2xl shadow-lg">
       <div class="flex justify-between items-center mb-3">
         <h2 class="text-xl font-semibold">Live Matches Feed</h2>
@@ -100,9 +92,7 @@
       </div>
     </div>
 
-    <!-- ============================================== -->
-    <!-- SMART MONEY MONITOR PANEL -->
-    <!-- ============================================== -->
+    <!-- SMART MONEY MONITOR -->
     <div class="card mt-6 p-4 bg-gray-900 text-white rounded-2xl shadow-lg">
       <h2 class="text-xl font-semibold mb-3">💰 Smart Money Monitor</h2>
       <div class="flex items-center mb-3 space-x-2">
@@ -130,14 +120,9 @@
     </div>
   </div>
 
-  <!-- ============================================== -->
-  <!-- FLOATING ALERT BANNER -->
-  <!-- ============================================== -->
+  <!-- ALERT BANNER -->
   <div id="alert-banner"></div>
 
-  <!-- ============================================== -->
-  <!-- JAVASCRIPT SECTION -->
-  <!-- ============================================== -->
   <script>
   // =====================================================
   // ALERT CENTER MODULE
@@ -152,7 +137,6 @@
     popup: localStorage.getItem('alertPopup') !== 'false',
   };
 
-  // Toggle panel
   document.getElementById('alertSettings').addEventListener('click', () => {
     const newState = confirm(
       `⚙️ ALERT SETTINGS\n\nSound: ${settings.sound ? 'ON' : 'OFF'}\nVisual Blink: ${settings.visual ? 'ON' : 'OFF'}\nPopup Banner: ${settings.popup ? 'ON' : 'OFF'}\n\nPress OK to toggle all.`
@@ -168,22 +152,17 @@
   });
 
   function triggerAlert(title, message, type="info") {
-    // Sound
     if (settings.sound) {
       alertSound.currentTime = 0;
       alertSound.play().catch(() => {});
     }
-
-    // Blink
     if (settings.visual) {
       summaryBar.classList.add('blink-alert');
       setTimeout(() => summaryBar.classList.remove('blink-alert'), 3000);
     }
-
-    // Popup banner
     if (settings.popup) {
       const alertDiv = document.createElement('div');
-      alertDiv.className = `alert-msg border-${type === 'warning' ? 'yellow' : 'green'}-400`;
+      alertDiv.className = "alert-msg";
       alertDiv.innerHTML = `<strong>${title}</strong><br>${message}`;
       alertBanner.appendChild(alertDiv);
       alertBanner.style.display = 'block';
@@ -195,7 +174,7 @@
   }
 
   // =====================================================
-  // CROSS VERIFICATION SUMMARY
+  // CROSS VERIFICATION
   // =====================================================
   let lastWarnCount = 0;
   async function loadCrossSummary() {
@@ -222,6 +201,52 @@
 
   window.addEventListener('load', loadCrossSummary);
   setInterval(loadCrossSummary, 45000);
+
+  // =====================================================
+  // SMART MONEY MONITOR
+  // =====================================================
+  let lastSmartCount = 0;
+  async function loadSmartMoney() {
+    const tbody = document.getElementById('smart-body');
+    const timeEl = document.getElementById('lastUpdate');
+    try {
+      const response = await fetch('/api/smart_money/test');
+      const data = await response.json();
+      tbody.innerHTML = '';
+      let newAlerts = 0;
+
+      data.results.forEach(r => {
+        const row = document.createElement('tr');
+        let bgColor = '';
+        if (r.flag.includes('STRONG_SMART')) bgColor = 'bg-orange-900';
+        else if (r.flag.includes('SMART')) bgColor = 'bg-green-900';
+        else bgColor = 'bg-gray-800';
+        row.className = `${bgColor} border-b border-gray-700 hover:bg-gray-700 transition`;
+        row.innerHTML = `
+          <td class="px-3 py-2">${r.match}</td>
+          <td class="px-3 py-2">${r.betfair_drop ?? '-'}</td>
+          <td class="px-3 py-2">${r.asian_drop ?? '-'}</td>
+          <td class="px-3 py-2 font-semibold">${r.flag}</td>
+        `;
+        tbody.appendChild(row);
+        if (r.flag.includes('STRONG_SMART')) newAlerts++;
+      });
+
+      // trigger smart money alert if new entries detected
+      if (data.results.length > lastSmartCount) {
+        triggerAlert("Smart Money", `${data.results.length - lastSmartCount} new movements detected`, "success");
+      }
+
+      lastSmartCount = data.results.length;
+      timeEl.textContent = "Last update: " + new Date().toLocaleTimeString();
+    } catch {
+      tbody.innerHTML = `<tr><td colspan="4" class="text-red-400 px-3 py-2">Error loading Smart Money data</td></tr>`;
+    }
+  }
+
+  document.getElementById('refreshSmart').addEventListener('click', loadSmartMoney);
+  setInterval(loadSmartMoney, 30000);
+  window.addEventListener('load', loadSmartMoney);
 
   // =====================================================
   // LIVE MATCHES
@@ -251,41 +276,6 @@
 
   document.getElementById('refreshLive').addEventListener('click', loadLive);
   window.addEventListener('load', loadLive);
-
-  // =====================================================
-  // SMART MONEY MONITOR
-  // =====================================================
-  async function loadSmartMoney() {
-    const tbody = document.getElementById('smart-body');
-    const timeEl = document.getElementById('lastUpdate');
-    try {
-      const response = await fetch('/api/smart_money/test');
-      const data = await response.json();
-      tbody.innerHTML = '';
-      data.results.forEach(r => {
-        const row = document.createElement('tr');
-        let bgColor = '';
-        if (r.flag.includes('STRONG_SMART')) bgColor = 'bg-orange-900';
-        else if (r.flag.includes('SMART')) bgColor = 'bg-green-900';
-        else bgColor = 'bg-gray-800';
-        row.className = `${bgColor} border-b border-gray-700 hover:bg-gray-700 transition`;
-        row.innerHTML = `
-          <td class="px-3 py-2">${r.match}</td>
-          <td class="px-3 py-2">${r.betfair_drop ?? '-'}</td>
-          <td class="px-3 py-2">${r.asian_drop ?? '-'}</td>
-          <td class="px-3 py-2 font-semibold">${r.flag}</td>
-        `;
-        tbody.appendChild(row);
-      });
-      timeEl.textContent = "Last update: " + new Date().toLocaleTimeString();
-    } catch {
-      tbody.innerHTML = `<tr><td colspan="4" class="text-red-400 px-3 py-2">Error loading Smart Money data</td></tr>`;
-    }
-  }
-
-  document.getElementById('refreshSmart').addEventListener('click', loadSmartMoney);
-  setInterval(loadSmartMoney, 30000);
-  window.addEventListener('load', loadSmartMoney);
   </script>
 </body>
 </html>
