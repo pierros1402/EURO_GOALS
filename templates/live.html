@@ -7,41 +7,62 @@
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
 
   <style>
-    /* Flash for value change */
-    .flash-change {
-      animation: flash 1s ease-in-out;
-    }
+    /* Flash and blink effects */
+    .flash-change { animation: flash 1s ease-in-out; }
     @keyframes flash {
       0% { background-color: #2563eb; }
       50% { background-color: #10b981; }
       100% { background-color: transparent; }
     }
-
-    /* Blink animation for alert */
     .blink-alert {
       animation: blink 1s ease-in-out infinite;
     }
     @keyframes blink {
-      0%, 100% { background-color: rgba(220, 38, 38, 0.4); }
+      0%, 100% { background-color: rgba(220, 38, 38, 0.3); }
       50% { background-color: rgba(220, 38, 38, 0.8); }
+    }
+    /* Floating notifications */
+    #alert-banner {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      z-index: 9999;
+      display: none;
+    }
+    .alert-msg {
+      background-color: #1f2937;
+      color: white;
+      padding: 10px 16px;
+      border-left: 5px solid #10b981;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+      animation: fadeinout 5s ease-in-out;
+    }
+    @keyframes fadeinout {
+      0% { opacity: 0; transform: translateY(-10px); }
+      10%, 90% { opacity: 1; transform: translateY(0); }
+      100% { opacity: 0; transform: translateY(-10px); }
     }
   </style>
 </head>
 
 <body class="bg-gray-950 text-gray-200 min-h-screen">
   <div class="max-w-6xl mx-auto py-8">
-    <h1 class="text-3xl font-bold text-green-400 mb-6">⚽ EURO_GOALS Live Matches</h1>
+    <div class="flex justify-between items-center mb-6">
+      <h1 class="text-3xl font-bold text-green-400">⚽ EURO_GOALS Live Matches</h1>
+      <div>
+        <button id="alertSettings"
+          class="bg-gray-700 hover:bg-gray-600 text-sm px-3 py-1 rounded-md">
+          ⚙️ Alerts
+        </button>
+      </div>
+    </div>
 
     <!-- ============================================== -->
     <!-- CROSS VERIFICATION SUMMARY BAR -->
     <!-- ============================================== -->
     <div id="cross-summary" class="bg-gray-800 rounded-2xl p-4 mb-5 shadow-md border border-gray-700 transition-all duration-500">
-      <div class="flex justify-between items-center mb-2">
-        <h2 class="text-lg font-semibold text-green-400">📊 Cross Verification Summary</h2>
-        <button id="soundToggle" class="bg-gray-700 hover:bg-gray-600 text-sm px-3 py-1 rounded-md">
-          🔔 Sound: ON
-        </button>
-      </div>
+      <h2 class="text-lg font-semibold text-green-400 mb-2">📊 Cross Verification Summary</h2>
       <div class="grid grid-cols-3 gap-4 text-center text-sm font-semibold">
         <div id="cross-ok" class="bg-green-900 p-2 rounded-lg shadow-inner">✅ Synced: —</div>
         <div id="cross-warn" class="bg-yellow-900 p-2 rounded-lg shadow-inner">⚠️ Discrepancies: —</div>
@@ -84,7 +105,6 @@
     <!-- ============================================== -->
     <div class="card mt-6 p-4 bg-gray-900 text-white rounded-2xl shadow-lg">
       <h2 class="text-xl font-semibold mb-3">💰 Smart Money Monitor</h2>
-
       <div class="flex items-center mb-3 space-x-2">
         <button id="refreshSmart"
           class="bg-green-600 hover:bg-green-700 text-white font-semibold px-3 py-1 rounded-md">
@@ -92,7 +112,6 @@
         </button>
         <span id="lastUpdate" class="text-sm text-gray-400">Last update: —</span>
       </div>
-
       <div id="smart-money-table" class="overflow-x-auto">
         <table class="min-w-full text-sm text-left text-gray-300">
           <thead class="bg-gray-800 text-gray-100">
@@ -112,28 +131,72 @@
   </div>
 
   <!-- ============================================== -->
+  <!-- FLOATING ALERT BANNER -->
+  <!-- ============================================== -->
+  <div id="alert-banner"></div>
+
+  <!-- ============================================== -->
   <!-- JAVASCRIPT SECTION -->
   <!-- ============================================== -->
   <script>
-  // SOUND TOGGLE
-  const soundToggle = document.getElementById('soundToggle');
+  // =====================================================
+  // ALERT CENTER MODULE
+  // =====================================================
   const alertSound = document.getElementById('alertSound');
+  const alertBanner = document.getElementById('alert-banner');
   const summaryBar = document.getElementById('cross-summary');
-  let soundEnabled = localStorage.getItem('soundEnabled') !== 'false';
 
-  function updateSoundButton() {
-    soundToggle.textContent = soundEnabled ? '🔔 Sound: ON' : '🔕 Sound: OFF';
-  }
+  const settings = {
+    sound: localStorage.getItem('alertSound') !== 'false',
+    visual: localStorage.getItem('alertVisual') !== 'false',
+    popup: localStorage.getItem('alertPopup') !== 'false',
+  };
 
-  soundToggle.addEventListener('click', () => {
-    soundEnabled = !soundEnabled;
-    localStorage.setItem('soundEnabled', soundEnabled);
-    updateSoundButton();
+  // Toggle panel
+  document.getElementById('alertSettings').addEventListener('click', () => {
+    const newState = confirm(
+      `⚙️ ALERT SETTINGS\n\nSound: ${settings.sound ? 'ON' : 'OFF'}\nVisual Blink: ${settings.visual ? 'ON' : 'OFF'}\nPopup Banner: ${settings.popup ? 'ON' : 'OFF'}\n\nPress OK to toggle all.`
+    );
+    if (newState) {
+      const newVal = !settings.sound;
+      settings.sound = settings.visual = settings.popup = newVal;
+      localStorage.setItem('alertSound', settings.sound);
+      localStorage.setItem('alertVisual', settings.visual);
+      localStorage.setItem('alertPopup', settings.popup);
+      alert(`✅ Alerts are now ${newVal ? 'ENABLED' : 'DISABLED'}`);
+    }
   });
 
-  updateSoundButton();
+  function triggerAlert(title, message, type="info") {
+    // Sound
+    if (settings.sound) {
+      alertSound.currentTime = 0;
+      alertSound.play().catch(() => {});
+    }
 
-  // CROSS VERIFICATION
+    // Blink
+    if (settings.visual) {
+      summaryBar.classList.add('blink-alert');
+      setTimeout(() => summaryBar.classList.remove('blink-alert'), 3000);
+    }
+
+    // Popup banner
+    if (settings.popup) {
+      const alertDiv = document.createElement('div');
+      alertDiv.className = `alert-msg border-${type === 'warning' ? 'yellow' : 'green'}-400`;
+      alertDiv.innerHTML = `<strong>${title}</strong><br>${message}`;
+      alertBanner.appendChild(alertDiv);
+      alertBanner.style.display = 'block';
+      setTimeout(() => {
+        alertDiv.remove();
+        if (alertBanner.children.length === 0) alertBanner.style.display = 'none';
+      }, 5000);
+    }
+  }
+
+  // =====================================================
+  // CROSS VERIFICATION SUMMARY
+  // =====================================================
   let lastWarnCount = 0;
   async function loadCrossSummary() {
     try {
@@ -148,14 +211,9 @@
       document.getElementById('cross-warn').textContent = `⚠️ Discrepancies: ${warn}`;
       document.getElementById('cross-miss').textContent = `🔴 Missing: ${miss}`;
 
-      // Trigger sound + blink if discrepancies increased
-      if (warn > lastWarnCount && soundEnabled) {
-        alertSound.currentTime = 0;
-        alertSound.play().catch(() => {});
-        summaryBar.classList.add('blink-alert');
-        setTimeout(() => summaryBar.classList.remove('blink-alert'), 3000);
+      if (warn > lastWarnCount) {
+        triggerAlert("Cross Verification", `${warn - lastWarnCount} new discrepancies detected`, "warning");
       }
-
       lastWarnCount = warn;
     } catch (e) {
       console.error('[CROSS_VERIFICATION] Error:', e);
@@ -165,7 +223,9 @@
   window.addEventListener('load', loadCrossSummary);
   setInterval(loadCrossSummary, 45000);
 
-  // LIVE MATCHES REFRESH
+  // =====================================================
+  // LIVE MATCHES
+  // =====================================================
   async function loadLive() {
     const tbody = document.getElementById('live-body');
     try {
@@ -188,11 +248,14 @@
       tbody.innerHTML = `<tr><td colspan="5" class="text-red-400 px-3 py-2">Error loading live data</td></tr>`;
     }
   }
+
   document.getElementById('refreshLive').addEventListener('click', loadLive);
   window.addEventListener('load', loadLive);
 
+  // =====================================================
   // SMART MONEY MONITOR
-  async function loadSmartMoney(auto = false) {
+  // =====================================================
+  async function loadSmartMoney() {
     const tbody = document.getElementById('smart-body');
     const timeEl = document.getElementById('lastUpdate');
     try {
@@ -220,9 +283,9 @@
     }
   }
 
-  document.getElementById('refreshSmart').addEventListener('click', () => loadSmartMoney(false));
-  setInterval(() => loadSmartMoney(true), 30000);
-  window.addEventListener('load', () => loadSmartMoney(true));
+  document.getElementById('refreshSmart').addEventListener('click', loadSmartMoney);
+  setInterval(loadSmartMoney, 30000);
+  window.addEventListener('load', loadSmartMoney);
   </script>
 </body>
 </html>
