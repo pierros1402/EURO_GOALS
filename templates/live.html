@@ -6,7 +6,6 @@
   <title>EURO_GOALS Live Panel</title>
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
   <style>
-    /* Animation effect for Cross Verification summary changes */
     .flash-change {
       animation: flash 1s ease-in-out;
     }
@@ -26,12 +25,19 @@
     <!-- CROSS VERIFICATION SUMMARY BAR -->
     <!-- ============================================== -->
     <div id="cross-summary" class="bg-gray-800 rounded-2xl p-4 mb-5 shadow-md border border-gray-700">
-      <h2 class="text-lg font-semibold mb-2 text-green-400">📊 Cross Verification Summary</h2>
-      <div class="grid grid-cols-3 gap-4 text-center text-sm font-semibold">
-        <div id="cross-ok" class="bg-green-900 p-2 rounded-lg shadow-inner transition-all">✅ Synced: —</div>
-        <div id="cross-warn" class="bg-yellow-900 p-2 rounded-lg shadow-inner transition-all">⚠️ Discrepancies: —</div>
-        <div id="cross-miss" class="bg-red-900 p-2 rounded-lg shadow-inner transition-all">🔴 Missing: —</div>
+      <div class="flex justify-between items-center mb-2">
+        <h2 class="text-lg font-semibold text-green-400">📊 Cross Verification Summary</h2>
+        <button id="soundToggle"
+          class="bg-gray-700 hover:bg-gray-600 text-sm px-3 py-1 rounded-md">
+          🔔 Sound: ON
+        </button>
       </div>
+      <div class="grid grid-cols-3 gap-4 text-center text-sm font-semibold">
+        <div id="cross-ok" class="bg-green-900 p-2 rounded-lg shadow-inner">✅ Synced: —</div>
+        <div id="cross-warn" class="bg-yellow-900 p-2 rounded-lg shadow-inner">⚠️ Discrepancies: —</div>
+        <div id="cross-miss" class="bg-red-900 p-2 rounded-lg shadow-inner">🔴 Missing: —</div>
+      </div>
+      <audio id="alertSound" src="https://assets.mixkit.co/sfx/preview/mixkit-alert-quick-chime-766.mp3" preload="auto"></audio>
     </div>
 
     <!-- ============================================== -->
@@ -99,9 +105,30 @@
   <!-- JAVASCRIPT SECTION -->
   <!-- ============================================== -->
   <script>
-  // ==============================
+  // ====================================
+  // SOUND TOGGLE
+  // ====================================
+  const soundToggle = document.getElementById('soundToggle');
+  const alertSound = document.getElementById('alertSound');
+  let soundEnabled = localStorage.getItem('soundEnabled') !== 'false';
+
+  function updateSoundButton() {
+    soundToggle.textContent = soundEnabled ? '🔔 Sound: ON' : '🔕 Sound: OFF';
+  }
+
+  soundToggle.addEventListener('click', () => {
+    soundEnabled = !soundEnabled;
+    localStorage.setItem('soundEnabled', soundEnabled);
+    updateSoundButton();
+  });
+
+  updateSoundButton();
+
+  // ====================================
   // CROSS VERIFICATION SUMMARY
-  // ==============================
+  // ====================================
+  let lastWarnCount = 0;
+
   async function loadCrossSummary() {
     try {
       const res = await fetch('/api/discrepancies');
@@ -111,33 +138,26 @@
       const warn = data.summary?.discrepancies ?? 0;
       const miss = data.summary?.missing ?? 0;
 
-      const okEl = document.getElementById('cross-ok');
-      const warnEl = document.getElementById('cross-warn');
-      const missEl = document.getElementById('cross-miss');
+      document.getElementById('cross-ok').textContent = `✅ Synced: ${ok}`;
+      document.getElementById('cross-warn').textContent = `⚠️ Discrepancies: ${warn}`;
+      document.getElementById('cross-miss').textContent = `🔴 Missing: ${miss}`;
 
-      // Animation when value changes
-      [okEl, warnEl, missEl].forEach(el => el.classList.remove('flash-change'));
-      void okEl.offsetWidth; // force reflow
-      okEl.classList.add('flash-change');
-      warnEl.classList.add('flash-change');
-      missEl.classList.add('flash-change');
-
-      okEl.textContent = `✅ Synced: ${ok}`;
-      warnEl.textContent = `⚠️ Discrepancies: ${warn}`;
-      missEl.textContent = `🔴 Missing: ${miss}`;
+      if (warn > lastWarnCount && soundEnabled) {
+        alertSound.currentTime = 0;
+        alertSound.play().catch(() => {});
+      }
+      lastWarnCount = warn;
     } catch (e) {
       console.error('[CROSS_VERIFICATION] Error:', e);
-      document.getElementById('cross-ok').textContent = '❌ Feed Error';
-      document.getElementById('cross-warn').textContent = '-';
-      document.getElementById('cross-miss').textContent = '-';
     }
   }
+
   window.addEventListener('load', loadCrossSummary);
   setInterval(loadCrossSummary, 45000);
 
-  // ==============================
+  // ====================================
   // LIVE MATCHES REFRESH
-  // ==============================
+  // ====================================
   async function loadLive() {
     const tbody = document.getElementById('live-body');
     try {
@@ -156,16 +176,17 @@
         `;
         tbody.appendChild(row);
       });
-    } catch (e) {
+    } catch {
       tbody.innerHTML = `<tr><td colspan="5" class="text-red-400 px-3 py-2">Error loading live data</td></tr>`;
     }
   }
+
   document.getElementById('refreshLive').addEventListener('click', loadLive);
   window.addEventListener('load', loadLive);
 
-  // ==============================
+  // ====================================
   // SMART MONEY MONITOR
-  // ==============================
+  // ====================================
   async function loadSmartMoney(auto = false) {
     const tbody = document.getElementById('smart-body');
     const timeEl = document.getElementById('lastUpdate');
@@ -188,13 +209,12 @@
         `;
         tbody.appendChild(row);
       });
-      const now = new Date().toLocaleTimeString();
-      timeEl.textContent = "Last update: " + now;
-    } catch (e) {
-      tbody.innerHTML =
-        `<tr><td colspan="4" class="text-red-400 px-3 py-2">Error loading data: ${e}</td></tr>`;
+      timeEl.textContent = "Last update: " + new Date().toLocaleTimeString();
+    } catch {
+      tbody.innerHTML = `<tr><td colspan="4" class="text-red-400 px-3 py-2">Error loading Smart Money data</td></tr>`;
     }
   }
+
   document.getElementById('refreshSmart').addEventListener('click', () => loadSmartMoney(false));
   setInterval(() => loadSmartMoney(true), 30000);
   window.addEventListener('load', () => loadSmartMoney(true));
