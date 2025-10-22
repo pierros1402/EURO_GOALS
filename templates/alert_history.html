@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Alert History</title>
+  <link rel="stylesheet" href="/static/css/alert_history.css">
+</head>
+<body>
+
+<div class="alert-history-container">
+  <h2 class="title">📋 Alert History</h2>
+
+  <!-- Φίλτρα -->
+  <div class="filters">
+    <select id="filter-type">
+      <option value="">All Types</option>
+      <option value="SmartMoney">Smart Money</option>
+      <option value="LiveFeed">Live Feed</option>
+      <option value="API">API</option>
+    </select>
+
+    <input type="text" id="filter-league" placeholder="League (π.χ. Premier League)">
+    <input type="date" id="filter-from">
+    <input type="date" id="filter-to">
+    <button id="filter-btn" class="btn">🔍 Filter</button>
+    <button id="clear-btn" class="btn-clear">🧹 Clear</button>
+  </div>
+
+  <!-- Πίνακας -->
+  <table id="alerts-table">
+    <thead>
+      <tr>
+        <th>Time</th>
+        <th>Type</th>
+        <th>League</th>
+        <th>Message</th>
+      </tr>
+    </thead>
+    <tbody>
+      <!-- Δυναμικά δεδομένα από alert_history.js -->
+    </tbody>
+  </table>
+
+  <div class="note">
+    <p>⚙️ Last 300 alerts displayed. Use filters above to narrow results.</p>
+  </div>
+</div>
+
+<script src="/static/js/alert_history.js"></script>
+
+</body>
+</html>

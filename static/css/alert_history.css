@@ -1,0 +1,103 @@
+/* =========================================================
+   EURO_GOALS v7.9 – Alert History CSS
+   Σκοπός: Dark Theme εμφάνιση πίνακα ειδοποιήσεων
+   ========================================================= */
+
+body {
+  font-family: "Segoe UI", Arial, sans-serif;
+  background-color: #121212;
+  color: #e0e0e0;
+}
+
+.alert-history-container {
+  margin: 40px auto;
+  max-width: 1000px;
+  background-color: #1e1e1e;
+  border-radius: 16px;
+  padding: 20px 30px;
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.4);
+}
+
+.title {
+  text-align: center;
+  margin-bottom: 20px;
+  color: #00ff91;
+}
+
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 20px;
+  justify-content: center;
+}
+
+.filters select,
+.filters input {
+  padding: 8px;
+  border-radius: 8px;
+  border: 1px solid #333;
+  background-color: #2b2b2b;
+  color: #fff;
+  min-width: 160px;
+}
+
+.btn,
+.btn-clear {
+  padding: 8px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: bold;
+  border: none;
+  transition: 0.2s;
+}
+
+.btn {
+  background-color: #00c896;
+  color: #000;
+}
+
+.btn:hover {
+  background-color: #00ffb0;
+}
+
+.btn-clear {
+  background-color: #444;
+  color: #fff;
+}
+
+.btn-clear:hover {
+  background-color: #666;
+}
+
+#alerts-table {
+  width: 100%;
+  border-collapse: collapse;
+  background-color: #181818;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+#alerts-table th, #alerts-table td {
+  padding: 10px;
+  border-bottom: 1px solid #333;
+  text-align: left;
+}
+
+#alerts-table th {
+  background-color: #222;
+  color: #00ff91;
+  font-weight: 600;
+}
+
+#alerts-table tr:hover {
+  background-color: #252525;
+}
+
+.note {
+  margin-top: 15px;
+  font-size: 13px;
+  color: #aaa;
+  text-align: center;
+  opacity: 0.8;
+}
