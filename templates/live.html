@@ -7,39 +7,24 @@
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
 
   <style>
-    /* Visual Effects */
     .blink-alert { animation: blink 1s ease-in-out infinite; }
     @keyframes blink {
       0%, 100% { background-color: rgba(220, 38, 38, 0.3); }
       50% { background-color: rgba(220, 38, 38, 0.8); }
     }
-    .flash-change { animation: flash 1s ease-in-out; }
-    @keyframes flash {
-      0% { background-color: #2563eb; }
-      50% { background-color: #10b981; }
-      100% { background-color: transparent; }
-    }
-
-    /* Floating banner */
     #alert-banner {
-      position: fixed;
-      top: 20px;
-      right: 20px;
-      z-index: 9999;
-      display: none;
+      position: fixed; top: 20px; right: 20px;
+      z-index: 9999; display: none;
     }
     .alert-msg {
-      background-color: #1f2937;
-      color: white;
-      padding: 10px 16px;
-      border-left: 5px solid #10b981;
-      border-radius: 8px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+      background-color: #1f2937; color: white;
+      padding: 10px 16px; border-left: 5px solid #10b981;
+      border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.4);
       animation: fadeinout 5s ease-in-out;
     }
     @keyframes fadeinout {
       0% { opacity: 0; transform: translateY(-10px); }
-      10%, 90% { opacity: 1; transform: translateY(0); }
+      10%,90% { opacity: 1; transform: translateY(0); }
       100% { opacity: 0; transform: translateY(-10px); }
     }
   </style>
@@ -55,7 +40,7 @@
     </div>
 
     <!-- CROSS VERIFICATION -->
-    <div id="cross-summary" class="bg-gray-800 rounded-2xl p-4 mb-5 shadow-md border border-gray-700 transition-all duration-500">
+    <div id="cross-summary" class="bg-gray-800 rounded-2xl p-4 mb-3 shadow-md border border-gray-700 transition-all duration-500">
       <h2 class="text-lg font-semibold text-green-400 mb-2">📊 Cross Verification Summary</h2>
       <div class="grid grid-cols-3 gap-4 text-center text-sm font-semibold">
         <div id="cross-ok" class="bg-green-900 p-2 rounded-lg shadow-inner">✅ Synced: —</div>
@@ -65,12 +50,19 @@
       <audio id="alertSound" src="https://assets.mixkit.co/sfx/preview/mixkit-alert-quick-chime-766.mp3" preload="auto"></audio>
     </div>
 
+    <!-- ALERT HISTORY PANEL -->
+    <div id="alert-history" class="bg-gray-900 rounded-2xl p-4 mb-6 border border-gray-700">
+      <h3 class="text-green-400 font-semibold mb-2">🕒 Alert History (Last 5)</h3>
+      <ul id="alert-list" class="text-sm text-gray-300 space-y-1">
+        <li class="text-gray-500 italic">No alerts yet.</li>
+      </ul>
+    </div>
+
     <!-- LIVE MATCHES -->
-    <div id="live-container" class="bg-gray-900 p-4 rounded-2xl shadow-lg">
+    <div id="live-container" class="bg-gray-900 p-4 rounded-2xl shadow-lg mb-6">
       <div class="flex justify-between items-center mb-3">
         <h2 class="text-xl font-semibold">Live Matches Feed</h2>
-        <button id="refreshLive"
-          class="bg-green-600 hover:bg-green-700 text-white font-semibold px-3 py-1 rounded-md">
+        <button id="refreshLive" class="bg-green-600 hover:bg-green-700 text-white font-semibold px-3 py-1 rounded-md">
           Refresh
         </button>
       </div>
@@ -86,18 +78,17 @@
             </tr>
           </thead>
           <tbody id="live-body">
-            <tr><td colspan="5" class="px-3 py-2 text-gray-500">Loading...</td></tr>
+            <tr><td colspan="5" class="px-3 py-2 text-gray-500">Loading…</td></tr>
           </tbody>
         </table>
       </div>
     </div>
 
-    <!-- SMART MONEY MONITOR -->
-    <div class="card mt-6 p-4 bg-gray-900 text-white rounded-2xl shadow-lg">
+    <!-- SMART MONEY -->
+    <div class="card p-4 bg-gray-900 text-white rounded-2xl shadow-lg">
       <h2 class="text-xl font-semibold mb-3">💰 Smart Money Monitor</h2>
       <div class="flex items-center mb-3 space-x-2">
-        <button id="refreshSmart"
-          class="bg-green-600 hover:bg-green-700 text-white font-semibold px-3 py-1 rounded-md">
+        <button id="refreshSmart" class="bg-green-600 hover:bg-green-700 text-white font-semibold px-3 py-1 rounded-md">
           Refresh Smart Data
         </button>
         <span id="lastUpdate" class="text-sm text-gray-400">Last update: —</span>
@@ -113,169 +104,155 @@
             </tr>
           </thead>
           <tbody id="smart-body">
-            <tr><td colspan="4" class="px-3 py-2 text-gray-500">Loading Smart Money data...</td></tr>
+            <tr><td colspan="4" class="px-3 py-2 text-gray-500">Loading Smart Money data…</td></tr>
           </tbody>
         </table>
       </div>
     </div>
   </div>
 
-  <!-- ALERT BANNER -->
   <div id="alert-banner"></div>
 
   <script>
-  // =====================================================
-  // ALERT CENTER MODULE
-  // =====================================================
-  const alertSound = document.getElementById('alertSound');
-  const alertBanner = document.getElementById('alert-banner');
-  const summaryBar = document.getElementById('cross-summary');
+  // --- SETTINGS ---
+  const alertSound=document.getElementById('alertSound');
+  const alertBanner=document.getElementById('alert-banner');
+  const summaryBar=document.getElementById('cross-summary');
+  const historyList=document.getElementById('alert-list');
 
-  const settings = {
-    sound: localStorage.getItem('alertSound') !== 'false',
-    visual: localStorage.getItem('alertVisual') !== 'false',
-    popup: localStorage.getItem('alertPopup') !== 'false',
+  const settings={
+    sound:localStorage.getItem('alertSound')!=='false',
+    visual:localStorage.getItem('alertVisual')!=='false',
+    popup:localStorage.getItem('alertPopup')!=='false'
   };
 
-  document.getElementById('alertSettings').addEventListener('click', () => {
-    const newState = confirm(
-      `⚙️ ALERT SETTINGS\n\nSound: ${settings.sound ? 'ON' : 'OFF'}\nVisual Blink: ${settings.visual ? 'ON' : 'OFF'}\nPopup Banner: ${settings.popup ? 'ON' : 'OFF'}\n\nPress OK to toggle all.`
-    );
-    if (newState) {
-      const newVal = !settings.sound;
-      settings.sound = settings.visual = settings.popup = newVal;
-      localStorage.setItem('alertSound', settings.sound);
-      localStorage.setItem('alertVisual', settings.visual);
-      localStorage.setItem('alertPopup', settings.popup);
-      alert(`✅ Alerts are now ${newVal ? 'ENABLED' : 'DISABLED'}`);
+  // --- HISTORY MANAGEMENT ---
+  let alertHistory=JSON.parse(localStorage.getItem('alertHistory')||'[]');
+  function updateHistoryPanel(){
+    historyList.innerHTML='';
+    if(alertHistory.length===0){
+      historyList.innerHTML='<li class="text-gray-500 italic">No alerts yet.</li>'; return;
+    }
+    alertHistory.slice(-5).reverse().forEach(a=>{
+      const li=document.createElement('li');
+      li.innerHTML=`<span class="text-green-400">${a.time}</span> – <strong>${a.title}</strong>: ${a.message}`;
+      historyList.appendChild(li);
+    });
+  }
+  function addToHistory(title,message){
+    const now=new Date().toLocaleTimeString();
+    alertHistory.push({title,message,time:now});
+    if(alertHistory.length>20) alertHistory.shift();
+    localStorage.setItem('alertHistory',JSON.stringify(alertHistory));
+    updateHistoryPanel();
+  }
+
+  // --- ALERT CENTER CORE ---
+  function triggerAlert(title,message,type="info"){
+    addToHistory(title,message);
+    if(settings.sound){ alertSound.currentTime=0; alertSound.play().catch(()=>{}); }
+    if(settings.visual){ summaryBar.classList.add('blink-alert'); setTimeout(()=>summaryBar.classList.remove('blink-alert'),3000); }
+    if(settings.popup){
+      const alertDiv=document.createElement('div');
+      alertDiv.className="alert-msg";
+      alertDiv.innerHTML=`<strong>${title}</strong><br>${message}`;
+      alertBanner.appendChild(alertDiv);
+      alertBanner.style.display='block';
+      setTimeout(()=>{alertDiv.remove(); if(alertBanner.children.length===0) alertBanner.style.display='none';},5000);
+    }
+  }
+
+  // --- ALERT SETTINGS BUTTON ---
+  document.getElementById('alertSettings').addEventListener('click',()=>{
+    const toggle=confirm(`⚙️ ALERT SETTINGS\n\nSound: ${settings.sound?'ON':'OFF'}\nVisual Blink: ${settings.visual?'ON':'OFF'}\nPopup Banner: ${settings.popup?'ON':'OFF'}\n\nPress OK to toggle all.`);
+    if(toggle){
+      const newVal=!settings.sound;
+      settings.sound=settings.visual=settings.popup=newVal;
+      localStorage.setItem('alertSound',settings.sound);
+      localStorage.setItem('alertVisual',settings.visual);
+      localStorage.setItem('alertPopup',settings.popup);
+      alert(`✅ Alerts are now ${newVal?'ENABLED':'DISABLED'}`);
     }
   });
 
-  function triggerAlert(title, message, type="info") {
-    if (settings.sound) {
-      alertSound.currentTime = 0;
-      alertSound.play().catch(() => {});
-    }
-    if (settings.visual) {
-      summaryBar.classList.add('blink-alert');
-      setTimeout(() => summaryBar.classList.remove('blink-alert'), 3000);
-    }
-    if (settings.popup) {
-      const alertDiv = document.createElement('div');
-      alertDiv.className = "alert-msg";
-      alertDiv.innerHTML = `<strong>${title}</strong><br>${message}`;
-      alertBanner.appendChild(alertDiv);
-      alertBanner.style.display = 'block';
-      setTimeout(() => {
-        alertDiv.remove();
-        if (alertBanner.children.length === 0) alertBanner.style.display = 'none';
-      }, 5000);
-    }
+  // --- CROSS VERIFICATION ---
+  let lastWarnCount=0;
+  async function loadCrossSummary(){
+    try{
+      const res=await fetch('/api/discrepancies');
+      const data=await res.json();
+      const ok=data.summary?.ok??0;
+      const warn=data.summary?.discrepancies??0;
+      const miss=data.summary?.missing??0;
+      document.getElementById('cross-ok').textContent=`✅ Synced: ${ok}`;
+      document.getElementById('cross-warn').textContent=`⚠️ Discrepancies: ${warn}`;
+      document.getElementById('cross-miss').textContent=`🔴 Missing: ${miss}`;
+      if(warn>lastWarnCount){ triggerAlert("Cross Verification",`${warn-lastWarnCount} new discrepancies detected`,"warning"); }
+      lastWarnCount=warn;
+    }catch(e){console.error('[CROSS]',e);}
   }
 
-  // =====================================================
-  // CROSS VERIFICATION
-  // =====================================================
-  let lastWarnCount = 0;
-  async function loadCrossSummary() {
-    try {
-      const res = await fetch('/api/discrepancies');
-      const data = await res.json();
-
-      const ok = data.summary?.ok ?? 0;
-      const warn = data.summary?.discrepancies ?? 0;
-      const miss = data.summary?.missing ?? 0;
-
-      document.getElementById('cross-ok').textContent = `✅ Synced: ${ok}`;
-      document.getElementById('cross-warn').textContent = `⚠️ Discrepancies: ${warn}`;
-      document.getElementById('cross-miss').textContent = `🔴 Missing: ${miss}`;
-
-      if (warn > lastWarnCount) {
-        triggerAlert("Cross Verification", `${warn - lastWarnCount} new discrepancies detected`, "warning");
-      }
-      lastWarnCount = warn;
-    } catch (e) {
-      console.error('[CROSS_VERIFICATION] Error:', e);
-    }
-  }
-
-  window.addEventListener('load', loadCrossSummary);
-  setInterval(loadCrossSummary, 45000);
-
-  // =====================================================
-  // SMART MONEY MONITOR
-  // =====================================================
-  let lastSmartCount = 0;
-  async function loadSmartMoney() {
-    const tbody = document.getElementById('smart-body');
-    const timeEl = document.getElementById('lastUpdate');
-    try {
-      const response = await fetch('/api/smart_money/test');
-      const data = await response.json();
-      tbody.innerHTML = '';
-      let newAlerts = 0;
-
-      data.results.forEach(r => {
-        const row = document.createElement('tr');
-        let bgColor = '';
-        if (r.flag.includes('STRONG_SMART')) bgColor = 'bg-orange-900';
-        else if (r.flag.includes('SMART')) bgColor = 'bg-green-900';
-        else bgColor = 'bg-gray-800';
-        row.className = `${bgColor} border-b border-gray-700 hover:bg-gray-700 transition`;
-        row.innerHTML = `
+  // --- SMART MONEY ---
+  let lastSmartCount=0;
+  async function loadSmartMoney(){
+    const tbody=document.getElementById('smart-body');
+    const timeEl=document.getElementById('lastUpdate');
+    try{
+      const res=await fetch('/api/smart_money/test');
+      const data=await res.json();
+      tbody.innerHTML='';
+      data.results.forEach(r=>{
+        const row=document.createElement('tr');
+        let bgColor='';
+        if(r.flag.includes('STRONG_SMART')) bgColor='bg-orange-900';
+        else if(r.flag.includes('SMART')) bgColor='bg-green-900';
+        else bgColor='bg-gray-800';
+        row.className=`${bgColor} border-b border-gray-700 hover:bg-gray-700 transition`;
+        row.innerHTML=`
           <td class="px-3 py-2">${r.match}</td>
-          <td class="px-3 py-2">${r.betfair_drop ?? '-'}</td>
-          <td class="px-3 py-2">${r.asian_drop ?? '-'}</td>
-          <td class="px-3 py-2 font-semibold">${r.flag}</td>
-        `;
+          <td class="px-3 py-2">${r.betfair_drop??'-'}</td>
+          <td class="px-3 py-2">${r.asian_drop??'-'}</td>
+          <td class="px-3 py-2 font-semibold">${r.flag}</td>`;
         tbody.appendChild(row);
-        if (r.flag.includes('STRONG_SMART')) newAlerts++;
       });
-
-      // trigger smart money alert if new entries detected
-      if (data.results.length > lastSmartCount) {
-        triggerAlert("Smart Money", `${data.results.length - lastSmartCount} new movements detected`, "success");
+      if(data.results.length>lastSmartCount){
+        triggerAlert("Smart Money",`${data.results.length-lastSmartCount} new movements detected`,"success");
       }
-
-      lastSmartCount = data.results.length;
-      timeEl.textContent = "Last update: " + new Date().toLocaleTimeString();
-    } catch {
-      tbody.innerHTML = `<tr><td colspan="4" class="text-red-400 px-3 py-2">Error loading Smart Money data</td></tr>`;
-    }
+      lastSmartCount=data.results.length;
+      timeEl.textContent="Last update: "+new Date().toLocaleTimeString();
+    }catch{tbody.innerHTML=`<tr><td colspan="4" class="text-red-400 px-3 py-2">Error loading Smart Money data</td></tr>`;}
   }
 
-  document.getElementById('refreshSmart').addEventListener('click', loadSmartMoney);
-  setInterval(loadSmartMoney, 30000);
-  window.addEventListener('load', loadSmartMoney);
-
-  // =====================================================
-  // LIVE MATCHES
-  // =====================================================
-  async function loadLive() {
-    const tbody = document.getElementById('live-body');
-    try {
-      const res = await fetch('/api/live_scores');
-      const data = await res.json();
-      tbody.innerHTML = '';
-      data.matches.forEach(m => {
-        const row = document.createElement('tr');
-        row.className = 'border-b border-gray-700 hover:bg-gray-800 transition';
-        row.innerHTML = `
+  // --- LIVE MATCHES ---
+  async function loadLive(){
+    const tbody=document.getElementById('live-body');
+    try{
+      const res=await fetch('/api/live_scores');
+      const data=await res.json();
+      tbody.innerHTML='';
+      data.matches.forEach(m=>{
+        const row=document.createElement('tr');
+        row.className='border-b border-gray-700 hover:bg-gray-800 transition';
+        row.innerHTML=`
           <td class="px-3 py-2">${m.match_id}</td>
           <td class="px-3 py-2">${m.home}</td>
           <td class="px-3 py-2">${m.away}</td>
-          <td class="px-3 py-2">${m.score || '-'}</td>
-          <td class="px-3 py-2">${m.status}</td>
-        `;
+          <td class="px-3 py-2">${m.score||'-'}</td>
+          <td class="px-3 py-2">${m.status}</td>`;
         tbody.appendChild(row);
       });
-    } catch {
-      tbody.innerHTML = `<tr><td colspan="5" class="text-red-400 px-3 py-2">Error loading live data</td></tr>`;
-    }
+    }catch{tbody.innerHTML=`<tr><td colspan="5" class="text-red-400 px-3 py-2">Error loading live data</td></tr>`;}
   }
 
-  document.getElementById('refreshLive').addEventListener('click', loadLive);
-  window.addEventListener('load', loadLive);
+  // --- INIT ---
+  window.addEventListener('load',()=>{
+    updateHistoryPanel();
+    loadCrossSummary(); loadSmartMoney(); loadLive();
+    setInterval(loadCrossSummary,45000);
+    setInterval(loadSmartMoney,30000);
+  });
+  document.getElementById('refreshLive').addEventListener('click',loadLive);
+  document.getElementById('refreshSmart').addEventListener('click',loadSmartMoney);
   </script>
 </body>
 </html>
