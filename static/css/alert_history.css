@@ -101,3 +101,16 @@ body {
   text-align: center;
   opacity: .85;
 }
+.btn-export {
+  background-color: #0084ff;
+  color: #fff;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 8px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: 0.2s;
+}
+.btn-export:hover {
+  background-color: #00aaff;
+}
