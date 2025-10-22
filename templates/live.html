@@ -10,6 +10,17 @@
 <body class="bg-gray-950 text-gray-200 min-h-screen">
   <div class="max-w-6xl mx-auto py-8">
     <h1 class="text-3xl font-bold text-green-400 mb-6">⚽ EURO_GOALS Live Matches</h1>
+<!-- ============================================== -->
+<!-- CROSS VERIFICATION SUMMARY BAR -->
+<!-- ============================================== -->
+<div id="cross-summary" class="bg-gray-800 rounded-2xl p-4 mb-5 shadow-md border border-gray-700">
+  <h2 class="text-lg font-semibold mb-2 text-green-400">📊 Cross Verification Summary</h2>
+  <div class="grid grid-cols-3 gap-4 text-center text-sm font-semibold">
+    <div id="cross-ok" class="bg-green-900 p-2 rounded-lg shadow-inner">✅ Synced: —</div>
+    <div id="cross-warn" class="bg-yellow-900 p-2 rounded-lg shadow-inner">⚠️ Discrepancies: —</div>
+    <div id="cross-miss" class="bg-red-900 p-2 rounded-lg shadow-inner">🔴 Missing: —</div>
+  </div>
+</div>
 
     <!-- ============================================== -->
     <!-- LIVE MATCHES SECTION -->
@@ -151,6 +162,52 @@
 
   // Load on page start
   window.addEventListener('load', () => loadSmartMoney(true));
+// ==============================
+// CROSS VERIFICATION SUMMARY
+// ==============================
+async function loadCrossSummary() {
+  try {
+    const res = await fetch('/api/discrepancies');
+    const data = await res.json();
+
+    async function loadCrossSummary() {
+  try {
+    const res = await fetch('/api/discrepancies');
+   const data = await res.json();
+
+    const ok = data.summary?.ok ?? 0;
+    const warn = data.summary?.discrepancies ?? 0;
+    const miss = data.summary?.missing ?? 0;
+
+    document.getElementById('cross-ok').textContent = `✅ Synced: ${ok}`;
+    document.getElementById('cross-warn').textContent = `⚠️ Discrepancies: ${warn}`;
+    document.getElementById('cross-miss').textContent = `🔴 Missing: ${miss}`;
+  } catch (e) {
+    console.error('[CROSS_VERIFICATION] Error:', e);
+    document.getElementById('cross-ok').textContent = '❌ Feed Error';
+    document.getElementById('cross-warn').textContent = '-';
+    document.getElementById('cross-miss').textContent = '-';
+  }
+}
+
+    const warn = data.summary?.discrepancies ?? 0;
+    const miss = data.summary?.missing ?? 0;
+
+    document.getElementById('cross-ok').textContent = `✅ Synced: ${ok}`;
+    document.getElementById('cross-warn').textContent = `⚠️ Discrepancies: ${warn}`;
+    document.getElementById('cross-miss').textContent = `🔴 Missing: ${miss}`;
+  } catch (e) {
+    console.error('[CROSS_VERIFICATION] Error:', e);
+    document.getElementById('cross-ok').textContent = "❌ Feed Error";
+    document.getElementById('cross-warn').textContent = "-";
+    document.getElementById('cross-miss').textContent = "-";
+  }
+}
+
+// Run once on page load + refresh every 45s
+window.addEventListener('load', loadCrossSummary);
+setInterval(loadCrossSummary, 45000);
+
   </script>
 </body>
 </html>
