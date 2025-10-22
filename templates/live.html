@@ -5,7 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>EURO_GOALS Live Panel</title>
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+
   <style>
+    /* Flash for value change */
     .flash-change {
       animation: flash 1s ease-in-out;
     }
@@ -13,6 +15,15 @@
       0% { background-color: #2563eb; }
       50% { background-color: #10b981; }
       100% { background-color: transparent; }
+    }
+
+    /* Blink animation for alert */
+    .blink-alert {
+      animation: blink 1s ease-in-out infinite;
+    }
+    @keyframes blink {
+      0%, 100% { background-color: rgba(220, 38, 38, 0.4); }
+      50% { background-color: rgba(220, 38, 38, 0.8); }
     }
   </style>
 </head>
@@ -24,11 +35,10 @@
     <!-- ============================================== -->
     <!-- CROSS VERIFICATION SUMMARY BAR -->
     <!-- ============================================== -->
-    <div id="cross-summary" class="bg-gray-800 rounded-2xl p-4 mb-5 shadow-md border border-gray-700">
+    <div id="cross-summary" class="bg-gray-800 rounded-2xl p-4 mb-5 shadow-md border border-gray-700 transition-all duration-500">
       <div class="flex justify-between items-center mb-2">
         <h2 class="text-lg font-semibold text-green-400">📊 Cross Verification Summary</h2>
-        <button id="soundToggle"
-          class="bg-gray-700 hover:bg-gray-600 text-sm px-3 py-1 rounded-md">
+        <button id="soundToggle" class="bg-gray-700 hover:bg-gray-600 text-sm px-3 py-1 rounded-md">
           🔔 Sound: ON
         </button>
       </div>
@@ -105,11 +115,10 @@
   <!-- JAVASCRIPT SECTION -->
   <!-- ============================================== -->
   <script>
-  // ====================================
   // SOUND TOGGLE
-  // ====================================
   const soundToggle = document.getElementById('soundToggle');
   const alertSound = document.getElementById('alertSound');
+  const summaryBar = document.getElementById('cross-summary');
   let soundEnabled = localStorage.getItem('soundEnabled') !== 'false';
 
   function updateSoundButton() {
@@ -124,11 +133,8 @@
 
   updateSoundButton();
 
-  // ====================================
-  // CROSS VERIFICATION SUMMARY
-  // ====================================
+  // CROSS VERIFICATION
   let lastWarnCount = 0;
-
   async function loadCrossSummary() {
     try {
       const res = await fetch('/api/discrepancies');
@@ -142,10 +148,14 @@
       document.getElementById('cross-warn').textContent = `⚠️ Discrepancies: ${warn}`;
       document.getElementById('cross-miss').textContent = `🔴 Missing: ${miss}`;
 
+      // Trigger sound + blink if discrepancies increased
       if (warn > lastWarnCount && soundEnabled) {
         alertSound.currentTime = 0;
         alertSound.play().catch(() => {});
+        summaryBar.classList.add('blink-alert');
+        setTimeout(() => summaryBar.classList.remove('blink-alert'), 3000);
       }
+
       lastWarnCount = warn;
     } catch (e) {
       console.error('[CROSS_VERIFICATION] Error:', e);
@@ -155,9 +165,7 @@
   window.addEventListener('load', loadCrossSummary);
   setInterval(loadCrossSummary, 45000);
 
-  // ====================================
   // LIVE MATCHES REFRESH
-  // ====================================
   async function loadLive() {
     const tbody = document.getElementById('live-body');
     try {
@@ -180,13 +188,10 @@
       tbody.innerHTML = `<tr><td colspan="5" class="text-red-400 px-3 py-2">Error loading live data</td></tr>`;
     }
   }
-
   document.getElementById('refreshLive').addEventListener('click', loadLive);
   window.addEventListener('load', loadLive);
 
-  // ====================================
   // SMART MONEY MONITOR
-  // ====================================
   async function loadSmartMoney(auto = false) {
     const tbody = document.getElementById('smart-body');
     const timeEl = document.getElementById('lastUpdate');
