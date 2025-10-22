@@ -5,22 +5,34 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>EURO_GOALS Live Panel</title>
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <style>
+    /* Animation effect for Cross Verification summary changes */
+    .flash-change {
+      animation: flash 1s ease-in-out;
+    }
+    @keyframes flash {
+      0% { background-color: #2563eb; }
+      50% { background-color: #10b981; }
+      100% { background-color: transparent; }
+    }
+  </style>
 </head>
 
 <body class="bg-gray-950 text-gray-200 min-h-screen">
   <div class="max-w-6xl mx-auto py-8">
     <h1 class="text-3xl font-bold text-green-400 mb-6">⚽ EURO_GOALS Live Matches</h1>
-<!-- ============================================== -->
-<!-- CROSS VERIFICATION SUMMARY BAR -->
-<!-- ============================================== -->
-<div id="cross-summary" class="bg-gray-800 rounded-2xl p-4 mb-5 shadow-md border border-gray-700">
-  <h2 class="text-lg font-semibold mb-2 text-green-400">📊 Cross Verification Summary</h2>
-  <div class="grid grid-cols-3 gap-4 text-center text-sm font-semibold">
-    <div id="cross-ok" class="bg-green-900 p-2 rounded-lg shadow-inner">✅ Synced: —</div>
-    <div id="cross-warn" class="bg-yellow-900 p-2 rounded-lg shadow-inner">⚠️ Discrepancies: —</div>
-    <div id="cross-miss" class="bg-red-900 p-2 rounded-lg shadow-inner">🔴 Missing: —</div>
-  </div>
-</div>
+
+    <!-- ============================================== -->
+    <!-- CROSS VERIFICATION SUMMARY BAR -->
+    <!-- ============================================== -->
+    <div id="cross-summary" class="bg-gray-800 rounded-2xl p-4 mb-5 shadow-md border border-gray-700">
+      <h2 class="text-lg font-semibold mb-2 text-green-400">📊 Cross Verification Summary</h2>
+      <div class="grid grid-cols-3 gap-4 text-center text-sm font-semibold">
+        <div id="cross-ok" class="bg-green-900 p-2 rounded-lg shadow-inner transition-all">✅ Synced: —</div>
+        <div id="cross-warn" class="bg-yellow-900 p-2 rounded-lg shadow-inner transition-all">⚠️ Discrepancies: —</div>
+        <div id="cross-miss" class="bg-red-900 p-2 rounded-lg shadow-inner transition-all">🔴 Missing: —</div>
+      </div>
+    </div>
 
     <!-- ============================================== -->
     <!-- LIVE MATCHES SECTION -->
@@ -88,6 +100,42 @@
   <!-- ============================================== -->
   <script>
   // ==============================
+  // CROSS VERIFICATION SUMMARY
+  // ==============================
+  async function loadCrossSummary() {
+    try {
+      const res = await fetch('/api/discrepancies');
+      const data = await res.json();
+
+      const ok = data.summary?.ok ?? 0;
+      const warn = data.summary?.discrepancies ?? 0;
+      const miss = data.summary?.missing ?? 0;
+
+      const okEl = document.getElementById('cross-ok');
+      const warnEl = document.getElementById('cross-warn');
+      const missEl = document.getElementById('cross-miss');
+
+      // Animation when value changes
+      [okEl, warnEl, missEl].forEach(el => el.classList.remove('flash-change'));
+      void okEl.offsetWidth; // force reflow
+      okEl.classList.add('flash-change');
+      warnEl.classList.add('flash-change');
+      missEl.classList.add('flash-change');
+
+      okEl.textContent = `✅ Synced: ${ok}`;
+      warnEl.textContent = `⚠️ Discrepancies: ${warn}`;
+      missEl.textContent = `🔴 Missing: ${miss}`;
+    } catch (e) {
+      console.error('[CROSS_VERIFICATION] Error:', e);
+      document.getElementById('cross-ok').textContent = '❌ Feed Error';
+      document.getElementById('cross-warn').textContent = '-';
+      document.getElementById('cross-miss').textContent = '-';
+    }
+  }
+  window.addEventListener('load', loadCrossSummary);
+  setInterval(loadCrossSummary, 45000);
+
+  // ==============================
   // LIVE MATCHES REFRESH
   // ==============================
   async function loadLive() {
@@ -112,7 +160,6 @@
       tbody.innerHTML = `<tr><td colspan="5" class="text-red-400 px-3 py-2">Error loading live data</td></tr>`;
     }
   }
-
   document.getElementById('refreshLive').addEventListener('click', loadLive);
   window.addEventListener('load', loadLive);
 
@@ -122,20 +169,16 @@
   async function loadSmartMoney(auto = false) {
     const tbody = document.getElementById('smart-body');
     const timeEl = document.getElementById('lastUpdate');
-
     try {
       const response = await fetch('/api/smart_money/test');
       const data = await response.json();
-
       tbody.innerHTML = '';
-
       data.results.forEach(r => {
         const row = document.createElement('tr');
         let bgColor = '';
         if (r.flag.includes('STRONG_SMART')) bgColor = 'bg-orange-900';
         else if (r.flag.includes('SMART')) bgColor = 'bg-green-900';
         else bgColor = 'bg-gray-800';
-
         row.className = `${bgColor} border-b border-gray-700 hover:bg-gray-700 transition`;
         row.innerHTML = `
           <td class="px-3 py-2">${r.match}</td>
@@ -145,7 +188,6 @@
         `;
         tbody.appendChild(row);
       });
-
       const now = new Date().toLocaleTimeString();
       timeEl.textContent = "Last update: " + now;
     } catch (e) {
@@ -153,61 +195,9 @@
         `<tr><td colspan="4" class="text-red-400 px-3 py-2">Error loading data: ${e}</td></tr>`;
     }
   }
-
-  // Manual refresh
   document.getElementById('refreshSmart').addEventListener('click', () => loadSmartMoney(false));
-
-  // Auto-refresh every 30s
   setInterval(() => loadSmartMoney(true), 30000);
-
-  // Load on page start
   window.addEventListener('load', () => loadSmartMoney(true));
-// ==============================
-// CROSS VERIFICATION SUMMARY
-// ==============================
-async function loadCrossSummary() {
-  try {
-    const res = await fetch('/api/discrepancies');
-    const data = await res.json();
-
-    async function loadCrossSummary() {
-  try {
-    const res = await fetch('/api/discrepancies');
-   const data = await res.json();
-
-    const ok = data.summary?.ok ?? 0;
-    const warn = data.summary?.discrepancies ?? 0;
-    const miss = data.summary?.missing ?? 0;
-
-    document.getElementById('cross-ok').textContent = `✅ Synced: ${ok}`;
-    document.getElementById('cross-warn').textContent = `⚠️ Discrepancies: ${warn}`;
-    document.getElementById('cross-miss').textContent = `🔴 Missing: ${miss}`;
-  } catch (e) {
-    console.error('[CROSS_VERIFICATION] Error:', e);
-    document.getElementById('cross-ok').textContent = '❌ Feed Error';
-    document.getElementById('cross-warn').textContent = '-';
-    document.getElementById('cross-miss').textContent = '-';
-  }
-}
-
-    const warn = data.summary?.discrepancies ?? 0;
-    const miss = data.summary?.missing ?? 0;
-
-    document.getElementById('cross-ok').textContent = `✅ Synced: ${ok}`;
-    document.getElementById('cross-warn').textContent = `⚠️ Discrepancies: ${warn}`;
-    document.getElementById('cross-miss').textContent = `🔴 Missing: ${miss}`;
-  } catch (e) {
-    console.error('[CROSS_VERIFICATION] Error:', e);
-    document.getElementById('cross-ok').textContent = "❌ Feed Error";
-    document.getElementById('cross-warn').textContent = "-";
-    document.getElementById('cross-miss').textContent = "-";
-  }
-}
-
-// Run once on page load + refresh every 45s
-window.addEventListener('load', loadCrossSummary);
-setInterval(loadCrossSummary, 45000);
-
   </script>
 </body>
 </html>
