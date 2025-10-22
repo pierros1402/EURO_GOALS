@@ -1,166 +1,64 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>EURO_GOALS v7</title>
-    <link rel="icon" type="image/x-icon" href="/static/EURO_GOALS.ico">
-    <style>
-        body {
-            background-color: #121212;
-            color: #e0e0e0;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            text-align: center;
-            margin: 0;
-            padding: 0;
-        }
-        h1 {
-            color: #00c853;
-            margin-top: 30px;
-            font-size: 2em;
-        }
-        p.version {
-            color: #aaa;
-            font-size: 0.9em;
-        }
-        .button-container {
-            margin-top: 40px;
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: center;
-            gap: 15px;
-        }
-        button {
-            background-color: #00c853;
-            color: white;
-            border: none;
-            padding: 12px 22px;
-            border-radius: 10px;
-            font-size: 1em;
-            cursor: pointer;
-            transition: background-color 0.2s ease-in-out, transform 0.1s;
-            box-shadow: 0 3px 6px rgba(0, 0, 0, 0.3);
-        }
-        button:hover {
-            background-color: #009624;
-            transform: scale(1.05);
-        }
-        hr {
-            border: 0;
-            height: 1px;
-            background-color: #333;
-            width: 60%;
-            margin: 30px auto;
-        }
-        .footer {
-            margin-top: 40px;
-            font-size: 0.8em;
-            color: #777;
-        }
-
-        /* -------- System Monitor Styles -------- */
-        .monitor {
-            background: #1e1e1e;
-            border-radius: 12px;
-            padding: 20px;
-            width: 80%;
-            max-width: 700px;
-            margin: 30px auto;
-            text-align: left;
-            box-shadow: 0 0 15px rgba(0,0,0,0.3);
-        }
-        .monitor h2 {
-            color: #00e676;
-            text-align: center;
-            margin-top: 0;
-        }
-        .status {
-            display: flex;
-            justify-content: space-between;
-            padding: 6px 0;
-            font-size: 0.95em;
-        }
-        .ok { color: #00e676; }
-        .warn { color: #ffeb3b; }
-        .err { color: #ff5252; }
-        .timestamp {
-            font-size: 0.85em;
-            color: #999;
-            text-align: center;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EURO_GOALS v7.9 – Dashboard</title>
+  <link rel="stylesheet" href="/static/style.css">
+  <style>
+    body {
+      background-color: #121212;
+      color: #e0e0e0;
+      font-family: "Segoe UI", Arial, sans-serif;
+      text-align: center;
+      margin: 0;
+      padding: 40px;
+    }
+    h1 {
+      color: #00ff91;
+      margin-bottom: 20px;
+    }
+    .menu {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      margin-bottom: 40px;
+    }
+    .menu-btn {
+      background: #00c896;
+      color: #000;
+      padding: 10px 18px;
+      border-radius: 8px;
+      text-decoration: none;
+      font-weight: bold;
+      transition: 0.2s;
+    }
+    .menu-btn:hover {
+      background: #00ffb0;
+    }
+    footer {
+      margin-top: 60px;
+      font-size: 13px;
+      opacity: 0.6;
+    }
+  </style>
 </head>
 <body>
-    <h1>🏆 EURO_GOALS v7 Platform</h1>
-    <p class="version">Live Feeds • Smart Money • Auto Backups</p>
 
-    <!-- 🔍 SYSTEM MONITOR PANEL -->
-    <div class="monitor" id="monitor">
-        <h2>🩺 System Monitor</h2>
-        <div class="status"><span>Database:</span> <span id="db_status">Checking...</span></div>
-        <div class="status"><span>Live Matches:</span> <span id="db_matches">...</span></div>
-        <div class="status"><span>Sofascore API:</span> <span id="api_status">...</span></div>
-        <div class="status"><span>Threads:</span> <span id="threads_status">...</span></div>
-        <div class="timestamp" id="last_update">Last check: -</div>
-        <button onclick="refreshStatus()">🔄 Refresh</button>
-    </div>
+  <h1>⚽ EURO_GOALS v7.9</h1>
 
-    <div class="button-container">
-        <!-- Navigation Buttons -->
-        <button onclick="window.location.href='/api/live_scores'">📊 API: Live Scores (JSON)</button>
-        <button onclick="window.location.href='/live'">⚽ LIVE MATCHES</button>
-        <button onclick="window.location.href='/smart-money'">💰 Smart Money Detector</button>
-        <button onclick="window.location.href='/backups'">💾 Backups</button>
-        <button onclick="window.location.href='/settings'">⚙️ Settings</button>
-        <button onclick="window.close()">🚪 Exit</button>
-    </div>
+  <div class="menu">
+    <a href="/" class="menu-btn">🏠 Home</a>
+    <a href="/live" class="menu-btn">📡 Live Feed</a>
+    <a href="/alerts" class="menu-btn">📋 Alert History</a>
+  </div>
 
-    <hr>
+  <h3>Welcome to EURO_GOALS Analytics</h3>
+  <p>Navigate through live data, smart money detections, and historical alerts.</p>
 
-    <div class="footer">
-        <p>EURO_GOALS v7 © 2025 — Auto Live Mode (Sofascore + Flashscore Integration)</p>
-    </div>
+  <footer>
+    © 2025 EURO_GOALS | Version 7.9 – Filterable Alert History
+  </footer>
 
-    <!-- -------- JS for System Monitor -------- -->
-    <script>
-        async function refreshStatus() {
-            try {
-                const response = await fetch('/api/system_check');
-                const data = await response.json();
-
-                // Database
-                document.getElementById('db_status').innerText = data.database.connected ? 'Connected' : 'Disconnected';
-                document.getElementById('db_status').className = data.database.connected ? 'ok' : 'err';
-                document.getElementById('db_matches').innerText = data.database.live_matches || 0;
-
-                // API
-                const api = data.feeds.sofascore_api;
-                if (api.includes('error')) {
-                    document.getElementById('api_status').innerText = api;
-                    document.getElementById('api_status').className = 'warn';
-                } else {
-                    document.getElementById('api_status').innerText = 'OK';
-                    document.getElementById('api_status').className = 'ok';
-                }
-
-                // Threads
-                const threadsOK = Object.values(data.threads).every(v => v === 'running' || v === 'ok');
-                document.getElementById('threads_status').innerText = threadsOK ? 'All Running' : 'Check Threads';
-                document.getElementById('threads_status').className = threadsOK ? 'ok' : 'warn';
-
-                // Timestamp
-                document.getElementById('last_update').innerText = "Last check: " + data.timestamp;
-            } catch (e) {
-                document.getElementById('db_status').innerText = "Error";
-                document.getElementById('api_status').innerText = "Error fetching";
-                document.getElementById('threads_status').innerText = "N/A";
-                document.getElementById('db_status').className = 'err';
-                document.getElementById('api_status').className = 'err';
-            }
-        }
-
-        // Auto refresh every 60 seconds
-        refreshStatus();
-        setInterval(refreshStatus, 60000);
-    </script>
 </body>
 </html>
