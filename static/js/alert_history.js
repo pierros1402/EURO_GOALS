@@ -1,8 +1,26 @@
 // =========================================================
-// EURO_GOALS v7.9 – Alert History JS
+// EURO_GOALS v7.9b – Alert History JS (Advanced Filters)
 // =========================================================
-// Φόρτωση & φιλτράρισμα ειδοποιήσεων (alerts)
-// =========================================================
+
+async function fetchLeagues() {
+  try {
+    const res = await fetch("/api/alerts/leagues");
+    const data = await res.json();
+    const sel = document.getElementById("filter-league");
+    // καθάρισε τυχόν προηγούμενα
+    sel.innerHTML = `<option value="">All Leagues</option>`;
+    if (data && Array.isArray(data.leagues)) {
+      data.leagues.forEach(lg => {
+        const opt = document.createElement("option");
+        opt.value = lg;
+        opt.textContent = lg;
+        sel.appendChild(opt);
+      });
+    }
+  } catch (e) {
+    console.error("Failed to load leagues:", e);
+  }
+}
 
 async function loadAlerts() {
   const type = document.getElementById("filter-type").value;
@@ -10,45 +28,43 @@ async function loadAlerts() {
   const from = document.getElementById("filter-from").value;
   const to = document.getElementById("filter-to").value;
 
-  // Δημιουργία URL με παραμέτρους φίλτρου
   let url = `/api/alerts?`;
   if (type) url += `type=${encodeURIComponent(type)}&`;
   if (league) url += `league=${encodeURIComponent(league)}&`;
   if (from) url += `date_from=${from}&`;
   if (to) url += `date_to=${to}&`;
 
-  // Φόρτωση δεδομένων από API
+  const tbody = document.querySelector("#alerts-table tbody");
+  tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; opacity:.7;">Loading...</td></tr>`;
+
   try {
     const res = await fetch(url);
     const data = await res.json();
-    const tbody = document.querySelector("#alerts-table tbody");
-    tbody.innerHTML = "";
 
+    tbody.innerHTML = "";
     if (!Array.isArray(data) || data.length === 0) {
       const empty = document.createElement("tr");
-      empty.innerHTML = `<td colspan="4" style="text-align:center; opacity:0.6;">No alerts found</td>`;
+      empty.innerHTML = `<td colspan="4" style="text-align:center; opacity:.6;">No alerts found</td>`;
       tbody.appendChild(empty);
       return;
     }
 
-    data.forEach(alert => {
-      const row = document.createElement("tr");
-      row.innerHTML = `
-        <td>${alert.timestamp}</td>
-        <td>${alert.type}</td>
-        <td>${alert.league || "-"}</td>
-        <td>${alert.message}</td>
+    data.forEach(a => {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td>${a.timestamp}</td>
+        <td>${a.type || "-"}</td>
+        <td>${a.league || "-"}</td>
+        <td>${a.message || ""}</td>
       `;
-      tbody.appendChild(row);
+      tbody.appendChild(tr);
     });
   } catch (err) {
     console.error("Error loading alerts:", err);
+    tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:#ff6b6b;">Error loading alerts</td></tr>`;
   }
 }
 
-// ---------------------------------------------------------
-// Κουμπιά φίλτρου & καθαρισμού
-// ---------------------------------------------------------
 document.getElementById("filter-btn").addEventListener("click", loadAlerts);
 
 document.getElementById("clear-btn").addEventListener("click", () => {
@@ -59,7 +75,7 @@ document.getElementById("clear-btn").addEventListener("click", () => {
   loadAlerts();
 });
 
-// ---------------------------------------------------------
-// Αυτόματη φόρτωση με το άνοιγμα της σελίδας
-// ---------------------------------------------------------
-window.addEventListener("DOMContentLoaded", loadAlerts);
+window.addEventListener("DOMContentLoaded", async () => {
+  await fetchLeagues();
+  await loadAlerts();
+});

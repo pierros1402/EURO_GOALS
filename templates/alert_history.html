@@ -2,7 +2,8 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Alert History</title>
+  <title>EURO_GOALS v7.9b – Alert History</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link rel="stylesheet" href="/static/css/alert_history.css">
 </head>
 <body>
@@ -19,34 +20,38 @@
       <option value="API">API</option>
     </select>
 
-    <input type="text" id="filter-league" placeholder="League (π.χ. Premier League)">
-    <input type="date" id="filter-from">
-    <input type="date" id="filter-to">
-    <button id="filter-btn" class="btn">🔍 Filter</button>
-    <button id="clear-btn" class="btn-clear">🧹 Clear</button>
+    <select id="filter-league">
+      <option value="">All Leagues</option>
+      <!-- γεμίζει δυναμικά -->
+    </select>
+
+    <input type="date" id="filter-from" />
+    <input type="date" id="filter-to" />
+
+    <button id="filter-btn" class="btn">🔍 Apply Filter</button>
+    <button id="clear-btn" class="btn-clear">🧹 Reset</button>
   </div>
 
   <!-- Πίνακας -->
   <table id="alerts-table">
     <thead>
       <tr>
-        <th>Time</th>
-        <th>Type</th>
-        <th>League</th>
+        <th style="min-width:140px;">Time</th>
+        <th style="min-width:120px;">Type</th>
+        <th style="min-width:160px;">League</th>
         <th>Message</th>
       </tr>
     </thead>
     <tbody>
-      <!-- Δυναμικά δεδομένα από alert_history.js -->
+      <!-- γεμίζει δυναμικά -->
     </tbody>
   </table>
 
   <div class="note">
-    <p>⚙️ Last 300 alerts displayed. Use filters above to narrow results.</p>
+    <p>⚙️ Showing up to last 300 alerts. Combine filters to narrow results.</p>
   </div>
 </div>
 
 <script src="/static/js/alert_history.js"></script>
-
 </body>
 </html>
