@@ -1,132 +1,102 @@
+<!-- ==========================================
+     EURO_GOALS v7.9f – Main Dashboard
+     ========================================== -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>EURO_GOALS v7.9</title>
-  <link rel="icon" type="image/x-icon" href="/static/icons/ball.png">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>EURO_GOALS v7.9f</title>
   <style>
     body {
-      background-color: #0f0f0f;
+      background-color: #0e1117;
       color: #e8e8e8;
-      font-family: 'Segoe UI', sans-serif;
-      text-align: center;
+      font-family: "Segoe UI", Arial, sans-serif;
       margin: 0;
       padding: 0;
     }
-    h1 {
-      color: #00ff9d;
-      font-size: 2.2em;
-      margin-top: 35px;
+    header {
+      background-color: #1c1f26;
+      padding: 16px;
+      text-align: center;
+      font-size: 1.6em;
+      border-bottom: 2px solid #2e3340;
+      font-weight: bold;
+    }
+    main {
+      max-width: 900px;
+      margin: 30px auto;
+      padding: 20px;
+      text-align: center;
     }
     .menu {
-      margin-top: 40px;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 12px;
+      margin-top: 20px;
     }
     .menu-btn {
-      display: inline-block;
-      margin: 10px;
-      background-color: #00c896;
-      color: #000;
-      font-weight: bold;
-      text-decoration: none;
-      border-radius: 14px;
-      padding: 12px 24px;
-      transition: background 0.3s;
+      background-color: #3b82f6;
+      border: none;
+      border-radius: 8px;
+      color: white;
+      font-size: 16px;
+      padding: 12px 18px;
+      cursor: pointer;
+      transition: 0.25s;
     }
     .menu-btn:hover {
-      background-color: #00e6a7;
+      background-color: #2563eb;
+      transform: translateY(-2px);
     }
     footer {
-      margin-top: 60px;
-      color: #777;
-      font-size: 0.9em;
+      text-align: center;
+      color: #8a8f9d;
+      font-size: 13px;
+      margin-top: 40px;
+    }
+    .version {
+      color: #5ebcff;
     }
   </style>
 </head>
 <body>
-  <h1>⚽ EURO_GOALS v7.9</h1>
+  <header>⚽ EURO_GOALS v7.9f Dashboard</header>
 
-  <div class="menu">
-    <a href="/" class="menu-btn">🏠 Home</a>
-    <a href="/live" class="menu-btn">📡 Live Feed</a>
-    <a href="/alerts" class="menu-btn">📋 Alert History</a>
-  </div>
-
-  <!-- ===================================================== -->
-  <!-- TEST NOTIFICATION BUTTON (v7.9e) -->
-  <!-- ===================================================== -->
-  <div id="notification-test" style="margin-top: 25px; text-align: center;">
-    <button id="btnNotifyTest"
-            style="background-color:#00c896;
-                   color:#000;
-                   border:none;
-                   padding:12px 24px;
-                   border-radius:14px;
-                   cursor:pointer;
-                   font-weight:600;
-                   font-size:15px;
-                   font-family:'Segoe UI',sans-serif;
-                   transition:background 0.3s;">
-      🔔 Test Browser Notification
-    </button>
-  </div>
-
-  <script>
-  document.addEventListener("DOMContentLoaded", function() {
-    const btn = document.getElementById("btnNotifyTest");
-
-    if (btn) {
-      btn.addEventListener("mouseover", () => {
-        btn.style.backgroundColor = "#00e6a7";
-      });
-      btn.addEventListener("mouseout", () => {
-        btn.style.backgroundColor = "#00c896";
-      });
-
-      btn.addEventListener("click", () => {
-        if (Notification.permission !== "granted") {
-          Notification.requestPermission().then(permission => {
-            if (permission !== "granted") {
-              alert("⚠️ Please allow notifications to test EURO_GOALS alerts.");
-              return;
-            }
-            sendTestNotification();
-          });
-        } else {
-          sendTestNotification();
-        }
-      });
-    }
-
-    function sendTestNotification() {
-      try {
-        if ("Notification" in window) {
-          const notification = new Notification("EURO_GOALS Test", {
-            body: "Browser notifications now active!",
-            icon: "/static/icons/ball.png",
-            tag: "eg-test"
-          });
-
-          // Παίζει ήχο ειδοποίησης
-          const sound = new Audio("/static/sounds/alert.mp3");
-          sound.play();
-
-          notification.onclick = function() {
-            window.open("/live", "_blank");
-          };
-        } else {
-          alert("❌ Browser does not support notifications.");
-        }
-      } catch (e) {
-        console.error("Notification test error:", e);
-      }
-    }
-  });
-  </script>
+  <main>
+    <p>Καλώς ήρθες στο EURO_GOALS! Επέλεξε λειτουργία:</p>
+    <div class="menu">
+      <button class="menu-btn" onclick="window.location.href='/live'">📡 Live Center</button>
+      <button class="menu-btn" onclick="window.location.href='/alert_history'">📋 Alert History</button>
+      <button class="menu-btn" onclick="testNotify()">🔔 Test Notification</button>
+    </div>
+  </main>
 
   <footer>
-    <hr style="width:60%;border:0.5px solid #222;">
-    <p>© 2025 EURO_GOALS | Version 7.9e – Browser Notifications</p>
+    <p class="version">EURO_GOALS Platform – Build v7.9f</p>
+    <p>© 2025 Pierros Analytics</p>
   </footer>
+
+  <script>
+    async function testNotify() {
+      try {
+        const res = await fetch("/notify", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            title: "Test Alert",
+            body: "Notification test from EURO_GOALS Dashboard 🔔",
+            icon: "/static/icons/ball.png",
+          }),
+        });
+        const data = await res.json();
+        alert("✅ Test notification sent!\n" + data.data.title);
+      } catch (err) {
+        alert("❌ Error sending test notification");
+        console.error(err);
+      }
+    }
+  </script>
 </body>
 </html>
