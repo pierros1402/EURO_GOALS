@@ -1,5 +1,6 @@
 # ==============================================
-# EURO_GOALS v7.9f – FastAPI Backend (Notifications + Alerts + UI)
+# EURO_GOALS v7.9f – FastAPI Backend
+# (Notifications + Alerts + Live Center)
 # ==============================================
 from fastapi import FastAPI, Request
 from fastapi.responses import FileResponse, JSONResponse, HTMLResponse, PlainTextResponse
@@ -102,8 +103,6 @@ def startup_event():
 # ==========================================================
 # ALERTS ENDPOINTS (Smart Money / Asian Reader / Notifications)
 # ==========================================================
-from datetime import datetime
-
 alerts = []  # προσωρινή λίστα ειδοποιήσεων
 
 @app.post("/api/add_alert")
@@ -170,3 +169,46 @@ async def alert_history(request: Request):
     Εμφανίζει το Alert History UI από τα templates.
     """
     return templates.TemplateResponse("alert_history.html", {"request": request})
+
+# ==========================================================
+# LIVE ODDS ENDPOINT (demo feed – για το live.html)
+# ==========================================================
+@app.get("/api/live_odds")
+async def live_odds():
+    """
+    Επιστρέφει προσωρινά demo δεδομένα για το Live Center.
+    Στην τελική μορφή θα διαβάζει από τις real-time πηγές
+    (Flashscore, Sofascore, Betfair, Asian odds).
+    """
+    try:
+        sample_data = [
+            {
+                "league": "Premier League",
+                "home": "Chelsea",
+                "away": "Arsenal",
+                "odds": "1.85 / 3.40 / 4.20"
+            },
+            {
+                "league": "La Liga",
+                "home": "Real Madrid",
+                "away": "Barcelona",
+                "odds": "2.10 / 3.25 / 3.60"
+            },
+            {
+                "league": "Bundesliga",
+                "home": "Bayern Munich",
+                "away": "Dortmund",
+                "odds": "1.70 / 3.80 / 4.60"
+            },
+            {
+                "league": "Super League Greece",
+                "home": "Olympiakos",
+                "away": "PAOK",
+                "odds": "2.05 / 3.10 / 3.80"
+            }
+        ]
+        print(f"[LIVE] ✅ Sent {len(sample_data)} live matches.")
+        return sample_data
+    except Exception as e:
+        print(f"[LIVE] ❌ Error generating live odds: {e}")
+        return []
