@@ -1,51 +1,129 @@
+<!-- ==========================================
+     EURO_GOALS v7.9f – Alert History Center
+     ========================================== -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>EURO_GOALS v7.9c – Alert History</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <link rel="stylesheet" href="/static/css/alert_history.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EURO_GOALS – Alert History</title>
+    <style>
+        body {
+            background-color: #0e1117;
+            color: #e8e8e8;
+            font-family: "Segoe UI", Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+        header {
+            background-color: #1c1f26;
+            padding: 16px;
+            text-align: center;
+            font-size: 1.5em;
+            border-bottom: 2px solid #2e3340;
+        }
+        .container {
+            padding: 20px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .alert {
+            background-color: #1e232b;
+            border-left: 5px solid #4fa3ff;
+            padding: 12px 16px;
+            margin-bottom: 10px;
+            border-radius: 8px;
+            box-shadow: 0 0 5px rgba(0,0,0,0.3);
+            animation: fadeIn 0.4s ease;
+        }
+        .alert p {
+            margin: 0;
+            font-size: 15px;
+        }
+        .timestamp {
+            font-size: 12px;
+            color: #9da5b4;
+            margin-top: 4px;
+        }
+        .source {
+            font-size: 12px;
+            font-style: italic;
+            color: #5ebcff;
+        }
+        #controls {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+        button {
+            background-color: #3b82f6;
+            border: none;
+            border-radius: 6px;
+            padding: 8px 12px;
+            color: white;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        button:hover {
+            background-color: #2563eb;
+        }
+        @keyframes fadeIn {
+            from {opacity: 0; transform: translateY(10px);}
+            to {opacity: 1; transform: translateY(0);}
+        }
+    </style>
 </head>
 <body>
+    <header>📋 EURO_GOALS Alert History</header>
+    <div class="container">
+        <div id="controls">
+            <button onclick="loadAlerts()">🔄 Refresh</button>
+            <button onclick="clearAlerts()">🧹 Clear Alerts</button>
+        </div>
+        <div id="alerts"></div>
+    </div>
 
-<div class="alert-history-container">
-  <h2 class="title">📋 Alert History</h2>
+    <script>
+        async function loadAlerts() {
+            const container = document.getElementById("alerts");
+            container.innerHTML = "<p>Loading alerts...</p>";
+            try {
+                const res = await fetch("/alerts");
+                const data = await res.json();
+                container.innerHTML = "";
 
-  <!-- Φίλτρα -->
-  <div class="filters">
-    <select id="filter-type">
-      <option value="">All Types</option>
-      <option value="SmartMoney">Smart Money</option>
-      <option value="LiveFeed">Live Feed</option>
-      <option value="API">API</option>
-    </select>
+                if (!data.alerts || data.alerts.length === 0) {
+                    container.innerHTML = "<p>No alerts found.</p>";
+                    return;
+                }
 
-    <select id="filter-league">
-      <option value="">All Leagues</option>
-    </select>
+                data.alerts.slice().reverse().forEach(a => {
+                    const div = document.createElement("div");
+                    div.className = "alert";
+                    div.innerHTML = `
+                        <p>${a.message}</p>
+                        <div class="timestamp">${a.timestamp}</div>
+                        <div class="source">Source: ${a.source}</div>
+                    `;
+                    container.appendChild(div);
+                });
+            } catch (err) {
+                container.innerHTML = "<p style='color:red;'>Error loading alerts.</p>";
+                console.error(err);
+            }
+        }
 
-    <input type="date" id="filter-from" />
-    <input type="date" id="filter-to" />
+        async function clearAlerts() {
+            if (!confirm("Clear all alerts?")) return;
+            await fetch("/api/clear_alerts", { method: "DELETE" });
+            loadAlerts();
+        }
 
-    <button id="filter-btn" class="btn">🔍 Apply</button>
-    <button id="clear-btn" class="btn-clear">🧹 Reset</button>
-    <button id="export-btn" class="btn-export">📊 Export to Excel</button>
-  </div>
+        // Auto-refresh every 15 seconds
+        setInterval(loadAlerts, 15000);
 
-  <table id="alerts-table">
-    <thead>
-      <tr>
-        <th>Time</th><th>Type</th><th>League</th><th>Message</th>
-      </tr>
-    </thead>
-    <tbody></tbody>
-  </table>
-
-  <div class="note">
-    ⚙️ Filter and export your alert history.
-  </div>
-</div>
-
-<script src="/static/js/alert_history.js"></script>
+        // Load immediately on page open
+        loadAlerts();
+    </script>
 </body>
 </html>

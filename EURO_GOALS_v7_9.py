@@ -1,5 +1,5 @@
 # ==============================================
-# EURO_GOALS v7.9e – FastAPI Backend (Notifications + Alerts)
+# EURO_GOALS v7.9f – FastAPI Backend (Notifications + Alerts + UI)
 # ==============================================
 from fastapi import FastAPI, Request
 from fastapi.responses import FileResponse, JSONResponse, HTMLResponse, PlainTextResponse
@@ -14,7 +14,7 @@ import os
 # -------------------------
 # App & Templates
 # -------------------------
-app = FastAPI(title="EURO_GOALS v7.9e")
+app = FastAPI(title="EURO_GOALS v7.9f")
 templates = Jinja2Templates(directory="templates")
 
 if not os.path.exists("static"):
@@ -83,7 +83,7 @@ async def notify(payload: NotifyPayload):
 # -------------------------
 @app.get("/api/health")
 async def health():
-    return {"status": "ok", "version": "7.9e"}
+    return {"status": "ok", "version": "7.9f"}
 
 # -------------------------
 # Startup Event (DB Meta Table)
@@ -97,15 +97,14 @@ def startup_event():
                 value TEXT
             )
         """))
-    print("[SYSTEM] ✅ EURO_GOALS v7.9e started successfully.")
+    print("[SYSTEM] ✅ EURO_GOALS v7.9f started successfully.")
 
 # ==========================================================
 # ALERTS ENDPOINTS (Smart Money / Asian Reader / Notifications)
 # ==========================================================
 from datetime import datetime
 
-# Προσωρινή λίστα ειδοποιήσεων (στη μνήμη)
-alerts = []
+alerts = []  # προσωρινή λίστα ειδοποιήσεων
 
 @app.post("/api/add_alert")
 async def add_alert(request: Request):
@@ -161,3 +160,13 @@ async def clear_alerts():
     except Exception as e:
         print(f"[ALERT] ❌ Error clearing alerts: {e}")
         return {"status": "error", "details": str(e)}
+
+# -------------------------
+# Alert History Page
+# -------------------------
+@app.get("/alert_history", response_class=HTMLResponse)
+async def alert_history(request: Request):
+    """
+    Εμφανίζει το Alert History UI από τα templates.
+    """
+    return templates.TemplateResponse("alert_history.html", {"request": request})
