@@ -1,142 +1,176 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>EURO_GOALS – Alert Center</title>
-    <link rel="icon" href="/static/icons/ball.png">
-    <style>
-        body {
-            background-color: #0d1117;
-            color: #e6edf3;
-            font-family: "Segoe UI", sans-serif;
-            margin: 0;
-            padding: 20px;
-        }
-        h1 {
-            color: #58a6ff;
-            text-align: center;
-            margin-bottom: 15px;
-        }
-        #filterBar {
-            display: flex;
-            justify-content: center;
-            gap: 10px;
-            margin-bottom: 20px;
-        }
-        button {
-            background-color: #21262d;
-            border: 1px solid #30363d;
-            color: #c9d1d9;
-            padding: 6px 14px;
-            border-radius: 6px;
-            cursor: pointer;
-            transition: 0.2s;
-        }
-        button:hover {
-            background-color: #30363d;
-        }
-        #alertContainer {
-            max-width: 850px;
-            margin: 0 auto;
-        }
-        .alert {
-            border-left: 5px solid #58a6ff;
-            background-color: #161b22;
-            margin-bottom: 10px;
-            padding: 12px 14px;
-            border-radius: 6px;
-            box-shadow: 0 0 8px rgba(0,0,0,0.3);
-            transition: 0.2s;
-        }
-        .alert:hover {
-            transform: scale(1.01);
-        }
-        .alert h3 {
-            margin: 0;
-            font-size: 16px;
-        }
-        .alert small {
-            color: #8b949e;
-        }
-        .alert.info { border-left-color: #58a6ff; }
-        .alert.warning { border-left-color: #f1c40f; }
-        .alert.danger { border-left-color: #e74c3c; }
-        .alert.success { border-left-color: #2ecc71; }
-        .empty {
-            text-align: center;
-            color: #8b949e;
-            margin-top: 40px;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EURO_GOALS – Alert Center</title>
+  <link rel="icon" type="image/x-icon" href="/static/euro_goals.ico">
+
+  <style>
+    body {
+      background-color: #111;
+      color: #eee;
+      font-family: "Segoe UI", sans-serif;
+      margin: 0;
+      padding: 20px;
+      text-align: center;
+    }
+
+    h1 {
+      color: #4da3ff;
+      font-size: 28px;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+    }
+
+    h1::before {
+      content: "📋";
+      font-size: 26px;
+    }
+
+    .filters {
+      margin-bottom: 25px;
+    }
+
+    button {
+      background-color: #222;
+      color: #ccc;
+      border: 1px solid #333;
+      padding: 8px 16px;
+      margin: 3px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+
+    button:hover {
+      background-color: #4da3ff;
+      color: #fff;
+    }
+
+    .alert-box {
+      background-color: #1b1b1b;
+      border-left: 6px solid #4da3ff;
+      margin: 10px auto;
+      padding: 10px 15px;
+      width: 90%;
+      border-radius: 8px;
+      text-align: left;
+      transition: 0.3s;
+    }
+
+    .alert-box.warning {
+      border-left: 6px solid #ffae00;
+    }
+
+    .alert-box.danger {
+      border-left: 6px solid #ff4444;
+    }
+
+    .alert-box.success {
+      border-left: 6px solid #00c851;
+    }
+
+    .alert-box.smartmoney {
+      border-left: 6px solid #ffaa33;
+      background: linear-gradient(to right, #1b1b1b, #1b1b1b 85%, rgba(255,170,51,0.1));
+      box-shadow: 0 0 8px rgba(255,170,51,0.3);
+    }
+
+    .alert-title {
+      font-weight: bold;
+      font-size: 15px;
+      color: #fff;
+    }
+
+    .alert-meta {
+      font-size: 12px;
+      color: #aaa;
+      margin-top: 3px;
+    }
+
+    .no-alerts {
+      color: #777;
+      font-size: 14px;
+      margin-top: 20px;
+    }
+
+    .smart-icon {
+      margin-right: 5px;
+    }
+
+  </style>
 </head>
 <body>
-    <h1>📋 EURO_GOALS – Alert Center</h1>
 
-    <div id="filterBar">
-        <button onclick="filterAlerts('all')">All</button>
-        <button onclick="filterAlerts('info')">Info</button>
-        <button onclick="filterAlerts('warning')">Warning</button>
-        <button onclick="filterAlerts('danger')">Danger</button>
-        <button onclick="filterAlerts('success')">Success</button>
-        <button onclick="clearAlerts()">🧹 Clear</button>
-    </div>
+  <h1>EURO_GOALS – Alert Center</h1>
 
-    <div id="alertContainer">
-        <div class="empty">Loading alerts...</div>
-    </div>
+  <div class="filters">
+    <button onclick="filterAlerts('all')">All</button>
+    <button onclick="filterAlerts('info')">Info</button>
+    <button onclick="filterAlerts('warning')">Warning</button>
+    <button onclick="filterAlerts('danger')">Danger</button>
+    <button onclick="filterAlerts('success')">Success</button>
+    <button onclick="filterAlerts('smartmoney')">💰 Smart Money</button>
+    <button onclick="clearAlerts()">🧹 Clear</button>
+  </div>
 
-    <script>
-        let alerts = [];
+  <div id="alerts-container"></div>
 
-        async function loadAlerts() {
-            try {
-                const res = await fetch("/alerts");
-                const data = await res.json();
-                alerts = data.alerts || [];
-                renderAlerts(alerts);
-            } catch (err) {
-                document.getElementById("alertContainer").innerHTML =
-                    "<div class='empty'>Error loading alerts.</div>";
-            }
-        }
+  <script>
+    let allAlerts = [];
 
-        function renderAlerts(list) {
-            const container = document.getElementById("alertContainer");
-            container.innerHTML = "";
+    async function fetchAlerts() {
+      const res = await fetch('/api/alerts');
+      const data = await res.json();
+      allAlerts = data.alerts || [];
+      renderAlerts('all');
+    }
 
-            if (!list.length) {
-                container.innerHTML = "<div class='empty'>No alerts found.</div>";
-                return;
-            }
+    function renderAlerts(level) {
+      const container = document.getElementById('alerts-container');
+      container.innerHTML = '';
 
-            list.forEach(a => {
-                const div = document.createElement("div");
-                div.className = `alert ${a.level}`;
-                div.innerHTML = `
-                    <h3>${a.message}</h3>
-                    <small>${a.source || 'System'} • ${a.timestamp}</small>
-                `;
-                container.appendChild(div);
-            });
-        }
+      let filtered = level === 'all' ? allAlerts : allAlerts.filter(a => a.level === level);
+      if (filtered.length === 0) {
+        container.innerHTML = `<div class="no-alerts">No alerts found.</div>`;
+        return;
+      }
 
-        function filterAlerts(level) {
-            if (level === 'all') {
-                renderAlerts(alerts);
-            } else {
-                renderAlerts(alerts.filter(a => a.level === level));
-            }
-        }
+      filtered.forEach(a => {
+        let cls = "alert-box " + (a.level || 'info');
+        if (a.message.includes("Smart Money Detected")) cls += " smartmoney";
 
-        async function clearAlerts() {
-            if (!confirm("Clear all alerts?")) return;
-            await fetch("/api/clear_alerts", { method: "DELETE" });
-            alerts = [];
-            renderAlerts([]);
-        }
+        container.innerHTML += `
+          <div class="${cls}">
+            <div class="alert-title">
+              ${a.message.includes("Smart Money") ? "💰 " : ""}${a.message}
+            </div>
+            <div class="alert-meta">
+              ${a.source || 'System'} • ${a.timestamp ? a.timestamp.replace('T', ' ').slice(0, 19) : ''}
+            </div>
+          </div>
+        `;
+      });
+    }
 
-        loadAlerts();
-    </script>
+    async function clearAlerts() {
+      if (!confirm("Clear all alerts?")) return;
+      await fetch('/api/clear_alerts');
+      allAlerts = [];
+      renderAlerts('all');
+    }
+
+    function filterAlerts(level) {
+      renderAlerts(level);
+    }
+
+    // Αυτόματο refresh κάθε 10s
+    setInterval(fetchAlerts, 10000);
+    fetchAlerts();
+  </script>
 </body>
 </html>
