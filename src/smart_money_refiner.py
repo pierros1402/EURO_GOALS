@@ -1,36 +1,55 @@
 # ==============================================
-# EURO_GOALS v7.3 – Smart Money Refiner
+# SMART MONEY REFINER v8
+# Ανίχνευση “έξυπνου χρήματος” & αυτόματη ειδοποίηση
 # ==============================================
-# Author: Pier
-# Description:
-#   Combines Asian odds, Betfair data, and Flashscore
-#   to detect abnormal line movements (Smart Money)
-#   Currently runs in placeholder simulation mode.
 
-import json, random
+import requests
+import json
 from datetime import datetime
+from EURO_GOALS_v8 import add_alert_direct  # ✅ νέα εισαγωγή για απευθείας ειδοποιήσεις
 
-def refine_smart_money():
+def detect_smart_money():
     """
-    Placeholder logic: simulates a Smart Money scan.
-    Later: will read Betfair + Asian odds and flag abnormal drifts.
+    Ανιχνεύει ύποπτες μεταβολές αποδόσεων από κύριες πηγές (Pinnacle, SBOBET, 188BET)
+    και δημιουργεί ειδοποίηση στην βάση δεδομένων.
     """
-    print("[SMART MONEY REFINER] Running placeholder analysis...")
-    fake_results = [
-        {"match": "Liverpool - Arsenal", "betfair_drop": -0.12, "asian_drop": -0.05, "flag": "SMART"},
-        {"match": "PSG - Marseille", "betfair_drop": +0.08, "asian_drop": +0.02, "flag": "NEUTRAL"},
-        {"match": "Napoli - Inter", "betfair_drop": -0.18, "asian_drop": -0.02, "flag": "STRONG_SMART"},
-    ]
-    return {
-        "timestamp": datetime.now().isoformat(),
-        "count": len(fake_results),
-        "results": fake_results
-    }
+    print("[SMART MONEY] 🔍 Checking for suspicious odds movements...")
 
-# Optional: endpoint-style callable
-def get_smart_money_json():
-    data = refine_smart_money()
-    return json.dumps(data, indent=2)
+    try:
+        # 🔸 Προσωρινές ψεύτικες πηγές (θα αντικατασταθούν με κανονικά APIs)
+        sources = [
+            {"book": "Pinnacle", "match": "Chelsea vs Arsenal", "old": 1.92, "new": 1.78},
+            {"book": "SBOBET", "match": "Barcelona vs Atletico", "old": 2.05, "new": 1.98}
+        ]
 
+        detected = []
+
+        for s in sources:
+            # Αν η απόδοση έπεσε πάνω από 0.10 → Smart Money alert
+            if s["old"] - s["new"] >= 0.10:
+                change = round(s["old"] - s["new"], 2)
+                msg = f"Smart Money Detected – {s['book']}: {s['match']} odds moved {s['old']} → {s['new']} (Δ-{change})"
+                detected.append(msg)
+
+                # ✅ Δημιουργεί alert απευθείας στη βάση
+                add_alert_direct(msg, "SmartMoney", "warning")
+                print(f"[SMART MONEY] ⚠️ {msg}")
+
+        if not detected:
+            print("[SMART MONEY] ✅ No major movements detected.")
+        else:
+            print(f"[SMART MONEY] {len(detected)} Smart Money signals stored.")
+
+        return {"status": "ok", "count": len(detected), "alerts": detected}
+
+    except Exception as e:
+        print(f"[SMART MONEY] ❌ Error: {e}")
+        add_alert_direct(f"Smart Money module error: {e}", "SmartMoney", "danger")
+        return {"status": "error", "message": str(e)}
+
+# ------------------------------------------------
+# Manual test entry point (for local testing)
+# ------------------------------------------------
 if __name__ == "__main__":
-    print(get_smart_money_json())
+    result = detect_smart_money()
+    print(json.dumps(result, indent=2, ensure_ascii=False))
