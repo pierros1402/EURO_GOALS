@@ -76,4 +76,5 @@ async def health_check():
 # ==============================================
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run("EURO_GOALS_v8.1:app", host="0.0.0.0", port=8000, reload=True)
+    uvicorn.run("EURO_GOALS_v8:app", host="0.0.0.0", port=8000, reload=True)
+
