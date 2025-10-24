@@ -1,128 +1,141 @@
-<!-- ==========================================
-     EURO_GOALS v7.9f – Alert History Center
-     ========================================== -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>EURO_GOALS – Alert History</title>
+    <title>EURO_GOALS – Alert Center</title>
+    <link rel="icon" href="/static/icons/ball.png">
     <style>
         body {
-            background-color: #0e1117;
-            color: #e8e8e8;
-            font-family: "Segoe UI", Arial, sans-serif;
+            background-color: #0d1117;
+            color: #e6edf3;
+            font-family: "Segoe UI", sans-serif;
             margin: 0;
-            padding: 0;
-        }
-        header {
-            background-color: #1c1f26;
-            padding: 16px;
-            text-align: center;
-            font-size: 1.5em;
-            border-bottom: 2px solid #2e3340;
-        }
-        .container {
             padding: 20px;
-            max-width: 800px;
-            margin: 0 auto;
         }
-        .alert {
-            background-color: #1e232b;
-            border-left: 5px solid #4fa3ff;
-            padding: 12px 16px;
-            margin-bottom: 10px;
-            border-radius: 8px;
-            box-shadow: 0 0 5px rgba(0,0,0,0.3);
-            animation: fadeIn 0.4s ease;
+        h1 {
+            color: #58a6ff;
+            text-align: center;
+            margin-bottom: 15px;
         }
-        .alert p {
-            margin: 0;
-            font-size: 15px;
-        }
-        .timestamp {
-            font-size: 12px;
-            color: #9da5b4;
-            margin-top: 4px;
-        }
-        .source {
-            font-size: 12px;
-            font-style: italic;
-            color: #5ebcff;
-        }
-        #controls {
+        #filterBar {
             display: flex;
-            justify-content: space-between;
+            justify-content: center;
+            gap: 10px;
             margin-bottom: 20px;
         }
         button {
-            background-color: #3b82f6;
-            border: none;
+            background-color: #21262d;
+            border: 1px solid #30363d;
+            color: #c9d1d9;
+            padding: 6px 14px;
             border-radius: 6px;
-            padding: 8px 12px;
-            color: white;
             cursor: pointer;
-            font-size: 14px;
+            transition: 0.2s;
         }
         button:hover {
-            background-color: #2563eb;
+            background-color: #30363d;
         }
-        @keyframes fadeIn {
-            from {opacity: 0; transform: translateY(10px);}
-            to {opacity: 1; transform: translateY(0);}
+        #alertContainer {
+            max-width: 850px;
+            margin: 0 auto;
+        }
+        .alert {
+            border-left: 5px solid #58a6ff;
+            background-color: #161b22;
+            margin-bottom: 10px;
+            padding: 12px 14px;
+            border-radius: 6px;
+            box-shadow: 0 0 8px rgba(0,0,0,0.3);
+            transition: 0.2s;
+        }
+        .alert:hover {
+            transform: scale(1.01);
+        }
+        .alert h3 {
+            margin: 0;
+            font-size: 16px;
+        }
+        .alert small {
+            color: #8b949e;
+        }
+        .alert.info { border-left-color: #58a6ff; }
+        .alert.warning { border-left-color: #f1c40f; }
+        .alert.danger { border-left-color: #e74c3c; }
+        .alert.success { border-left-color: #2ecc71; }
+        .empty {
+            text-align: center;
+            color: #8b949e;
+            margin-top: 40px;
         }
     </style>
 </head>
 <body>
-    <header>📋 EURO_GOALS Alert History</header>
-    <div class="container">
-        <div id="controls">
-            <button onclick="loadAlerts()">🔄 Refresh</button>
-            <button onclick="clearAlerts()">🧹 Clear Alerts</button>
-        </div>
-        <div id="alerts"></div>
+    <h1>📋 EURO_GOALS – Alert Center</h1>
+
+    <div id="filterBar">
+        <button onclick="filterAlerts('all')">All</button>
+        <button onclick="filterAlerts('info')">Info</button>
+        <button onclick="filterAlerts('warning')">Warning</button>
+        <button onclick="filterAlerts('danger')">Danger</button>
+        <button onclick="filterAlerts('success')">Success</button>
+        <button onclick="clearAlerts()">🧹 Clear</button>
+    </div>
+
+    <div id="alertContainer">
+        <div class="empty">Loading alerts...</div>
     </div>
 
     <script>
+        let alerts = [];
+
         async function loadAlerts() {
-            const container = document.getElementById("alerts");
-            container.innerHTML = "<p>Loading alerts...</p>";
             try {
                 const res = await fetch("/alerts");
                 const data = await res.json();
-                container.innerHTML = "";
-
-                if (!data.alerts || data.alerts.length === 0) {
-                    container.innerHTML = "<p>No alerts found.</p>";
-                    return;
-                }
-
-                data.alerts.slice().reverse().forEach(a => {
-                    const div = document.createElement("div");
-                    div.className = "alert";
-                    div.innerHTML = `
-                        <p>${a.message}</p>
-                        <div class="timestamp">${a.timestamp}</div>
-                        <div class="source">Source: ${a.source}</div>
-                    `;
-                    container.appendChild(div);
-                });
+                alerts = data.alerts || [];
+                renderAlerts(alerts);
             } catch (err) {
-                container.innerHTML = "<p style='color:red;'>Error loading alerts.</p>";
-                console.error(err);
+                document.getElementById("alertContainer").innerHTML =
+                    "<div class='empty'>Error loading alerts.</div>";
+            }
+        }
+
+        function renderAlerts(list) {
+            const container = document.getElementById("alertContainer");
+            container.innerHTML = "";
+
+            if (!list.length) {
+                container.innerHTML = "<div class='empty'>No alerts found.</div>";
+                return;
+            }
+
+            list.forEach(a => {
+                const div = document.createElement("div");
+                div.className = `alert ${a.level}`;
+                div.innerHTML = `
+                    <h3>${a.message}</h3>
+                    <small>${a.source || 'System'} • ${a.timestamp}</small>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        function filterAlerts(level) {
+            if (level === 'all') {
+                renderAlerts(alerts);
+            } else {
+                renderAlerts(alerts.filter(a => a.level === level));
             }
         }
 
         async function clearAlerts() {
             if (!confirm("Clear all alerts?")) return;
             await fetch("/api/clear_alerts", { method: "DELETE" });
-            loadAlerts();
+            alerts = [];
+            renderAlerts([]);
         }
 
-        // Auto-refresh every 15 seconds
-        setInterval(loadAlerts, 15000);
-
-        // Load immediately on page open
         loadAlerts();
     </script>
 </body>
