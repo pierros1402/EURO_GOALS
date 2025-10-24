@@ -1,102 +1,127 @@
-<!-- ==========================================
-     EURO_GOALS v7.9f – Main Dashboard
-     ========================================== -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>EURO_GOALS v7.9f</title>
-  <style>
-    body {
-      background-color: #0e1117;
-      color: #e8e8e8;
-      font-family: "Segoe UI", Arial, sans-serif;
-      margin: 0;
-      padding: 0;
-    }
-    header {
-      background-color: #1c1f26;
-      padding: 16px;
-      text-align: center;
-      font-size: 1.6em;
-      border-bottom: 2px solid #2e3340;
-      font-weight: bold;
-    }
-    main {
-      max-width: 900px;
-      margin: 30px auto;
-      padding: 20px;
-      text-align: center;
-    }
-    .menu {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: center;
-      gap: 12px;
-      margin-top: 20px;
-    }
-    .menu-btn {
-      background-color: #3b82f6;
-      border: none;
-      border-radius: 8px;
-      color: white;
-      font-size: 16px;
-      padding: 12px 18px;
-      cursor: pointer;
-      transition: 0.25s;
-    }
-    .menu-btn:hover {
-      background-color: #2563eb;
-      transform: translateY(-2px);
-    }
-    footer {
-      text-align: center;
-      color: #8a8f9d;
-      font-size: 13px;
-      margin-top: 40px;
-    }
-    .version {
-      color: #5ebcff;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EURO_GOALS v8.1 – Alert Center</title>
+    <link rel="icon" href="/static/icons/ball_icon.png">
+    <style>
+        body {
+            background-color: #0f1117;
+            color: #e0e0e0;
+            font-family: "Segoe UI", sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+
+        header {
+            background-color: #1a1d29;
+            padding: 12px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.4);
+        }
+
+        h1 {
+            font-size: 22px;
+            color: #4fc3f7;
+            margin: 0;
+        }
+
+        .mute-btn {
+            background-color: #2a2f3f;
+            border: none;
+            color: #fff;
+            padding: 6px 14px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .mute-btn:hover {
+            background-color: #3b4257;
+        }
+
+        .alert-container {
+            padding: 20px;
+        }
+
+        .alert-box {
+            background-color: #1e2233;
+            border-left: 5px solid #4fc3f7;
+            padding: 12px 16px;
+            margin-bottom: 12px;
+            border-radius: 6px;
+            box-shadow: 0 0 5px rgba(0,0,0,0.3);
+            animation: fadeIn 0.4s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from {opacity: 0; transform: translateY(-5px);}
+            to {opacity: 1; transform: translateY(0);}
+        }
+
+        .timestamp {
+            font-size: 12px;
+            color: #aaa;
+            margin-top: 4px;
+        }
+    </style>
 </head>
 <body>
-  <header>⚽ EURO_GOALS v7.9f Dashboard</header>
+    <header>
+        <h1>⚽ EURO_GOALS v8.1 – Alert Center</h1>
+        <button id="soundToggle" class="mute-btn">🔊 Sound: ON</button>
+    </header>
 
-  <main>
-    <p>Καλώς ήρθες στο EURO_GOALS! Επέλεξε λειτουργία:</p>
-    <div class="menu">
-      <button class="menu-btn" onclick="window.location.href='/live'">📡 Live Center</button>
-      <button class="menu-btn" onclick="window.location.href='/alert_history'">📋 Alert History</button>
-      <button class="menu-btn" onclick="testNotify()">🔔 Test Notification</button>
+    <div class="alert-container" id="alertContainer">
+        <!-- Alerts appear here -->
     </div>
-  </main>
 
-  <footer>
-    <p class="version">EURO_GOALS Platform – Build v7.9f</p>
-    <p>© 2025 Pierros Analytics</p>
-  </footer>
+    <!-- ====== ALERT SOUNDS ====== -->
+    <audio id="goalSound" src="/static/sounds/goal_alert.mp3" preload="auto"></audio>
+    <audio id="smartMoneySound" src="/static/sounds/smartmoney_alert.mp3" preload="auto"></audio>
 
-  <script>
-    async function testNotify() {
-      try {
-        const res = await fetch("/notify", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            title: "Test Alert",
-            body: "Notification test from EURO_GOALS Dashboard 🔔",
-            icon: "/static/icons/ball.png",
-          }),
+    <script>
+        let soundEnabled = true;
+
+        document.getElementById('soundToggle').addEventListener('click', () => {
+            soundEnabled = !soundEnabled;
+            document.getElementById('soundToggle').textContent = soundEnabled ? '🔊 Sound: ON' : '🔇 Sound: OFF';
         });
-        const data = await res.json();
-        alert("✅ Test notification sent!\n" + data.data.title);
-      } catch (err) {
-        alert("❌ Error sending test notification");
-        console.error(err);
-      }
-    }
-  </script>
+
+        // Παίζει ήχο ανά τύπο ειδοποίησης
+        function playSound(type) {
+            if (!soundEnabled) return;
+            if (type === 'goal') document.getElementById('goalSound').play();
+            if (type === 'smartmoney') document.getElementById('smartMoneySound').play();
+        }
+
+        // Προβολή ειδοποίησης
+        function showAlert(message, type) {
+            const container = document.getElementById('alertContainer');
+            const alert = document.createElement('div');
+            alert.classList.add('alert-box');
+            alert.innerHTML = `<strong>${message}</strong><div class="timestamp">${new Date().toLocaleTimeString()}</div>`;
+            container.prepend(alert);
+            playSound(type);
+        }
+
+        // Παράδειγμα δοκιμής: goal & smartmoney alerts (μπορείς να τα αφαιρέσεις)
+        setTimeout(() => showAlert('⚽ Goal detected in Premier League!', 'goal'), 2000);
+        setTimeout(() => showAlert('💰 Smart Money movement on Serie A!', 'smartmoney'), 5000);
+
+        // Ενσωμάτωση από backend
+        async function checkAlerts() {
+            const resGoal = await fetch('/api/trigger_goal_alert');
+            const resSmart = await fetch('/api/trigger_smartmoney_alert');
+            const goalData = await resGoal.json();
+            const smartData = await resSmart.json();
+            showAlert('⚽ Goal detected!', goalData.alert_type);
+            showAlert('💰 Smart Money movement!', smartData.alert_type);
+        }
+        // checkAlerts(); // Αν θέλεις να τρέχει με ένα click
+    </script>
 </body>
 </html>
