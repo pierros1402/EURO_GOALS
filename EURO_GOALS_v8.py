@@ -1,5 +1,5 @@
 # ==============================================
-# EURO_GOALS v8 – Backend with Persistent Alerts + Direct Alert Function
+# EURO_GOALS v8 – Backend with Persistent Alerts + Smart Money Integration
 # ==============================================
 
 from fastapi import FastAPI, Request
@@ -13,10 +13,11 @@ from datetime import datetime
 import os
 
 # ------------------------------------------------
-# Import external modules (Live Feeds)
+# External Modules
 # ------------------------------------------------
 from sofascore_reader import get_live_matches
 from flashscore_reader import get_flashscore_odds
+from smart_money_refiner import detect_smart_money  # ✅ νέο import
 
 # ------------------------------------------------
 # FastAPI App Initialization
@@ -189,6 +190,24 @@ async def test_alert():
 
     except Exception as e:
         print(f"[ALERT] ❌ Error inserting test alert: {e}")
+        return {"status": "error", "details": str(e)}
+
+# ------------------------------------------------
+# SMART MONEY TEST ENDPOINT
+# ------------------------------------------------
+@app.get("/api/test_smartmoney")
+async def test_smartmoney():
+    """
+    Εκτελεί το Smart Money Refiner και αποθηκεύει τα alerts στη βάση.
+    Μπορεί να κληθεί απευθείας από browser.
+    """
+    try:
+        result = detect_smart_money()
+        count = result.get("count", 0)
+        print(f"[SMART MONEY] ✅ Triggered manually via /api/test_smartmoney ({count} signals)")
+        return {"status": "ok", "detected": count, "alerts": result.get("alerts", [])}
+    except Exception as e:
+        print(f"[SMART MONEY] ❌ Error triggering Smart Money: {e}")
         return {"status": "error", "details": str(e)}
 
 # ------------------------------------------------
