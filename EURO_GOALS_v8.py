@@ -17,7 +17,7 @@ import os
 # ------------------------------------------------
 from sofascore_reader import get_live_matches
 from flashscore_reader import get_flashscore_odds
-from smart_money_refiner import detect_smart_money  # ✅ νέο import
+from src.smart_money_refiner import detect_smart_money  # ✅ νέο import
 
 # ------------------------------------------------
 # FastAPI App Initialization
