@@ -1,140 +1,152 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>EURO_GOALS v8.2 – Alert Center</title>
-    <link rel="icon" href="/static/icons/ball_icon.png">
-    <style>
-        body {
-            background-color: #0f1117;
-            color: #e0e0e0;
-            font-family: "Segoe UI", sans-serif;
-            margin: 0;
-            padding: 0;
-        }
-        header {
-            background-color: #1a1d29;
-            padding: 12px 20px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.4);
-        }
-        h1 {
-            font-size: 22px;
-            color: #4fc3f7;
-            margin: 0;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        .mute-btn {
-            background-color: #2a2f3f;
-            border: none;
-            color: #fff;
-            padding: 6px 14px;
-            border-radius: 6px;
-            cursor: pointer;
-            transition: background 0.2s;
-        }
-        .mute-btn:hover {
-            background-color: #3b4257;
-        }
-        .volume-slider {
-            width: 100px;
-            vertical-align: middle;
-            margin-left: 10px;
-        }
-        .alert-container {
-            padding: 20px;
-        }
-        .alert-box {
-            background-color: #1e2233;
-            border-left: 5px solid #4fc3f7;
-            padding: 12px 16px;
-            margin-bottom: 12px;
-            border-radius: 6px;
-            box-shadow: 0 0 5px rgba(0,0,0,0.3);
-            animation: fadeIn 0.4s ease-in;
-        }
-        @keyframes fadeIn {
-            from {opacity: 0; transform: translateY(-5px);}
-            to {opacity: 1; transform: translateY(0);}
-        }
-        .timestamp {
-            font-size: 12px;
-            color: #aaa;
-            margin-top: 4px;
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>EURO_GOALS v8.3 – Alert Center</title>
+  <link rel="icon" href="/static/icons/ball_icon.png" />
+  <style>
+    body {
+      background-color: #0f1117;
+      color: #e0e0e0;
+      font-family: "Segoe UI", sans-serif;
+      margin: 0;
+      padding: 0;
+    }
+    header {
+      background-color: #1a1d29;
+      padding: 12px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
+    }
+    h1 {
+      font-size: 22px;
+      color: #4fc3f7;
+      margin: 0;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .mute-btn {
+      background-color: #2a2f3f;
+      border: none;
+      color: #fff;
+      padding: 6px 14px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .mute-btn:hover {
+      background-color: #3b4257;
+    }
+    .volume-slider {
+      width: 100px;
+      vertical-align: middle;
+      margin-left: 10px;
+    }
+    .alert-container {
+      padding: 20px;
+    }
+    .alert-box {
+      background-color: #1e2233;
+      border-left: 5px solid #4fc3f7;
+      padding: 12px 16px;
+      margin-bottom: 12px;
+      border-radius: 6px;
+      box-shadow: 0 0 5px rgba(0, 0, 0, 0.3);
+      animation: fadeIn 0.4s ease-in;
+    }
+    @keyframes fadeIn {
+      from {opacity: 0; transform: translateY(-5px);}
+      to {opacity: 1; transform: translateY(0);}
+    }
+    .timestamp {
+      font-size: 12px;
+      color: #aaa;
+      margin-top: 4px;
+    }
+  </style>
 </head>
 <body>
-    <header>
-        <h1>⚽ EURO_GOALS v8.2 – Alert Center</h1>
-        <div>
-            <button id="soundToggle" class="mute-btn">🔇 Sound: OFF</button>
-            <input id="volumeControl" class="volume-slider" type="range" min="0" max="1" step="0.05" value="0.8">
-        </div>
-    </header>
-
-    <div class="alert-container" id="alertContainer">
-        <!-- Alerts appear here -->
+  <header>
+    <h1>⚽ EURO_GOALS v8.3 – Alert Center</h1>
+    <div>
+      <button id="soundToggle" class="mute-btn">🔇 Sound: OFF</button>
+      <input id="volumeControl" class="volume-slider" type="range" min="0" max="1" step="0.05" value="0.8" />
     </div>
+  </header>
 
-    <!-- ====== ALERT SOUNDS ====== -->
-    <audio id="goalSound" src="/static/sounds/goal_alert.mp3" preload="auto"></audio>
-    <audio id="smartMoneySound" src="/static/sounds/smartmoney_alert.mp3" preload="auto"></audio>
+  <div class="alert-container" id="alertContainer">
+    <p style="color:#888;font-size:14px;">Waiting for live alerts...</p>
+  </div>
 
-    <script>
-        let soundEnabled = false; // Ξεκινάει OFF λόγω Chrome autoplay policy
-        const goalAudio = document.getElementById('goalSound');
-        const smartAudio = document.getElementById('smartMoneySound');
-        const toggleBtn = document.getElementById('soundToggle');
-        const volumeControl = document.getElementById('volumeControl');
+  <!-- ====== ALERT SOUNDS ====== -->
+  <audio id="goalSound" src="/static/sounds/goal_alert.mp3" preload="auto"></audio>
+  <audio id="smartMoneySound" src="/static/sounds/smartmoney_alert.mp3" preload="auto"></audio>
 
-        // Πρώτο click: ενεργοποιεί τον ήχο (Chrome requirement)
-        document.body.addEventListener('click', () => {
-            if (!soundEnabled) {
-                soundEnabled = true;
-                toggleBtn.textContent = '🔊 Sound: ON';
-                console.log('Sound activated by user click.');
-            }
-        }, { once: true });
+  <script>
+    let soundEnabled = false;
+    const goalAudio = document.getElementById('goalSound');
+    const smartAudio = document.getElementById('smartMoneySound');
+    const toggleBtn = document.getElementById('soundToggle');
+    const volumeControl = document.getElementById('volumeControl');
+    const container = document.getElementById('alertContainer');
 
-        // Mute / Unmute button
-        toggleBtn.addEventListener('click', () => {
-            soundEnabled = !soundEnabled;
-            toggleBtn.textContent = soundEnabled ? '🔊 Sound: ON' : '🔇 Sound: OFF';
-        });
+    // Chrome requirement: first click activates audio
+    document.body.addEventListener('click', () => {
+      if (!soundEnabled) {
+        soundEnabled = true;
+        toggleBtn.textContent = '🔊 Sound: ON';
+        console.log('Sound activated by user click.');
+      }
+    }, { once: true });
 
-        // Ρύθμιση έντασης
-        volumeControl.addEventListener('input', () => {
-            goalAudio.volume = volumeControl.value;
-            smartAudio.volume = volumeControl.value;
-        });
+    toggleBtn.addEventListener('click', () => {
+      soundEnabled = !soundEnabled;
+      toggleBtn.textContent = soundEnabled ? '🔊 Sound: ON' : '🔇 Sound: OFF';
+    });
 
-        // Παίζει ήχο ανά τύπο ειδοποίησης
-        function playSound(type) {
-            if (!soundEnabled) return;
-            if (type === 'goal') goalAudio.play();
-            if (type === 'smartmoney') smartAudio.play();
+    volumeControl.addEventListener('input', () => {
+      goalAudio.volume = volumeControl.value;
+      smartAudio.volume = volumeControl.value;
+    });
+
+    function playSound(type) {
+      if (!soundEnabled) return;
+      if (type === 'goal') goalAudio.play();
+      if (type === 'smartmoney') smartAudio.play();
+    }
+
+    function showAlert(message, type) {
+      const alert = document.createElement('div');
+      alert.classList.add('alert-box');
+      alert.innerHTML = `<strong>${message}</strong><div class="timestamp">${new Date().toLocaleTimeString()}</div>`;
+      container.prepend(alert);
+      playSound(type);
+    }
+
+    // === Poll live backend endpoints every 10s ===
+    async function pollAlerts() {
+      try {
+        const goalRes = await fetch('/api/trigger_goal_alert');
+        const goalData = await goalRes.json();
+        if (goalData.alert_type === 'goal') {
+          showAlert('⚽ ' + goalData.message, 'goal');
         }
 
-        // Εμφάνιση ειδοποίησης
-        function showAlert(message, type) {
-            const container = document.getElementById('alertContainer');
-            const alert = document.createElement('div');
-            alert.classList.add('alert-box');
-            alert.innerHTML = `<strong>${message}</strong><div class="timestamp">${new Date().toLocaleTimeString()}</div>`;
-            container.prepend(alert);
-            playSound(type);
+        const smartRes = await fetch('/api/trigger_smartmoney_alert');
+        const smartData = await smartRes.json();
+        if (smartData.alert_type === 'smartmoney') {
+          showAlert('💰 ' + smartData.message, 'smartmoney');
         }
+      } catch (err) {
+        console.error('Error fetching alerts', err);
+      }
+    }
 
-        // Demo alerts (fixed delay to ensure Chrome audio permission)
-setTimeout(() => showAlert('⚽ Goal detected in Premier League!', 'goal'), 3000);
-setTimeout(() => showAlert('💰 Smart Money movement on Serie A!', 'smartmoney'), 6000);
-
-    </script>
+    setInterval(pollAlerts, 10000); // κάθε 10 δευτερόλεπτα
+  </script>
 </body>
 </html>
