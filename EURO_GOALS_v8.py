@@ -1,5 +1,5 @@
 # ==============================================
-# EURO_GOALS v8 – Backend with Persistent Alerts
+# EURO_GOALS v8 – Backend with Persistent Alerts + Test Endpoint
 # ==============================================
 
 from fastapi import FastAPI, Request
@@ -162,6 +162,33 @@ async def clear_alerts():
         return {"status": "ok", "cleared": count.rowcount}
     except Exception as e:
         print(f"[ALERT] ❌ Error clearing alerts: {e}")
+        return {"status": "error", "details": str(e)}
+
+# ------------------------------------------------
+# SIMPLE TEST ALERT ENDPOINT (One-click alert)
+# ------------------------------------------------
+@app.get("/api/test_alert")
+async def test_alert():
+    """
+    Δημιουργεί μια δοκιμαστική ειδοποίηση στη βάση χωρίς Postman.
+    """
+    try:
+        msg = "Test Alert Triggered via Browser"
+        src = "Manual"
+        lvl = "info"
+        ts = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+        with engine.begin() as conn:
+            conn.execute(text("""
+                INSERT INTO alerts (message, source, timestamp, level)
+                VALUES (:m, :s, :t, :l)
+            """), {"m": msg, "s": src, "t": ts, "l": lvl})
+
+        print(f"[ALERT] 🧪 Test alert inserted: {msg}")
+        return {"status": "ok", "message": msg, "time": ts}
+
+    except Exception as e:
+        print(f"[ALERT] ❌ Error inserting test alert: {e}")
         return {"status": "error", "details": str(e)}
 
 # ------------------------------------------------
