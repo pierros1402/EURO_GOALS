@@ -1,10 +1,5 @@
 # ==============================================
-# EURO_GOALS v8 – FastAPI Backend
-# ==============================================
-# Περιλαμβάνει:
-#  - Notifications (manual + automatic)
-#  - Smart Money integration
-#  - Alert Center
+# EURO_GOALS v8 – FastAPI Backend (SmartMoney + LiveFeeds Auto)
 # ==============================================
 
 from fastapi import FastAPI, Request
@@ -16,14 +11,17 @@ from pydantic import BaseModel
 from sqlalchemy import create_engine, text
 from datetime import datetime
 import os
+import threading
+import time
 
 # ------------------------------------------------
-# Εξωτερικά Modules
+# External Modules
 # ------------------------------------------------
-from src.smart_money_refiner import detect_smart_money  # ✅ Νέο import
+from src.smart_money_refiner import detect_smart_money
+from src.live_feeds_alerts import detect_live_alerts
 
 # ------------------------------------------------
-# Εφαρμογή & Templates
+# App Initialization
 # ------------------------------------------------
 app = FastAPI(title="EURO_GOALS v8")
 templates = Jinja2Templates(directory="templates")
@@ -41,7 +39,7 @@ app.add_middleware(
 )
 
 # ------------------------------------------------
-# Database
+# Database Connection
 # ------------------------------------------------
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///matches.db")
 engine = create_engine(
@@ -50,7 +48,54 @@ engine = create_engine(
 )
 
 # ------------------------------------------------
-# Startup – Create tables
+# Utility: Insert Alert Directly to DB
+# ------------------------------------------------
+def add_alert_direct(message: str, source="System", level="info"):
+    try:
+        with engine.begin() as conn:
+            conn.execute(text("""
+                INSERT INTO alerts (message, source, level, timestamp)
+                VALUES (:m, :s, :l, :t)
+            """), {"m": message, "s": source, "l": level, "t": datetime.utcnow().isoformat()})
+        print(f"[ALERT] 🔔 {source}: {message}")
+    except Exception as e:
+        print(f"[ALERT] ❌ Failed to insert alert: {e}")
+
+# ------------------------------------------------
+# Auto Monitor Thread (Live Feeds & SmartMoney)
+# ------------------------------------------------
+def auto_monitor():
+    """
+    Εκτελεί ανά 60s έλεγχο Smart Money και Live Feeds.
+    """
+    while True:
+        try:
+            print("\n[MONITOR] 🔄 Checking Smart Money & Live Feeds...")
+            sm = detect_smart_money()
+            lf = detect_live_alerts()
+
+            # Smart Money alerts
+            for a in sm.get("alerts", []):
+                add_alert_direct(a["message"], source="SmartMoney", level="warning")
+
+            # Live Feed alerts
+            for b in lf.get("alerts", []):
+                lvl = (
+                    "success" if b["type"] == "goal" else
+                    "danger" if b["type"] == "card" else
+                    "info"
+                )
+                add_alert_direct(b["message"], source="LiveFeed", level=lvl)
+
+            print("[MONITOR] ✅ Cycle complete.")
+        except Exception as e:
+            print(f"[MONITOR] ❌ Error in monitor loop: {e}")
+            add_alert_direct(f"Monitor error: {e}", "System", "danger")
+
+        time.sleep(60)  # επανάληψη κάθε 60s
+
+# ------------------------------------------------
+# Startup Event
 # ------------------------------------------------
 @app.on_event("startup")
 def startup_event():
@@ -62,90 +107,58 @@ def startup_event():
                 source TEXT,
                 level TEXT,
                 timestamp TEXT
-            )
+            );
         """))
         conn.commit()
-    print("[SYSTEM] ✅ EURO_GOALS v8 started successfully and DB initialized.")
+
+    print("[SYSTEM] ✅ EURO_GOALS v8 started and DB initialized.")
+
+    # Ξεκινά το monitoring thread
+    t = threading.Thread(target=auto_monitor, daemon=True)
+    t.start()
+    print("[SYSTEM] 🧠 Background Monitor thread started (SmartMoney + LiveFeeds).")
 
 # ------------------------------------------------
-# Root page
+# Root Page
 # ------------------------------------------------
 @app.get("/", response_class=HTMLResponse)
 async def index(request: Request):
     return templates.TemplateResponse("index.html", {"request": request})
 
 # ------------------------------------------------
-# Service Worker
-# ------------------------------------------------
-@app.get("/service-worker.js")
-async def service_worker():
-    path = os.path.join("static", "js", "service-worker.js")
-    if not os.path.exists(path):
-        return PlainTextResponse("// service-worker missing", media_type="application/javascript")
-    headers = {"Cache-Control": "no-cache, no-store, must-revalidate"}
-    return FileResponse(path, media_type="application/javascript", headers=headers)
-
-# ------------------------------------------------
-# Health check
+# Health Check
 # ------------------------------------------------
 @app.get("/api/health")
 async def health():
     return {"status": "ok", "version": "8.0"}
 
 # ------------------------------------------------
-# Εσωτερική συνάρτηση για απευθείας εισαγωγή ειδοποίησης
-# ------------------------------------------------
-def add_alert_direct(message: str, source="System", level="info"):
-    try:
-        with engine.connect() as conn:
-            conn.execute(
-                text("INSERT INTO alerts (message, source, level, timestamp) VALUES (:m, :s, :l, :t)"),
-                {"m": message, "s": source, "l": level, "t": datetime.utcnow().isoformat()}
-            )
-            conn.commit()
-        print(f"[ALERT] 🔔 Direct insert → {message}")
-    except Exception as e:
-        print(f"[ALERT] ❌ Failed to insert alert: {e}")
-
-# ------------------------------------------------
-# Notification endpoint
-# ------------------------------------------------
-class NotifyPayload(BaseModel):
-    title: str
-    body: str | None = None
-    icon: str | None = None
-    url: str | None = None
-    tag: str | None = None
-    sound: bool | None = True
-
-@app.post("/notify")
-async def notify(payload: NotifyPayload):
-    add_alert_direct(payload.title, source="Manual", level="info")
-    return JSONResponse({
-        "ok": True,
-        "data": payload.dict(),
-        "ts": datetime.utcnow().isoformat()
-    })
-
-# ------------------------------------------------
-# SMART MONEY ENDPOINT
+# Manual SmartMoney Trigger
 # ------------------------------------------------
 @app.get("/api/test_smartmoney")
 async def test_smartmoney():
-    """
-    Εκτελεί το Smart Money Refiner και αποθηκεύει τα alerts στη βάση.
-    Μπορεί να κληθεί απευθείας από browser.
-    """
     try:
         result = detect_smart_money()
         count = result.get("count", 0)
-        alerts = result.get("alerts", [])
-        for a in alerts:
-            add_alert_direct(a["message"], source=a["source"], level="warning")
-        print(f"[SMART MONEY] ✅ Triggered manually via /api/test_smartmoney ({count} signals)")
-        return {"status": "ok", "detected": count, "alerts": alerts}
+        for a in result.get("alerts", []):
+            add_alert_direct(a["message"], "SmartMoney", "warning")
+        return {"status": "ok", "detected": count, "alerts": result.get("alerts", [])}
     except Exception as e:
-        print(f"[SMART MONEY] ❌ Error triggering Smart Money: {e}")
+        return {"status": "error", "details": str(e)}
+
+# ------------------------------------------------
+# Manual Live Feed Trigger
+# ------------------------------------------------
+@app.get("/api/test_livefeeds")
+async def test_livefeeds():
+    try:
+        result = detect_live_alerts()
+        count = result.get("count", 0)
+        for a in result.get("alerts", []):
+            lvl = "success" if a["type"] == "goal" else "danger" if a["type"] == "card" else "info"
+            add_alert_direct(a["message"], "LiveFeed", lvl)
+        return {"status": "ok", "detected": count}
+    except Exception as e:
         return {"status": "error", "details": str(e)}
 
 # ------------------------------------------------
@@ -155,20 +168,13 @@ async def test_smartmoney():
 async def get_alerts():
     with engine.connect() as conn:
         res = conn.execute(text("SELECT * FROM alerts ORDER BY id DESC"))
-        alerts = [
-            dict(row._mapping)
-            for row in res.fetchall()
-        ]
-    return {"alerts": alerts, "total": len(alerts)}
+        data = [dict(row._mapping) for row in res.fetchall()]
+    return {"alerts": data, "total": len(data)}
 
-# ------------------------------------------------
-# Clear Alerts
-# ------------------------------------------------
 @app.get("/api/clear_alerts")
 async def clear_alerts():
-    with engine.connect() as conn:
+    with engine.begin() as conn:
         conn.execute(text("DELETE FROM alerts"))
-        conn.commit()
     return {"status": "ok", "cleared": True}
 
 # ------------------------------------------------
@@ -177,4 +183,3 @@ async def clear_alerts():
 @app.get("/alert_history", response_class=HTMLResponse)
 async def alert_history(request: Request):
     return templates.TemplateResponse("alert_history.html", {"request": request})
-
