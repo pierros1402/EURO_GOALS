@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>EURO_GOALS v8.3 – Alert Center</title>
+  <title>EURO_GOALS v8.6 – Alert Center</title>
   <link rel="icon" href="/static/icons/ball_icon.png" />
   <style>
     body {
@@ -19,7 +19,7 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
+      box-shadow: 0 2px 4px rgba(0,0,0,0.4);
     }
     h1 {
       font-size: 22px;
@@ -55,7 +55,7 @@
       padding: 12px 16px;
       margin-bottom: 12px;
       border-radius: 6px;
-      box-shadow: 0 0 5px rgba(0, 0, 0, 0.3);
+      box-shadow: 0 0 5px rgba(0,0,0,0.3);
       animation: fadeIn 0.4s ease-in;
     }
     @keyframes fadeIn {
@@ -67,11 +67,15 @@
       color: #aaa;
       margin-top: 4px;
     }
+    pre {
+      font-family: "Consolas", monospace;
+      font-size: 13px;
+    }
   </style>
 </head>
 <body>
   <header>
-    <h1>⚽ EURO_GOALS v8.3 – Alert Center</h1>
+    <h1>⚽ EURO_GOALS v8.6 – Alert Center</h1>
     <div>
       <button id="soundToggle" class="mute-btn">🔇 Sound: OFF</button>
       <input id="volumeControl" class="volume-slider" type="range" min="0" max="1" step="0.05" value="0.8" />
@@ -80,6 +84,11 @@
 
   <div class="alert-container" id="alertContainer">
     <p style="color:#888;font-size:14px;">Waiting for live alerts...</p>
+  </div>
+
+  <div style="padding: 20px; border-top: 1px solid #2a2a2a;">
+    <h2 style="color:#4fc3f7;">📜 Alert History</h2>
+    <pre id="alertHistory" style="background:#1b1f2e;color:#bfbfbf;padding:10px;border-radius:8px;max-height:200px;overflow-y:auto;"></pre>
   </div>
 
   <!-- ====== ALERT SOUNDS ====== -->
@@ -94,7 +103,7 @@
     const volumeControl = document.getElementById('volumeControl');
     const container = document.getElementById('alertContainer');
 
-    // Chrome requirement: first click activates audio
+    // Chrome requirement: activate sound on first click
     document.body.addEventListener('click', () => {
       if (!soundEnabled) {
         soundEnabled = true;
@@ -127,7 +136,7 @@
       playSound(type);
     }
 
-    // === Poll live backend endpoints every 10s ===
+    // === Poll live alerts every 10 seconds ===
     async function pollAlerts() {
       try {
         const goalRes = await fetch('/api/trigger_goal_alert');
@@ -146,7 +155,20 @@
       }
     }
 
-    setInterval(pollAlerts, 10000); // κάθε 10 δευτερόλεπτα
+    // === Update alert history panel ===
+    async function updateHistory() {
+      try {
+        const res = await fetch('/api/alert_history');
+        const text = await res.text();
+        document.getElementById('alertHistory').textContent = text;
+      } catch (err) {
+        console.error('Error loading history', err);
+      }
+    }
+
+    setInterval(pollAlerts, 10000);
+    setInterval(updateHistory, 10000);
+    updateHistory();
   </script>
 </body>
 </html>
