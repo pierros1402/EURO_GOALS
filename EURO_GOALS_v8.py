@@ -1,5 +1,5 @@
 # ==============================================
-# EURO_GOALS v8 – Backend with Persistent Alerts + Test Endpoint
+# EURO_GOALS v8 – Backend with Persistent Alerts + Direct Alert Function
 # ==============================================
 
 from fastapi import FastAPI, Request
@@ -233,3 +233,22 @@ async def live_odds():
     except Exception as e:
         print(f"[LIVE] ❌ Error combining live feeds: {e}")
         return [{"league": "Error loading live feed", "home": "-", "away": "-", "odds": "-"}]
+
+# ------------------------------------------------
+# INTERNAL FUNCTION – Direct alert insert (for modules)
+# ------------------------------------------------
+def add_alert_direct(message: str, source: str = "System", level: str = "info"):
+    """
+    Προσθέτει απευθείας alert στη βάση, χωρίς HTTP request.
+    Καλείται από άλλα modules (π.χ. smart_money_refiner).
+    """
+    try:
+        ts = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        with engine.begin() as conn:
+            conn.execute(text("""
+                INSERT INTO alerts (message, source, timestamp, level)
+                VALUES (:m, :s, :t, :l)
+            """), {"m": message, "s": source, "t": ts, "l": level})
+        print(f"[ALERT] 🔔 Direct insert → {source}: {message}")
+    except Exception as e:
+        print(f"[ALERT] ❌ Failed to insert alert: {e}")
