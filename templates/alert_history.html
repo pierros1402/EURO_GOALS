@@ -3,13 +3,13 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>EURO_GOALS – Alert Center</title>
+  <title>EURO_GOALS – Alert Center v8.3</title>
   <link rel="icon" type="image/x-icon" href="/static/euro_goals.ico">
 
   <style>
     body {
-      background-color: #111;
-      color: #eee;
+      background-color: #0b0b0b;
+      color: #e8e8e8;
       font-family: "Segoe UI", sans-serif;
       margin: 0;
       padding: 20px;
@@ -17,29 +17,23 @@
     }
 
     h1 {
-      color: #4da3ff;
       font-size: 28px;
-      margin-bottom: 20px;
+      color: #4da3ff;
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 10px;
-    }
-
-    h1::before {
-      content: "📋";
-      font-size: 26px;
+      gap: 8px;
     }
 
     .filters {
-      margin-bottom: 25px;
+      margin: 15px 0;
     }
 
     button {
-      background-color: #222;
+      background: #1b1b1b;
       color: #ccc;
       border: 1px solid #333;
-      padding: 8px 16px;
+      padding: 8px 14px;
       margin: 3px;
       border-radius: 6px;
       cursor: pointer;
@@ -52,32 +46,31 @@
     }
 
     .alert-box {
-      background-color: #1b1b1b;
+      background-color: #151515;
       border-left: 6px solid #4da3ff;
       margin: 10px auto;
-      padding: 10px 15px;
+      padding: 10px 16px;
       width: 90%;
-      border-radius: 8px;
+      border-radius: 10px;
       text-align: left;
-      transition: 0.3s;
+      animation: fadeIn 0.6s ease;
     }
 
-    .alert-box.warning {
-      border-left: 6px solid #ffae00;
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
     }
 
-    .alert-box.danger {
-      border-left: 6px solid #ff4444;
-    }
-
-    .alert-box.success {
-      border-left: 6px solid #00c851;
-    }
-
+    .alert-box.warning { border-left-color: #ffae00; }
+    .alert-box.danger { border-left-color: #ff4d4d; }
+    .alert-box.success { border-left-color: #00c851; }
     .alert-box.smartmoney {
-      border-left: 6px solid #ffaa33;
-      background: linear-gradient(to right, #1b1b1b, #1b1b1b 85%, rgba(255,170,51,0.1));
+      border-left-color: #ffaa33;
       box-shadow: 0 0 8px rgba(255,170,51,0.3);
+    }
+    .alert-box.livefeed {
+      border-left-color: #00c851;
+      box-shadow: 0 0 8px rgba(0,200,81,0.25);
     }
 
     .alert-title {
@@ -92,65 +85,120 @@
       margin-top: 3px;
     }
 
+    .badge {
+      display: inline-block;
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 6px;
+      margin-left: 6px;
+      font-weight: 600;
+    }
+
+    .badge.smart { background: #ffaa33; color: #111; }
+    .badge.live { background: #00c851; color: #111; }
+
     .no-alerts {
       color: #777;
       font-size: 14px;
       margin-top: 20px;
     }
-
-    .smart-icon {
-      margin-right: 5px;
-    }
-
   </style>
 </head>
 <body>
-
   <h1>EURO_GOALS – Alert Center</h1>
 
   <div class="filters">
     <button onclick="filterAlerts('all')">All</button>
-    <button onclick="filterAlerts('info')">Info</button>
-    <button onclick="filterAlerts('warning')">Warning</button>
-    <button onclick="filterAlerts('danger')">Danger</button>
-    <button onclick="filterAlerts('success')">Success</button>
     <button onclick="filterAlerts('smartmoney')">💰 Smart Money</button>
+    <button onclick="filterAlerts('livefeed')">⚽ Live Feed</button>
     <button onclick="clearAlerts()">🧹 Clear</button>
   </div>
 
   <div id="alerts-container"></div>
 
+  <!-- 🔊 Audio Elements -->
+  <audio id="sound-smart" src="/static/sounds/smartmoney.mp3" preload="auto"></audio>
+  <audio id="sound-goal" src="/static/sounds/goal.wav" preload="auto"></audio>
+  <audio id="sound-generic" src="/static/sounds/alert.mp3" preload="auto"></audio>
+
   <script>
     let allAlerts = [];
+    let lastCount = 0;
 
     async function fetchAlerts() {
-      const res = await fetch('/api/alerts');
+      const res = await fetch("/api/alerts");
       const data = await res.json();
-      allAlerts = data.alerts || [];
-      renderAlerts('all');
+      const current = data.alerts || [];
+      renderAlerts("all", current);
+
+      // Αν υπάρχουν νέα alerts
+      if (current.length > lastCount) {
+        const newAlerts = current.slice(0, current.length - lastCount);
+        newAlerts.forEach(a => playSoundForAlert(a));
+        lastCount = current.length;
+      } else {
+        lastCount = current.length;
+      }
+
+      allAlerts = current;
     }
 
-    function renderAlerts(level) {
-      const container = document.getElementById('alerts-container');
-      container.innerHTML = '';
+    function playSoundForAlert(alert) {
+      try {
+        if (alert.source?.toLowerCase() === "smartmoney") {
+          document.getElementById("sound-smart").play();
+        } else if (alert.source?.toLowerCase() === "livefeed") {
+          if (alert.message.includes("Goal")) {
+            document.getElementById("sound-goal").play();
+          } else {
+            document.getElementById("sound-generic").play();
+          }
+        } else {
+          document.getElementById("sound-generic").play();
+        }
+      } catch (e) {
+        console.warn("Sound play error:", e);
+      }
+    }
 
-      let filtered = level === 'all' ? allAlerts : allAlerts.filter(a => a.level === level);
+    function renderAlerts(level, alerts) {
+      const container = document.getElementById("alerts-container");
+      container.innerHTML = "";
+
+      let filtered =
+        level === "all"
+          ? alerts
+          : alerts.filter(a =>
+              level === "smartmoney"
+                ? a.source?.toLowerCase() === "smartmoney"
+                : level === "livefeed"
+                ? a.source?.toLowerCase() === "livefeed"
+                : a.level === level
+            );
+
       if (filtered.length === 0) {
         container.innerHTML = `<div class="no-alerts">No alerts found.</div>`;
         return;
       }
 
       filtered.forEach(a => {
-        let cls = "alert-box " + (a.level || 'info');
-        if (a.message.includes("Smart Money Detected")) cls += " smartmoney";
+        let cls = "alert-box " + (a.level || "info");
+        if (a.source?.toLowerCase() === "smartmoney") cls += " smartmoney";
+        if (a.source?.toLowerCase() === "livefeed") cls += " livefeed";
+
+        let badge = "";
+        if (a.source?.toLowerCase() === "smartmoney")
+          badge = `<span class="badge smart">SMART</span>`;
+        else if (a.source?.toLowerCase() === "livefeed")
+          badge = `<span class="badge live">LIVE</span>`;
 
         container.innerHTML += `
           <div class="${cls}">
-            <div class="alert-title">
-              ${a.message.includes("Smart Money") ? "💰 " : ""}${a.message}
-            </div>
+            <div class="alert-title">${a.message} ${badge}</div>
             <div class="alert-meta">
-              ${a.source || 'System'} • ${a.timestamp ? a.timestamp.replace('T', ' ').slice(0, 19) : ''}
+              ${a.source || "System"} • ${
+          a.timestamp ? a.timestamp.replace("T", " ").slice(0, 19) : ""
+        }
             </div>
           </div>
         `;
@@ -159,16 +207,16 @@
 
     async function clearAlerts() {
       if (!confirm("Clear all alerts?")) return;
-      await fetch('/api/clear_alerts');
+      await fetch("/api/clear_alerts");
       allAlerts = [];
-      renderAlerts('all');
+      renderAlerts("all", []);
+      lastCount = 0;
     }
 
     function filterAlerts(level) {
-      renderAlerts(level);
+      renderAlerts(level, allAlerts);
     }
 
-    // Αυτόματο refresh κάθε 10s
     setInterval(fetchAlerts, 10000);
     fetchAlerts();
   </script>
