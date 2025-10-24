@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>EURO_GOALS v8.1 – Alert Center</title>
+    <title>EURO_GOALS v8.2 – Alert Center</title>
     <link rel="icon" href="/static/icons/ball_icon.png">
     <style>
         body {
@@ -13,7 +13,6 @@
             margin: 0;
             padding: 0;
         }
-
         header {
             background-color: #1a1d29;
             padding: 12px 20px;
@@ -22,13 +21,14 @@
             align-items: center;
             box-shadow: 0 2px 4px rgba(0,0,0,0.4);
         }
-
         h1 {
             font-size: 22px;
             color: #4fc3f7;
             margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
-
         .mute-btn {
             background-color: #2a2f3f;
             border: none;
@@ -38,15 +38,17 @@
             cursor: pointer;
             transition: background 0.2s;
         }
-
         .mute-btn:hover {
             background-color: #3b4257;
         }
-
+        .volume-slider {
+            width: 100px;
+            vertical-align: middle;
+            margin-left: 10px;
+        }
         .alert-container {
             padding: 20px;
         }
-
         .alert-box {
             background-color: #1e2233;
             border-left: 5px solid #4fc3f7;
@@ -56,12 +58,10 @@
             box-shadow: 0 0 5px rgba(0,0,0,0.3);
             animation: fadeIn 0.4s ease-in;
         }
-
         @keyframes fadeIn {
             from {opacity: 0; transform: translateY(-5px);}
             to {opacity: 1; transform: translateY(0);}
         }
-
         .timestamp {
             font-size: 12px;
             color: #aaa;
@@ -71,8 +71,11 @@
 </head>
 <body>
     <header>
-        <h1>⚽ EURO_GOALS v8.1 – Alert Center</h1>
-        <button id="soundToggle" class="mute-btn">🔊 Sound: ON</button>
+        <h1>⚽ EURO_GOALS v8.2 – Alert Center</h1>
+        <div>
+            <button id="soundToggle" class="mute-btn">🔇 Sound: OFF</button>
+            <input id="volumeControl" class="volume-slider" type="range" min="0" max="1" step="0.05" value="0.8">
+        </div>
     </header>
 
     <div class="alert-container" id="alertContainer">
@@ -84,21 +87,41 @@
     <audio id="smartMoneySound" src="/static/sounds/smartmoney_alert.mp3" preload="auto"></audio>
 
     <script>
-        let soundEnabled = true;
+        let soundEnabled = false; // Ξεκινάει OFF λόγω Chrome autoplay policy
+        const goalAudio = document.getElementById('goalSound');
+        const smartAudio = document.getElementById('smartMoneySound');
+        const toggleBtn = document.getElementById('soundToggle');
+        const volumeControl = document.getElementById('volumeControl');
 
-        document.getElementById('soundToggle').addEventListener('click', () => {
+        // Πρώτο click: ενεργοποιεί τον ήχο (Chrome requirement)
+        document.body.addEventListener('click', () => {
+            if (!soundEnabled) {
+                soundEnabled = true;
+                toggleBtn.textContent = '🔊 Sound: ON';
+                console.log('Sound activated by user click.');
+            }
+        }, { once: true });
+
+        // Mute / Unmute button
+        toggleBtn.addEventListener('click', () => {
             soundEnabled = !soundEnabled;
-            document.getElementById('soundToggle').textContent = soundEnabled ? '🔊 Sound: ON' : '🔇 Sound: OFF';
+            toggleBtn.textContent = soundEnabled ? '🔊 Sound: ON' : '🔇 Sound: OFF';
+        });
+
+        // Ρύθμιση έντασης
+        volumeControl.addEventListener('input', () => {
+            goalAudio.volume = volumeControl.value;
+            smartAudio.volume = volumeControl.value;
         });
 
         // Παίζει ήχο ανά τύπο ειδοποίησης
         function playSound(type) {
             if (!soundEnabled) return;
-            if (type === 'goal') document.getElementById('goalSound').play();
-            if (type === 'smartmoney') document.getElementById('smartMoneySound').play();
+            if (type === 'goal') goalAudio.play();
+            if (type === 'smartmoney') smartAudio.play();
         }
 
-        // Προβολή ειδοποίησης
+        // Εμφάνιση ειδοποίησης
         function showAlert(message, type) {
             const container = document.getElementById('alertContainer');
             const alert = document.createElement('div');
@@ -108,20 +131,10 @@
             playSound(type);
         }
 
-        // Παράδειγμα δοκιμής: goal & smartmoney alerts (μπορείς να τα αφαιρέσεις)
-        setTimeout(() => showAlert('⚽ Goal detected in Premier League!', 'goal'), 2000);
-        setTimeout(() => showAlert('💰 Smart Money movement on Serie A!', 'smartmoney'), 5000);
+        // Demo alerts (fixed delay to ensure Chrome audio permission)
+setTimeout(() => showAlert('⚽ Goal detected in Premier League!', 'goal'), 3000);
+setTimeout(() => showAlert('💰 Smart Money movement on Serie A!', 'smartmoney'), 6000);
 
-        // Ενσωμάτωση από backend
-        async function checkAlerts() {
-            const resGoal = await fetch('/api/trigger_goal_alert');
-            const resSmart = await fetch('/api/trigger_smartmoney_alert');
-            const goalData = await resGoal.json();
-            const smartData = await resSmart.json();
-            showAlert('⚽ Goal detected!', goalData.alert_type);
-            showAlert('💰 Smart Money movement!', smartData.alert_type);
-        }
-        // checkAlerts(); // Αν θέλεις να τρέχει με ένα click
     </script>
 </body>
 </html>
