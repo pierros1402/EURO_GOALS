@@ -1,5 +1,10 @@
 # ==============================================
-# EURO_GOALS v8 – Backend with Persistent Alerts + Smart Money Integration
+# EURO_GOALS v8 – FastAPI Backend
+# ==============================================
+# Περιλαμβάνει:
+#  - Notifications (manual + automatic)
+#  - Smart Money integration
+#  - Alert Center
 # ==============================================
 
 from fastapi import FastAPI, Request
@@ -13,14 +18,12 @@ from datetime import datetime
 import os
 
 # ------------------------------------------------
-# External Modules
+# Εξωτερικά Modules
 # ------------------------------------------------
-from sofascore_reader import get_live_matches
-from flashscore_reader import get_flashscore_odds
-from src.smart_money_refiner import detect_smart_money  # ✅ νέο import
+from src.smart_money_refiner import detect_smart_money  # ✅ Νέο import
 
 # ------------------------------------------------
-# FastAPI App Initialization
+# Εφαρμογή & Templates
 # ------------------------------------------------
 app = FastAPI(title="EURO_GOALS v8")
 templates = Jinja2Templates(directory="templates")
@@ -38,7 +41,7 @@ app.add_middleware(
 )
 
 # ------------------------------------------------
-# Database Connection
+# Database
 # ------------------------------------------------
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///matches.db")
 engine = create_engine(
@@ -47,7 +50,25 @@ engine = create_engine(
 )
 
 # ------------------------------------------------
-# Root Page
+# Startup – Create tables
+# ------------------------------------------------
+@app.on_event("startup")
+def startup_event():
+    with engine.connect() as conn:
+        conn.execute(text("""
+            CREATE TABLE IF NOT EXISTS alerts (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                message TEXT,
+                source TEXT,
+                level TEXT,
+                timestamp TEXT
+            )
+        """))
+        conn.commit()
+    print("[SYSTEM] ✅ EURO_GOALS v8 started successfully and DB initialized.")
+
+# ------------------------------------------------
+# Root page
 # ------------------------------------------------
 @app.get("/", response_class=HTMLResponse)
 async def index(request: Request):
@@ -65,7 +86,29 @@ async def service_worker():
     return FileResponse(path, media_type="application/javascript", headers=headers)
 
 # ------------------------------------------------
-# Notification Payload Schema
+# Health check
+# ------------------------------------------------
+@app.get("/api/health")
+async def health():
+    return {"status": "ok", "version": "8.0"}
+
+# ------------------------------------------------
+# Εσωτερική συνάρτηση για απευθείας εισαγωγή ειδοποίησης
+# ------------------------------------------------
+def add_alert_direct(message: str, source="System", level="info"):
+    try:
+        with engine.connect() as conn:
+            conn.execute(
+                text("INSERT INTO alerts (message, source, level, timestamp) VALUES (:m, :s, :l, :t)"),
+                {"m": message, "s": source, "l": level, "t": datetime.utcnow().isoformat()}
+            )
+            conn.commit()
+        print(f"[ALERT] 🔔 Direct insert → {message}")
+    except Exception as e:
+        print(f"[ALERT] ❌ Failed to insert alert: {e}")
+
+# ------------------------------------------------
+# Notification endpoint
 # ------------------------------------------------
 class NotifyPayload(BaseModel):
     title: str
@@ -77,6 +120,7 @@ class NotifyPayload(BaseModel):
 
 @app.post("/notify")
 async def notify(payload: NotifyPayload):
+    add_alert_direct(payload.title, source="Manual", level="info")
     return JSONResponse({
         "ok": True,
         "data": payload.dict(),
@@ -84,116 +128,7 @@ async def notify(payload: NotifyPayload):
     })
 
 # ------------------------------------------------
-# Health Check
-# ------------------------------------------------
-@app.get("/api/health")
-async def health():
-    return {"status": "ok", "version": "8.0"}
-
-# ------------------------------------------------
-# Startup Event – Create Tables
-# ------------------------------------------------
-@app.on_event("startup")
-def startup_event():
-    with engine.connect() as conn:
-        conn.execute(text("""
-            CREATE TABLE IF NOT EXISTS meta (
-                key TEXT PRIMARY KEY,
-                value TEXT
-            );
-        """))
-        conn.execute(text("""
-            CREATE TABLE IF NOT EXISTS alerts (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                message TEXT,
-                source TEXT,
-                timestamp TEXT,
-                level TEXT DEFAULT 'info'
-            );
-        """))
-        conn.commit()
-    print("[SYSTEM] ✅ EURO_GOALS v8 started successfully and DB initialized.")
-
-# ------------------------------------------------
-# ALERT ENDPOINTS – Persistent Storage
-# ------------------------------------------------
-@app.post("/api/add_alert")
-async def add_alert(request: Request):
-    try:
-        data = await request.json()
-        msg = data.get("message", "")
-        src = data.get("source", "System")
-        lvl = data.get("level", "info")
-
-        if not msg:
-            return {"status": "error", "message": "Empty alert message."}
-
-        ts = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-
-        with engine.begin() as conn:
-            conn.execute(text("""
-                INSERT INTO alerts (message, source, timestamp, level)
-                VALUES (:m, :s, :t, :l)
-            """), {"m": msg, "s": src, "t": ts, "l": lvl})
-
-        print(f"[ALERT] ✅ {lvl.upper()} | {src} → {msg}")
-        return {"status": "ok", "message": msg, "source": src, "time": ts}
-
-    except Exception as e:
-        print(f"[ALERT] ❌ Error adding alert: {e}")
-        return {"status": "error", "details": str(e)}
-
-@app.get("/alerts")
-async def get_alerts():
-    try:
-        with engine.connect() as conn:
-            result = conn.execute(text("SELECT * FROM alerts ORDER BY id DESC"))
-            data = [dict(row._mapping) for row in result]
-        return {"alerts": data, "total": len(data)}
-    except Exception as e:
-        print(f"[ALERT] ❌ Error reading alerts: {e}")
-        return {"alerts": [], "error": str(e)}
-
-@app.delete("/api/clear_alerts")
-async def clear_alerts():
-    try:
-        with engine.begin() as conn:
-            count = conn.execute(text("DELETE FROM alerts"))
-        print("[ALERT] 🧹 Alerts table cleared.")
-        return {"status": "ok", "cleared": count.rowcount}
-    except Exception as e:
-        print(f"[ALERT] ❌ Error clearing alerts: {e}")
-        return {"status": "error", "details": str(e)}
-
-# ------------------------------------------------
-# SIMPLE TEST ALERT ENDPOINT (One-click alert)
-# ------------------------------------------------
-@app.get("/api/test_alert")
-async def test_alert():
-    """
-    Δημιουργεί μια δοκιμαστική ειδοποίηση στη βάση χωρίς Postman.
-    """
-    try:
-        msg = "Test Alert Triggered via Browser"
-        src = "Manual"
-        lvl = "info"
-        ts = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-
-        with engine.begin() as conn:
-            conn.execute(text("""
-                INSERT INTO alerts (message, source, timestamp, level)
-                VALUES (:m, :s, :t, :l)
-            """), {"m": msg, "s": src, "t": ts, "l": lvl})
-
-        print(f"[ALERT] 🧪 Test alert inserted: {msg}")
-        return {"status": "ok", "message": msg, "time": ts}
-
-    except Exception as e:
-        print(f"[ALERT] ❌ Error inserting test alert: {e}")
-        return {"status": "error", "details": str(e)}
-
-# ------------------------------------------------
-# SMART MONEY TEST ENDPOINT
+# SMART MONEY ENDPOINT
 # ------------------------------------------------
 @app.get("/api/test_smartmoney")
 async def test_smartmoney():
@@ -204,70 +139,42 @@ async def test_smartmoney():
     try:
         result = detect_smart_money()
         count = result.get("count", 0)
+        alerts = result.get("alerts", [])
+        for a in alerts:
+            add_alert_direct(a["message"], source=a["source"], level="warning")
         print(f"[SMART MONEY] ✅ Triggered manually via /api/test_smartmoney ({count} signals)")
-        return {"status": "ok", "detected": count, "alerts": result.get("alerts", [])}
+        return {"status": "ok", "detected": count, "alerts": alerts}
     except Exception as e:
         print(f"[SMART MONEY] ❌ Error triggering Smart Money: {e}")
         return {"status": "error", "details": str(e)}
 
 # ------------------------------------------------
-# ALERT HISTORY PAGE
+# Alerts API
+# ------------------------------------------------
+@app.get("/api/alerts")
+async def get_alerts():
+    with engine.connect() as conn:
+        res = conn.execute(text("SELECT * FROM alerts ORDER BY id DESC"))
+        alerts = [
+            dict(row._mapping)
+            for row in res.fetchall()
+        ]
+    return {"alerts": alerts, "total": len(alerts)}
+
+# ------------------------------------------------
+# Clear Alerts
+# ------------------------------------------------
+@app.get("/api/clear_alerts")
+async def clear_alerts():
+    with engine.connect() as conn:
+        conn.execute(text("DELETE FROM alerts"))
+        conn.commit()
+    return {"status": "ok", "cleared": True}
+
+# ------------------------------------------------
+# Alert History Page
 # ------------------------------------------------
 @app.get("/alert_history", response_class=HTMLResponse)
 async def alert_history(request: Request):
     return templates.TemplateResponse("alert_history.html", {"request": request})
 
-# ------------------------------------------------
-# LIVE ODDS ENDPOINT (Sofascore + Flashscore)
-# ------------------------------------------------
-@app.get("/api/live_odds")
-async def live_odds():
-    try:
-        sofascore_data = get_live_matches()
-        flashscore_data = get_flashscore_odds()
-
-        if not sofascore_data and not flashscore_data:
-            return [{"league": "No live data", "home": "-", "away": "-", "odds": "-"}]
-
-        combined = []
-        for s in sofascore_data:
-            for f in flashscore_data:
-                if s["home"].split("(")[0].strip() in f["home"] or s["away"].split("(")[0].strip() in f["away"]:
-                    match = {
-                        "league": s["league"],
-                        "home": s["home"],
-                        "away": s["away"],
-                        "odds": f.get("odds", "-"),
-                        "status": s.get("status", ""),
-                        "minute": s.get("minute", "-")
-                    }
-                    combined.append(match)
-
-        if not combined:
-            combined = sofascore_data
-
-        print(f"[LIVE] ✅ {len(combined)} combined live matches.")
-        return combined
-
-    except Exception as e:
-        print(f"[LIVE] ❌ Error combining live feeds: {e}")
-        return [{"league": "Error loading live feed", "home": "-", "away": "-", "odds": "-"}]
-
-# ------------------------------------------------
-# INTERNAL FUNCTION – Direct alert insert (for modules)
-# ------------------------------------------------
-def add_alert_direct(message: str, source: str = "System", level: str = "info"):
-    """
-    Προσθέτει απευθείας alert στη βάση, χωρίς HTTP request.
-    Καλείται από άλλα modules (π.χ. smart_money_refiner).
-    """
-    try:
-        ts = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        with engine.begin() as conn:
-            conn.execute(text("""
-                INSERT INTO alerts (message, source, timestamp, level)
-                VALUES (:m, :s, :t, :l)
-            """), {"m": message, "s": source, "t": ts, "l": level})
-        print(f"[ALERT] 🔔 Direct insert → {source}: {message}")
-    except Exception as e:
-        print(f"[ALERT] ❌ Failed to insert alert: {e}")
