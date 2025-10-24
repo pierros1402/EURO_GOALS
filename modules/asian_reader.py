@@ -1,26 +1,33 @@
 # ==============================================
 # ASIAN READER MODULE – Smart Money Detector
 # ==============================================
-import requests, json
+import requests
 from datetime import datetime
 
 def detect_smart_money():
     """
-    Ελέγχει γνωστά Asian feeds (π.χ. Pinnacle, SBOBET)
-    και εντοπίζει ασυνήθιστες μεταβολές αποδόσεων.
+    Ανιχνεύει ασυνήθιστες μεταβολές αποδόσεων από ασιατικές αγορές.
+    Προς το παρόν, λειτουργεί με δοκιμαστικό API.
     """
     alerts = []
     try:
+        # Παράδειγμα placeholder – θα αντικατασταθεί με πραγματικό API
         url = "https://api.theoddsapi.com/v4/sports/soccer_odds"
         res = requests.get(url, timeout=8)
-        # Στο μέλλον μπορούμε να συνδέσουμε API key.
+
         if res.status_code == 200:
-            msg = "💰 Sharp movement detected in Asian market!"
+            msg = "💰 Smart Money movement detected in Asian markets!"
             alerts.append({
                 "alert_type": "smartmoney",
                 "message": msg,
                 "timestamp": datetime.now().isoformat()
             })
+
+        if alerts:
+            print(f"[ASIAN READER] ✅ {len(alerts)} smart money alert(s).")
+        else:
+            print("[ASIAN READER] No smart money movement at the moment.")
+
     except Exception as e:
         print("[ASIAN READER] ❌ Error:", e)
     return alerts
