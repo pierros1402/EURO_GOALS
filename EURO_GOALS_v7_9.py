@@ -1,6 +1,6 @@
 # ==============================================
-# EURO_GOALS v7.9f – FastAPI Backend
-# (Notifications + Alerts + Live Center)
+# EURO_GOALS v7.9g – FastAPI Backend
+# (Notifications + Alerts + Live Center + Sofascore + Flashscore)
 # ==============================================
 from fastapi import FastAPI, Request
 from fastapi.responses import FileResponse, JSONResponse, HTMLResponse, PlainTextResponse
@@ -12,10 +12,14 @@ from sqlalchemy import create_engine, text
 from datetime import datetime
 import os
 
+# Εισαγωγή των modules για live δεδομένα
+from sofascore_reader import get_live_matches
+from flashscore_reader import get_flashscore_odds
+
 # -------------------------
 # App & Templates
 # -------------------------
-app = FastAPI(title="EURO_GOALS v7.9f")
+app = FastAPI(title="EURO_GOALS v7.9g")
 templates = Jinja2Templates(directory="templates")
 
 if not os.path.exists("static"):
@@ -70,9 +74,6 @@ class NotifyPayload(BaseModel):
 
 @app.post("/notify")
 async def notify(payload: NotifyPayload):
-    """
-    Επιστρέφει payload ειδοποίησης για το front-end.
-    """
     return JSONResponse({
         "ok": True,
         "data": payload.dict(),
@@ -84,10 +85,10 @@ async def notify(payload: NotifyPayload):
 # -------------------------
 @app.get("/api/health")
 async def health():
-    return {"status": "ok", "version": "7.9f"}
+    return {"status": "ok", "version": "7.9g"}
 
 # -------------------------
-# Startup Event (DB Meta Table)
+# Startup Event
 # -------------------------
 @app.on_event("startup")
 def startup_event():
@@ -98,19 +99,15 @@ def startup_event():
                 value TEXT
             )
         """))
-    print("[SYSTEM] ✅ EURO_GOALS v7.9f started successfully.")
+    print("[SYSTEM] ✅ EURO_GOALS v7.9g started successfully.")
 
 # ==========================================================
-# ALERTS ENDPOINTS (Smart Money / Asian Reader / Notifications)
+# ALERTS ENDPOINTS
 # ==========================================================
-alerts = []  # προσωρινή λίστα ειδοποιήσεων
+alerts = []
 
 @app.post("/api/add_alert")
 async def add_alert(request: Request):
-    """
-    Δέχεται νέα ειδοποίηση (π.χ. Smart Money Detected)
-    από modules όπως asian_reader ή betfair_reader.
-    """
     try:
         data = await request.json()
         alert_msg = data.get("message", "")
@@ -127,17 +124,12 @@ async def add_alert(request: Request):
             return {"status": "ok", "alert": alert_entry, "total": len(alerts)}
         else:
             return {"status": "error", "message": "No alert message provided."}
-
     except Exception as e:
         print(f"[ALERT] ❌ Error adding alert: {e}")
         return {"status": "error", "details": str(e)}
 
 @app.get("/alerts")
 async def get_alerts():
-    """
-    Επιστρέφει όλες τις ειδοποιήσεις (Alert History)
-    για εμφάνιση στο Alert Center του UI.
-    """
     try:
         print(f"[ALERT] 🗂 Returning {len(alerts)} alerts.")
         return {"alerts": alerts}
@@ -147,10 +139,6 @@ async def get_alerts():
 
 @app.delete("/api/clear_alerts")
 async def clear_alerts():
-    """
-    Διαγράφει όλες τις ειδοποιήσεις (reset).
-    Μπορεί να καλείται από το κουμπί 'Clear' του Alert Center.
-    """
     try:
         count = len(alerts)
         alerts.clear()
@@ -165,50 +153,45 @@ async def clear_alerts():
 # -------------------------
 @app.get("/alert_history", response_class=HTMLResponse)
 async def alert_history(request: Request):
-    """
-    Εμφανίζει το Alert History UI από τα templates.
-    """
     return templates.TemplateResponse("alert_history.html", {"request": request})
 
 # ==========================================================
-# LIVE ODDS ENDPOINT (demo feed – για το live.html)
+# LIVE ODDS ENDPOINT (Sofascore + Flashscore Integration)
 # ==========================================================
 @app.get("/api/live_odds")
 async def live_odds():
     """
-    Επιστρέφει προσωρινά demo δεδομένα για το Live Center.
-    Στην τελική μορφή θα διαβάζει από τις real-time πηγές
-    (Flashscore, Sofascore, Betfair, Asian odds).
+    Συνδυάζει Sofascore (live scores) + Flashscore (odds).
     """
     try:
-        sample_data = [
-            {
-                "league": "Premier League",
-                "home": "Chelsea",
-                "away": "Arsenal",
-                "odds": "1.85 / 3.40 / 4.20"
-            },
-            {
-                "league": "La Liga",
-                "home": "Real Madrid",
-                "away": "Barcelona",
-                "odds": "2.10 / 3.25 / 3.60"
-            },
-            {
-                "league": "Bundesliga",
-                "home": "Bayern Munich",
-                "away": "Dortmund",
-                "odds": "1.70 / 3.80 / 4.60"
-            },
-            {
-                "league": "Super League Greece",
-                "home": "Olympiakos",
-                "away": "PAOK",
-                "odds": "2.05 / 3.10 / 3.80"
-            }
-        ]
-        print(f"[LIVE] ✅ Sent {len(sample_data)} live matches.")
-        return sample_data
+        sofascore_data = get_live_matches()
+        flashscore_data = get_flashscore_odds()
+
+        if not sofascore_data and not flashscore_data:
+            return [{"league": "No live data", "home": "-", "away": "-", "odds": "-"}]
+
+        combined = []
+
+        # Προσπαθεί να ταιριάξει αγώνες με ίδιο όνομα ομάδων
+        for s in sofascore_data:
+            for f in flashscore_data:
+                if (s["home"].split("(")[0].strip() in f["home"]) or (s["away"].split("(")[0].strip() in f["away"]):
+                    match = {
+                        "league": s["league"],
+                        "home": s["home"],
+                        "away": s["away"],
+                        "odds": f.get("odds", "-"),
+                        "status": s.get("status", ""),
+                        "minute": s.get("minute", "-")
+                    }
+                    combined.append(match)
+
+        if not combined:
+            combined = sofascore_data
+
+        print(f"[LIVE] ✅ Combined {len(combined)} live matches (Sofascore + Flashscore).")
+        return combined
+
     except Exception as e:
-        print(f"[LIVE] ❌ Error generating live odds: {e}")
-        return []
+        print(f"[LIVE] ❌ Error combining live feeds: {e}")
+        return [{"league": "Error loading live feed", "home": "-", "away": "-", "odds": "-"}]
