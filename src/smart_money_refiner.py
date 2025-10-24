@@ -1,55 +1,69 @@
 # ==============================================
-# SMART MONEY REFINER v8
-# Ανίχνευση “έξυπνου χρήματος” & αυτόματη ειδοποίηση
+# SMART MONEY REFINER MODULE (EURO_GOALS v8)
+# ==============================================
+# Ανιχνεύει μεταβολές αποδόσεων/ασιατικών γραμμών
+# από γνωστές πηγές (Pinnacle, SBOBET, 188BET, κ.λπ.)
+# και επιστρέφει δομημένα alerts
 # ==============================================
 
 import requests
-import json
+import random
 from datetime import datetime
-from EURO_GOALS_v8 import add_alert_direct  # ✅ νέα εισαγωγή για απευθείας ειδοποιήσεις
 
+# ------------------------------------------------
+# Εσωτερική συνάρτηση απλής εκτύπωσης alert
+# ------------------------------------------------
+def send_alert(msg):
+    """Προσωρινή αντικατάσταση της add_alert_direct"""
+    print(f"[ALERT] 🔔 {msg}")
+
+# ------------------------------------------------
+# Κύρια συνάρτηση ανίχνευσης Smart Money
+# ------------------------------------------------
 def detect_smart_money():
     """
-    Ανιχνεύει ύποπτες μεταβολές αποδόσεων από κύριες πηγές (Pinnacle, SBOBET, 188BET)
-    και δημιουργεί ειδοποίηση στην βάση δεδομένων.
+    Ελέγχει τις τελευταίες αποδόσεις από πηγές (dummy mode)
+    και επιστρέφει λίστα alerts για ύποπτες μεταβολές.
     """
-    print("[SMART MONEY] 🔍 Checking for suspicious odds movements...")
+
+    print("[SMART MONEY] 🔍 Checking Asian market data...")
 
     try:
-        # 🔸 Προσωρινές ψεύτικες πηγές (θα αντικατασταθούν με κανονικά APIs)
-        sources = [
-            {"book": "Pinnacle", "match": "Chelsea vs Arsenal", "old": 1.92, "new": 1.78},
-            {"book": "SBOBET", "match": "Barcelona vs Atletico", "old": 2.05, "new": 1.98}
+        # Προσωρινές εικονικές τιμές
+        sample_games = [
+            ("Chelsea vs Arsenal", 1.92, 1.78, "Pinnacle"),
+            ("Bayern vs Dortmund", 2.10, 1.95, "SBOBET"),
+            ("PAOK vs AEK", 2.35, 2.10, "188BET"),
         ]
 
-        detected = []
+        alerts = []
 
-        for s in sources:
-            # Αν η απόδοση έπεσε πάνω από 0.10 → Smart Money alert
-            if s["old"] - s["new"] >= 0.10:
-                change = round(s["old"] - s["new"], 2)
-                msg = f"Smart Money Detected – {s['book']}: {s['match']} odds moved {s['old']} → {s['new']} (Δ-{change})"
-                detected.append(msg)
+        for match, old, new, source in sample_games:
+            delta = round(old - new, 2)
+            if abs(delta) >= 0.10:
+                msg = f"Smart Money Detected – {source}: {match} odds moved {old} → {new} (Δ{delta:+.2f})"
+                alerts.append({
+                    "match": match,
+                    "source": source,
+                    "old": old,
+                    "new": new,
+                    "delta": delta,
+                    "message": msg,
+                    "timestamp": datetime.utcnow().isoformat()
+                })
+                send_alert(msg)
 
-                # ✅ Δημιουργεί alert απευθείας στη βάση
-                add_alert_direct(msg, "SmartMoney", "warning")
-                print(f"[SMART MONEY] ⚠️ {msg}")
-
-        if not detected:
-            print("[SMART MONEY] ✅ No major movements detected.")
-        else:
-            print(f"[SMART MONEY] {len(detected)} Smart Money signals stored.")
-
-        return {"status": "ok", "count": len(detected), "alerts": detected}
+        print(f"[SMART MONEY] ✅ Completed ({len(alerts)} signals found)")
+        return {"status": "ok", "count": len(alerts), "alerts": alerts}
 
     except Exception as e:
-        print(f"[SMART MONEY] ❌ Error: {e}")
-        add_alert_direct(f"Smart Money module error: {e}", "SmartMoney", "danger")
-        return {"status": "error", "message": str(e)}
+        print("[SMART MONEY] ❌ Error:", e)
+        return {"status": "error", "details": str(e)}
 
 # ------------------------------------------------
-# Manual test entry point (for local testing)
+# Εκτέλεση δοκιμής (αν τρέξει απευθείας το αρχείο)
 # ------------------------------------------------
 if __name__ == "__main__":
+    print("Running Smart Money Refiner test mode...")
     result = detect_smart_money()
-    print(json.dumps(result, indent=2, ensure_ascii=False))
+    print(result)
