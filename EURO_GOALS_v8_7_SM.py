@@ -1,102 +1,93 @@
 # ==============================================
-# EURO_GOALS v8.7_SM – Smart Money Only + Logger + Excel Export
+# EURO_GOALS v8.7_SM – Smart Money Integration (Render ready)
 # ==============================================
-from fastapi import FastAPI, Request
-from fastapi.responses import JSONResponse, HTMLResponse, FileResponse, PlainTextResponse
-from fastapi.staticfiles import StaticFiles
-from fastapi.templating import Jinja2Templates
+
+from fastapi import FastAPI
+from fastapi.responses import JSONResponse, HTMLResponse
+from fastapi.middleware.cors import CORSMiddleware
+from apscheduler.schedulers.background import BackgroundScheduler
 from datetime import datetime
 import os
-import pandas as pd
+import json
 
-# Μόνο το Smart Money module
+# Εισαγωγή Smart Money module
 from modules.asian_reader import detect_smart_money
 
-# ==============================================
-# APP INIT
-# ==============================================
-app = FastAPI(title="EURO_GOALS v8.7_SM – Smart Money Only")
-app.mount("/static", StaticFiles(directory="static"), name="static")
-templates = Jinja2Templates(directory="templates")
+# ----------------------------------------------
+# FastAPI app setup
+# ----------------------------------------------
+app = FastAPI(title="EURO_GOALS v8.7_SM – Smart Money Detector")
 
-# ==============================================
-# LOGGER
-# ==============================================
-def log_alert(alert_type, message):
-    """Αποθηκεύει κάθε Smart Money alert σε αρχείο κειμένου με timestamp."""
-    log_file = "alert_log.txt"
-    time_now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    line = f"[{time_now}] {alert_type.upper()} - {message}\n"
-    with open(log_file, "a", encoding="utf-8") as f:
-        f.write(line)
-    print(f"[LOGGER] Logged {alert_type.upper()} alert.")
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
-# ==============================================
-# ROUTES
-# ==============================================
-@app.get("/", response_class=HTMLResponse)
-async def home(request: Request):
-    return templates.TemplateResponse("index.html", {"request": request})
+# ----------------------------------------------
+# Ριζικό endpoint (προαιρετικό)
+# ----------------------------------------------
+@app.get("/")
+def root():
+    return HTMLResponse(
+        """
+        <h2>⚽ EURO_GOALS v8.7_SM is Live!</h2>
+        <p>Smart Money detector running on Render.</p>
+        <p>Check health: <a href="/api/health" target="_blank">/api/health</a></p>
+        <p>Trigger scan manually: <a href="/api/smartmoney/scan" target="_blank">/api/smartmoney/scan</a></p>
+        """
+    )
 
-# 💰 SMART MONEY ALERTS
-@app.get("/api/trigger_smartmoney_alert")
-async def smartmoney_alert():
+# ----------------------------------------------
+# Health Check endpoint (Render)
+# ----------------------------------------------
+@app.get("/api/health")
+def health_check():
+    return {"status": "ok", "service": "EURO_GOALS_SM", "timestamp": datetime.now().isoformat()}
+
+
+# ----------------------------------------------
+# Χειροκίνητο trigger Smart Money scan
+# ----------------------------------------------
+@app.get("/api/smartmoney/scan")
+def manual_smartmoney_scan():
+    print("[EURO_GOALS] 🧠 Manual Smart Money scan requested")
     results = detect_smart_money()
-    if results:
-        alert = results[0]
-        log_alert(alert["alert_type"], alert["message"])
-        return JSONResponse(alert)
-    return JSONResponse({"alert_type": None, "message": "No Smart Money movements"})
+    return JSONResponse({"status": "ok", "data": results})
 
-# 📜 ALERT HISTORY (UI Panel)
-@app.get("/api/alert_history", response_class=PlainTextResponse)
-async def alert_history():
-    log_file = "alert_log.txt"
-    if not os.path.exists(log_file):
-        return "No alerts logged yet."
-    with open(log_file, "r", encoding="utf-8") as f:
-        return f.read()
 
-# 📦 EXPORT TO EXCEL
-@app.get("/export_excel")
-async def export_excel():
-    log_file = "alert_log.txt"
-    if not os.path.exists(log_file):
-        return JSONResponse({"error": "No alert_log.txt found."})
+# ----------------------------------------------
+# Αυτόματος scheduler κάθε 60 δευτερόλεπτα
+# ----------------------------------------------
+scheduler = BackgroundScheduler()
 
-    rows = []
-    with open(log_file, "r", encoding="utf-8") as f:
-        for line in f:
-            if line.strip():
-                try:
-                    date_part = line.split("]")[0][1:]
-                    rest = line.split("]")[1].strip()
-                    alert_type, message = rest.split(" - ", 1)
-                    rows.append({
-                        "Timestamp": date_part,
-                        "Type": alert_type,
-                        "Message": message
-                    })
-                except Exception:
-                    pass
+def scheduled_smartmoney_check():
+    print(f"[SCHEDULER] 🕒 Smart Money auto-scan ενεργό ({datetime.now().strftime('%H:%M:%S')})")
+    detect_smart_money()
 
-    if not rows:
-        return JSONResponse({"error": "No valid entries found."})
+scheduler.add_job(scheduled_smartmoney_check, "interval", seconds=60)
+scheduler.start()
 
-    df = pd.DataFrame(rows)
-    filename = f"alert_log_{datetime.now().strftime('%Y_%m_%d')}.xlsx"
-    df.to_excel(filename, index=False)
-    print(f"[EXPORT] Excel file created: {filename}")
-    return FileResponse(filename, media_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', filename=filename)
 
-# 🧠 HEALTH CHECK
-@app.get("/health")
-async def health():
-    return {"status": "ok", "version": "8.7_SM", "time": datetime.now().isoformat()}
+# ----------------------------------------------
+# Εκκίνηση εφαρμογής
+# ----------------------------------------------
+@app.on_event("startup")
+def startup_event():
+    print("[EURO_GOALS] ✅ Database connection established (mock).")
+    print("[EURO_GOALS] 🚀 Smart Money module ready.")
 
-# ==============================================
-# LOCAL RUN
-# ==============================================
+@app.on_event("shutdown")
+def shutdown_event():
+    scheduler.shutdown()
+    print("[EURO_GOALS] 📴 Application shutdown complete.")
+
+
+# ----------------------------------------------
+# Local run (μόνο για test)
+# ----------------------------------------------
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run("EURO_GOALS_v8_7_SM:app", host="0.0.0.0", port=8000, reload=True)
+    uvicorn.run(app, host="0.0.0.0", port=int(os.getenv("PORT", 10000)))
