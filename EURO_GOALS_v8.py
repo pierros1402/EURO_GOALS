@@ -171,3 +171,29 @@ def auto_smartmoney_job():
 scheduler.add_job(auto_smartmoney_job, "interval", seconds=60)
 scheduler.start()
 print("[SCHEDULER] ⏱️ Smart Money auto-scanner ενεργό (κάθε 60 sec)")
+# ==============================================
+# SMART MONEY – AUTO CLEANUP (κάθε 24 ώρες)
+# ==============================================
+def cleanup_old_smartmoney():
+    """Διαγράφει alerts παλαιότερα από 24 ώρες"""
+    import time
+    if not os.path.exists(SMARTMONEY_LOG):
+        return
+    cutoff = time.time() - 86400  # 24 ώρες σε δευτερόλεπτα
+    with open(SMARTMONEY_LOG, "r", encoding="utf-8") as f:
+        lines = f.readlines()
+    new_lines = []
+    for line in lines:
+        try:
+            ts = line.split("]")[0].replace("[", "")
+            ts_obj = datetime.strptime(ts, "%Y-%m-%d %H:%M:%S")
+            if ts_obj.timestamp() > cutoff:
+                new_lines.append(line)
+        except:
+            pass
+    with open(SMARTMONEY_LOG, "w", encoding="utf-8") as f:
+        f.writelines(new_lines)
+    print("[CLEANUP] 🧹 Smart Money log cleaned (24h old removed)")
+
+# Εκτέλεση καθαρισμού κάθε 24 ώρες
+scheduler.add_job(cleanup_old_smartmoney, "interval", hours=24)
