@@ -1,80 +1,95 @@
 # ==============================================
-# EURO_GOALS v8.1 – Alert Sounds Integration
+# EURO_GOALS v8 – FastAPI Backend (Smart Money)
 # ==============================================
+
 from fastapi import FastAPI, Request
-from fastapi.responses import HTMLResponse, JSONResponse, FileResponse
-from fastapi.staticfiles import StaticFiles
+from fastapi.responses import JSONResponse, HTMLResponse, FileResponse
 from fastapi.templating import Jinja2Templates
+from pydantic import BaseModel
+from sqlalchemy import create_engine, text
 from datetime import datetime
 import os
+from dotenv import load_dotenv
 
 # ==============================================
-# 🔧 INITIALIZATION
+# Φόρτωση .env
 # ==============================================
-app = FastAPI(title="EURO_GOALS v8.1 – Alert Center")
+load_dotenv()
 
-# Mount static folder (icons, sounds, css, js)
-app.mount("/static", StaticFiles(directory="static"), name="static")
-
-# Templates directory
+# ==============================================
+# FastAPI Initialization
+# ==============================================
+app = FastAPI()
 templates = Jinja2Templates(directory="templates")
 
 # ==============================================
-# 🏠 ROOT PAGE
+# Database Connection
 # ==============================================
+DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///matches.db")
+engine = create_engine(
+    DATABASE_URL,
+    connect_args={"check_same_thread": False} if "sqlite" in DATABASE_URL else {}
+)
+
+@app.on_event("startup")
+def startup_event():
+    with engine.connect() as conn:
+        print("[EURO_GOALS] ✅ Database connection established.")
+
+# ==============================================
+# MODULE IMPORTS
+# ==============================================
+from modules import asian_reader
+
+# ==============================================
+# ROUTES
+# ==============================================
+
 @app.get("/", response_class=HTMLResponse)
 async def home(request: Request):
-    """
-    Loads the main Alert Center interface.
-    """
+    """Αρχική σελίδα"""
     return templates.TemplateResponse("index.html", {"request": request})
 
-# ==============================================
-# ⚽ GOAL ALERT ENDPOINT
-# ==============================================
-@app.get("/api/trigger_goal_alert")
-async def trigger_goal_alert():
-    """
-    Simulates a Goal alert.
-    This can later be connected to the live scores feed (Flashscore/Sofascore).
-    """
-    print("[ALERT] ⚽ Goal Alert Triggered")
-    return JSONResponse({
-        "alert_type": "goal",
-        "message": "Goal detected!",
-        "timestamp": datetime.now().isoformat()
-    })
+@app.get("/alerts", response_class=HTMLResponse)
+async def alert_center(request: Request):
+    """Alert Center"""
+    return templates.TemplateResponse("alert_history.html", {"request": request})
+
+@app.get("/live", response_class=HTMLResponse)
+async def live_page(request: Request):
+    """Live Feed"""
+    return templates.TemplateResponse("live.html", {"request": request})
 
 # ==============================================
-# 💰 SMART MONEY ALERT ENDPOINT
+# SMART MONEY ENDPOINT (ASIAN READER)
 # ==============================================
-@app.get("/api/trigger_smartmoney_alert")
-async def trigger_smartmoney_alert():
+@app.get("/asian/smart-money")
+async def get_smart_money():
     """
-    Simulates a Smart Money alert.
-    This can later be connected to asian_reader.py or betfair_reader.py.
+    Επιστρέφει τα αποτελέσματα του Smart Money Detector (asian_reader.py)
     """
-    print("[ALERT] 💰 Smart Money Movement Detected")
-    return JSONResponse({
-        "alert_type": "smartmoney",
-        "message": "Smart Money movement detected!",
-        "timestamp": datetime.now().isoformat()
-    })
+    try:
+        result = asian_reader.detect_smart_money()
+        return {"status": "ok", "data": result}
+    except Exception as e:
+        print("[SMART MONEY API] ❌ Error:", e)
+        return {"status": "error", "message": str(e)}
 
 # ==============================================
-# 🧠 HEALTH CHECK
+# HEALTH CHECK ENDPOINT
 # ==============================================
 @app.get("/health")
 async def health_check():
-    """
-    Simple health check for Render / monitoring.
-    """
-    return {"status": "ok", "version": "8.1", "time": datetime.now().isoformat()}
+    return {"status": "ok", "message": "EURO_GOALS v8 backend running successfully"}
 
 # ==============================================
-# 🚀 LOCAL RUN
+# STATIC FILES (optional, αν χρειάζεται)
 # ==============================================
-if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run("EURO_GOALS_v8:app", host="0.0.0.0", port=8000, reload=True)
-
+@app.get("/favicon.ico")
+async def favicon():
+    """επιστρέφει το εικονίδιο αν ζητηθεί"""
+    path = os.path.join("static", "icons", "ball.png")
+    if os.path.exists(path):
+        return FileResponse(path)
+    else:
+        return JSONResponse({"error": "Icon not found"}, status_code=404)
