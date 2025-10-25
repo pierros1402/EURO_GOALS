@@ -1,6 +1,6 @@
-# =======================================================
-# ASIAN READER v8.9 – Smart Money Detector (TheOddsAPI)
-# =======================================================
+# ==============================================
+# ASIAN READER v8.8 – Smart Money Detector (TheOddsAPI)
+# ==============================================
 
 import os
 import requests
@@ -8,105 +8,109 @@ import json
 from datetime import datetime
 from dotenv import load_dotenv
 
-# ===========================================
-# Φόρτωση του .env από τον φάκελο EURO_GOALS
-# ===========================================
+# Φόρτωση .env από τον εξωτερικό φάκελο EURO_GOALS
 load_dotenv()
+
 THEODDS_API_KEY = os.getenv("THEODDS_API_KEY")
+DEMO_MODE = False if THEODDS_API_KEY else True
 
-if not THEODDS_API_KEY:
-    print("[ASIAN READER] ⚠️ THEODDS_API_KEY missing in .env – running in DEMO MODE.")
-    DEMO_MODE = True
+print("[ASIAN READER] 🧩 Module active")
+if DEMO_MODE:
+    print("[ASIAN READER] ⚠️  THEODDS_API_KEY missing – running in DEMO mode.")
 else:
-    DEMO_MODE = False
+    print("[ASIAN READER] ✅ API key loaded successfully.")
 
-# ===========================================
-# Ευρωπαϊκές Λίγκες (EURO_GOALS Program)
-# ===========================================
-EURO_LEAGUES = [
-    # Αγγλία
-    "soccer_epl",
-    "soccer_efl_championship",
-    "soccer_england_league1",
-    "soccer_england_league2",
-    # Γερμανία
-    "soccer_germany_bundesliga",
-    "soccer_germany_bundesliga2",
-    "soccer_germany_3_liga",
-    # Ελλάδα
-    "soccer_greece_super_league",
-    "soccer_greece_super_league_2",
-    # Ιταλία
-    "soccer_italy_serie_a",
-    "soccer_italy_serie_b",
-    # Ισπανία
-    "soccer_spain_la_liga",
-    "soccer_spain_segunda_division",
-    # Γαλλία
-    "soccer_france_ligue_1",
-    "soccer_france_ligue_2",
-    # Ολλανδία
-    "soccer_netherlands_eredivisie",
-    # Πορτογαλία
-    "soccer_portugal_primeira_liga",
-    # Τουρκία
-    "soccer_turkey_super_lig",
-]
 
-# ===========================================
-# Smart Money Detector
-# ===========================================
+# ==============================================
+# 1️⃣  Λίγκες προς παρακολούθηση
+# ==============================================
+LEAGUES = {
+    "england": ["premier_league", "championship", "league_one", "league_two"],
+    "germany": ["bundesliga", "2_bundesliga", "3_liga"],
+    "greece": ["super_league", "super_league_2", "football_league"],
+    "spain": ["la_liga", "la_liga2"],
+    "italy": ["serie_a", "serie_b"],
+    "france": ["ligue_1", "ligue_2"],
+    "netherlands": ["eredivisie", "eerste_divisie"],
+    "portugal": ["primeira_liga", "segunda_liga"]
+}
+
+# ==============================================
+# 2️⃣  Κύρια συνάρτηση Smart Money Detection
+# ==============================================
 def detect_smart_money():
-    """
-    Ελέγχει για έντονες μεταβολές αποδόσεων ("Smart Money") σε όλες τις λίγκες του EURO_GOALS.
-    """
     print("[ASIAN READER] 🔍 Checking Smart Money movements...")
 
+    movements = []
+    now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
     if DEMO_MODE:
-        return [{"league": "DEMO", "match": "No API key", "movement": "N/A"}]
-
-    alerts = []
-    base_url = "https://api.the-odds-api.com/v4/sports"
-
-    for league in EURO_LEAGUES:
+        # Δείγμα για επίδειξη
+        movements.append({
+            "league": "Premier League",
+            "match": "Liverpool vs Chelsea",
+            "movement": "-0.35 Asian line drift (Liverpool)",
+            "timestamp": now
+        })
+        print("[ASIAN READER] 🧪 DEMO mode sample movement added.")
+    else:
         try:
-            url = f"{base_url}/{league}/odds?regions=eu&markets=h2h&oddsFormat=decimal&apiKey={THEODDS_API_KEY}"
-            response = requests.get(url, timeout=10)
-
-            if response.status_code != 200:
-                print(f"[ASIAN READER] ⚠️ {league} → API error ({response.status_code})")
-                continue
-
-            data = response.json()
-
-            for match in data:
-                home = match["home_team"]
-                away = match["away_team"]
-                bookmakers = match.get("bookmakers", [])
-
-                for book in bookmakers:
-                    odds = book.get("markets", [])
-                    for market in odds:
-                        outcomes = market.get("outcomes", [])
-                        if len(outcomes) == 2:
-                            try:
-                                home_price = float(outcomes[0]["price"])
-                                away_price = float(outcomes[1]["price"])
-
-                                # Ενδεικτικό threshold για "Smart Money" alert
-                                if abs(home_price - away_price) > 0.5:
-                                    alerts.append({
+            for country, leagues in LEAGUES.items():
+                for league in leagues:
+                    url = f"https://api.the-odds-api.com/v4/sports/{country}-{league}/odds"
+                    params = {"apiKey": THEODDS_API_KEY, "regions": "eu", "markets": "h2h,spreads"}
+                    r = requests.get(url, params=params)
+                    if r.status_code == 200:
+                        data = r.json()
+                        for game in data:
+                            home = game["home_team"]
+                            away = game["away_team"]
+                            bookmakers = game.get("bookmakers", [])
+                            for b in bookmakers:
+                                if "Asian Handicap" in b.get("title", ""):
+                                    # placeholder rule
+                                    movements.append({
                                         "league": league,
                                         "match": f"{home} vs {away}",
-                                        "movement": f"{home_price} / {away_price}",
-                                        "timestamp": datetime.now().strftime("%H:%M:%S")
+                                        "movement": "Asian line shift detected",
+                                        "timestamp": now
                                     })
-                            except:
-                                continue
+                    else:
+                        print(f"[ASIAN READER] ⚠️ League {league} skipped (status {r.status_code})")
 
         except Exception as e:
-            print(f"[ASIAN READER] ❌ Error in {league}:", e)
-            continue
+            print("[ASIAN READER] ❌ Error:", e)
 
-    print(f"[ASIAN READER] ✅ Found {len(alerts)} Smart Money alerts.")
-    return alerts
+    # ==============================================
+    # 3️⃣  Αποθήκευση σε log αρχείο
+    # ==============================================
+    log_entry = {"timestamp": now, "alerts": movements}
+    log_path = os.path.join(os.getcwd(), "smartmoney_log.json")
+
+    try:
+        if os.path.exists(log_path):
+            with open(log_path, "r", encoding="utf-8") as f:
+                data = json.load(f)
+        else:
+            data = []
+
+        data.append(log_entry)
+
+        with open(log_path, "w", encoding="utf-8") as f:
+            json.dump(data, f, indent=2, ensure_ascii=False)
+
+        print(f"[ASIAN READER] 💾 Log updated ({len(movements)} alerts).")
+
+    except Exception as e:
+        print("[ASIAN READER] ⚠️ Could not save log:", e)
+
+    print(f"[ASIAN READER] ✅ Scan complete at {now}")
+    return movements
+
+
+# ==============================================
+# 4️⃣  Test Execution
+# ==============================================
+if __name__ == "__main__":
+    results = detect_smart_money()
+    print(json.dumps(results, indent=2, ensure_ascii=False))
