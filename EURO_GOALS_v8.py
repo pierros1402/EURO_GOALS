@@ -93,3 +93,55 @@ async def favicon():
         return FileResponse(path)
     else:
         return JSONResponse({"error": "Icon not found"}, status_code=404)
+# ===================== SMART MONEY – SETTINGS =====================
+from fastapi.responses import PlainTextResponse
+SMARTMONEY_LOG = "smartmoney_log.txt"
+
+def log_smartmoney(message: str):
+    from datetime import datetime
+    ts = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    with open(SMARTMONEY_LOG, "a", encoding="utf-8") as f:
+        f.write(f"[{ts}] {message}\n")
+
+# ===================== SMART MONEY – PAGE =========================
+@app.get("/smartmoney", response_class=HTMLResponse)
+async def smartmoney_page(request: Request):
+    """Ξεχωριστή καρτέλα Smart Money Monitor"""
+    return templates.TemplateResponse("smartmoney.html", {"request": request})
+
+# ===================== SMART MONEY – API ==========================
+@app.get("/api/smartmoney_scan")
+async def api_smartmoney_scan():
+    """
+    Καλεί το modules.asian_reader.detect_smart_money()
+    • επιστρέφει νέα alerts (λίστα)
+    • τα γράφει και στο smartmoney_log.txt
+    """
+    try:
+        results = asian_reader.detect_smart_money()  # list[dict] ή []
+        # αποθήκευση σε log
+        for a in results:
+            # φτιάχνουμε καθαρό μήνυμα
+            league = a.get("league", "unknown")
+            match_ = a.get("match", "unknown")
+            movement = a.get("movement", "")
+            log_smartmoney(f"💰 {league} – {match_} ({movement})")
+        return {"status": "ok", "alerts": results}
+    except Exception as e:
+        print("[SMART MONEY API] ❌ Error:", e)
+        return {"status": "error", "message": str(e)}
+
+@app.get("/api/smartmoney_history", response_class=PlainTextResponse)
+async def api_smartmoney_history():
+    """Επιστρέφει όλο το ιστορικό Smart Money (ως text)"""
+    if not os.path.exists(SMARTMONEY_LOG):
+        return "No Smart Money alerts yet."
+    with open(SMARTMONEY_LOG, "r", encoding="utf-8") as f:
+        return f.read()
+
+@app.get("/api/smartmoney_clear")
+async def api_smartmoney_clear():
+    """(προαιρετικό) Καθαρίζει το log"""
+    if os.path.exists(SMARTMONEY_LOG):
+        os.remove(SMARTMONEY_LOG)
+    return {"status": "ok", "message": "Smart Money log cleared."}

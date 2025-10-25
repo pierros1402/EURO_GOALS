@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="el">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>EURO_GOALS – Smart Money Monitor</title>
+  <link rel="icon" href="/static/icons/ball.png">
+  <style>
+    body{margin:0;background:#0f141b;color:#e6edf3;font-family:Inter,system-ui,Arial}
+    .topbar{display:flex;justify-content:space-between;align-items:center;padding:16px 20px;background:#1b2330;border-bottom:1px solid #242c3a}
+    .title{font-weight:700;font-size:18px}
+    .pill{display:inline-flex;align-items:center;gap:10px;background:#111826;border:1px solid #263041;border-radius:999px;padding:6px 12px}
+    .container{max-width:1200px;margin:20px auto;padding:0 16px}
+    .panel{background:#151b24;border:1px solid #252e3c;border-radius:12px;margin-bottom:16px}
+    .panel h3{margin:0;padding:14px 16px;border-bottom:1px solid #222b37;font-size:15px}
+    .list{padding:8px 12px}
+    .item{background:#182131;border:1px solid #263041;border-radius:10px;margin:8px 0;padding:10px 12px}
+    .dim{opacity:.8}
+    .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+    .badge{font-size:12px;background:#233148;border:1px solid #2c3b54;border-radius:999px;padding:2px 8px}
+    .time{font-size:12px;opacity:.7}
+    .btn{cursor:pointer;border:1px solid #2b3850;background:#1a2230;color:#e6edf3;border-radius:8px;padding:6px 10px}
+    .btn:hover{background:#1f2939}
+    .muted{opacity:.6}
+    .grid{display:grid;grid-template-columns:2fr 1fr;gap:16px}
+    @media (max-width: 900px){.grid{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+  <div class="topbar">
+    <div class="title">💰 EURO_GOALS – Smart Money Monitor</div>
+    <div class="pill">
+      <span id="sound-label">Sound: ON</span>
+      <input id="sound-toggle" type="checkbox" checked />
+    </div>
+  </div>
+
+  <div class="container grid">
+    <!-- Live feed -->
+    <div class="panel">
+      <h3>Live Smart Money</h3>
+      <div class="list" id="live-list">
+        <div class="item dim">Αναμονή για ανίχνευση κινήσεων…</div>
+      </div>
+      <div style="display:flex;gap:8px;padding:0 12px 12px 12px;">
+        <button class="btn" id="btn-scan">Σάρωση τώρα</button>
+        <button class="btn muted" id="btn-toggle-auto">Auto: ON (20s)</button>
+      </div>
+    </div>
+
+    <!-- History -->
+    <div class="panel">
+      <h3>Ιστορικό Smart Money</h3>
+      <pre class="list" id="history" style="white-space:pre-wrap;max-height:460px;overflow:auto">Φόρτωση…</pre>
+      <div style="padding:0 12px 12px 12px;">
+        <button class="btn muted" id="btn-clear">Καθάρισμα ιστορικού</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Ήχος -->
+  <audio id="snd" src="/static/sounds/smartmoney_alert.mp3" preload="auto"></audio>
+
+  <script>
+    const liveList = document.getElementById('live-list');
+    const historyBox = document.getElementById('history');
+    const snd = document.getElementById('snd');
+    const soundToggle = document.getElementById('sound-toggle');
+    const soundLabel = document.getElementById('sound-label');
+    const btnScan = document.getElementById('btn-scan');
+    const btnAuto = document.getElementById('btn-toggle-auto');
+    const btnClear = document.getElementById('btn-clear');
+
+    let auto = true;
+    let timer = null;
+
+    function playSound(){ if(soundToggle.checked){ snd.currentTime = 0; snd.play().catch(()=>{}); } }
+    soundToggle.addEventListener('change', ()=>{ soundLabel.textContent = soundToggle.checked ? 'Sound: ON' : 'Sound: OFF'; });
+
+    async function fetchHistory(){
+      try{
+        const r = await fetch('/api/smartmoney_history');
+        historyBox.textContent = await r.text();
+      }catch(e){ historyBox.textContent = 'Error loading history.'; }
+    }
+
+    function renderAlerts(alerts){
+      if(!alerts || alerts.length===0){ return; }
+      if(liveList.firstElementChild && liveList.firstElementChild.classList.contains('dim')) liveList.innerHTML = '';
+      alerts.forEach(a=>{
+        const el = document.createElement('div');
+        el.className = 'item';
+        el.innerHTML = `
+          <div class="row">
+            <span class="badge">${a.league || 'league'}</span>
+            <strong>${a.match || 'match'}</strong>
+            <span class="time">${a.timestamp || ''}</span>
+          </div>
+          <div class="dim">Movement: ${a.movement || '-'}</div>
+        `;
+        liveList.prepend(el);
+      });
+      playSound();
+      fetchHistory();
+    }
+
+    async function scanNow(){
+      try{
+        const r = await fetch('/api/smartmoney_scan');
+        const data = await r.json();
+        if(data.status==='ok') renderAlerts(data.alerts || []);
+      }catch(e){ /* silent */ }
+    }
+
+    function startAuto(){
+      if(timer) clearInterval(timer);
+      timer = setInterval(scanNow, 20000);
+      btnAuto.textContent = 'Auto: ON (20s)';
+      btnAuto.classList.add('muted');
+    }
+    function stopAuto(){
+      if(timer) clearInterval(timer);
+      btnAuto.textContent = 'Auto: OFF';
+      btnAuto.classList.remove('muted');
+    }
+
+    btnScan.addEventListener('click', scanNow);
+    btnAuto.addEventListener('click', ()=>{
+      auto = !auto;
+      if(auto) startAuto(); else stopAuto();
+    });
+    btnClear.addEventListener('click', async ()=>{
+      await fetch('/api/smartmoney_clear');
+      historyBox.textContent = 'No Smart Money alerts yet.';
+    });
+
+    // init
+    fetchHistory();
+    startAuto();
+  </script>
+</body>
+</html>
