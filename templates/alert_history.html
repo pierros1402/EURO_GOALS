@@ -1,224 +1,83 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>EURO_GOALS – Alert Center v8.3</title>
-  <link rel="icon" type="image/x-icon" href="/static/euro_goals.ico">
-
-  <style>
-    body {
-      background-color: #0b0b0b;
-      color: #e8e8e8;
-      font-family: "Segoe UI", sans-serif;
-      margin: 0;
-      padding: 20px;
-      text-align: center;
-    }
-
-    h1 {
-      font-size: 28px;
-      color: #4da3ff;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-    }
-
-    .filters {
-      margin: 15px 0;
-    }
-
-    button {
-      background: #1b1b1b;
-      color: #ccc;
-      border: 1px solid #333;
-      padding: 8px 14px;
-      margin: 3px;
-      border-radius: 6px;
-      cursor: pointer;
-      transition: 0.2s;
-    }
-
-    button:hover {
-      background-color: #4da3ff;
-      color: #fff;
-    }
-
-    .alert-box {
-      background-color: #151515;
-      border-left: 6px solid #4da3ff;
-      margin: 10px auto;
-      padding: 10px 16px;
-      width: 90%;
-      border-radius: 10px;
-      text-align: left;
-      animation: fadeIn 0.6s ease;
-    }
-
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(10px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-
-    .alert-box.warning { border-left-color: #ffae00; }
-    .alert-box.danger { border-left-color: #ff4d4d; }
-    .alert-box.success { border-left-color: #00c851; }
-    .alert-box.smartmoney {
-      border-left-color: #ffaa33;
-      box-shadow: 0 0 8px rgba(255,170,51,0.3);
-    }
-    .alert-box.livefeed {
-      border-left-color: #00c851;
-      box-shadow: 0 0 8px rgba(0,200,81,0.25);
-    }
-
-    .alert-title {
-      font-weight: bold;
-      font-size: 15px;
-      color: #fff;
-    }
-
-    .alert-meta {
-      font-size: 12px;
-      color: #aaa;
-      margin-top: 3px;
-    }
-
-    .badge {
-      display: inline-block;
-      font-size: 11px;
-      padding: 2px 8px;
-      border-radius: 6px;
-      margin-left: 6px;
-      font-weight: 600;
-    }
-
-    .badge.smart { background: #ffaa33; color: #111; }
-    .badge.live { background: #00c851; color: #111; }
-
-    .no-alerts {
-      color: #777;
-      font-size: 14px;
-      margin-top: 20px;
-    }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EURO_GOALS v9 – Unified Alert Center</title>
+<link rel="icon" href="/static/icons/ball.png">
+<style>
+body{background:#0b0d17;color:#d1d5db;font-family:sans-serif;margin:0;padding:0;}
+header{background:#111322;padding:1rem;display:flex;justify-content:space-between;align-items:center;}
+h1{color:#38bdf8;margin:0;font-size:1.2rem;}
+.toggle{background:#222;color:#fff;border:none;border-radius:12px;padding:6px 12px;cursor:pointer;}
+.container{padding:1rem;}
+.alert{border-radius:8px;margin-bottom:10px;padding:10px;background:#1e2133;}
+.goal{border-left:5px solid #38bdf8;}
+.smart{border-left:5px solid #facc15;}
+.time{font-size:0.8rem;color:#9ca3af;}
+.counterbar{background:#1e2133;color:#facc15;padding:8px;text-align:center;font-weight:bold;}
+.counterbar span{margin:0 10px;}
+</style>
 </head>
 <body>
-  <h1>EURO_GOALS – Alert Center</h1>
 
-  <div class="filters">
-    <button onclick="filterAlerts('all')">All</button>
-    <button onclick="filterAlerts('smartmoney')">💰 Smart Money</button>
-    <button onclick="filterAlerts('livefeed')">⚽ Live Feed</button>
-    <button onclick="clearAlerts()">🧹 Clear</button>
-  </div>
+<header>
+  <h1>⚽ EURO_GOALS v9 – Unified Alert Center</h1>
+  <button id="soundToggle" class="toggle">🔊 Sound: ON</button>
+</header>
 
-  <div id="alerts-container"></div>
+<div class="counterbar">
+  <span id="smartCount">💰 Active: 0</span>
+  <span id="goalCount">⚽ Goals: 0</span>
+</div>
 
-  <!-- 🔊 Audio Elements -->
-  <audio id="sound-smart" src="/static/sounds/smartmoney.mp3" preload="auto"></audio>
-  <audio id="sound-goal" src="/static/sounds/goal.wav" preload="auto"></audio>
-  <audio id="sound-generic" src="/static/sounds/alert.mp3" preload="auto"></audio>
+<div class="container" id="alerts"></div>
 
-  <script>
-    let allAlerts = [];
-    let lastCount = 0;
+<script>
+let soundOn = true;
+document.getElementById("soundToggle").onclick = () => {
+  soundOn = !soundOn;
+  document.getElementById("soundToggle").innerText = soundOn ? "🔊 Sound: ON" : "🔇 Sound: OFF";
+};
 
-    async function fetchAlerts() {
-      const res = await fetch("/api/alerts");
-      const data = await res.json();
-      const current = data.alerts || [];
-      renderAlerts("all", current);
+// Ήχοι
+const sndGoal = new Audio("/static/sounds/goal_alert.mp3");
+const sndSmart = new Audio("/static/sounds/smartmoney_alert.mp3");
 
-      // Αν υπάρχουν νέα alerts
-      if (current.length > lastCount) {
-        const newAlerts = current.slice(0, current.length - lastCount);
-        newAlerts.forEach(a => playSoundForAlert(a));
-        lastCount = current.length;
-      } else {
-        lastCount = current.length;
-      }
+let smartCount = 0, goalCount = 0;
 
-      allAlerts = current;
+
+function updateCounters(){
+  document.getElementById("smartCount").innerText = `💰 Active: ${smartCount}`;
+  document.getElementById("goalCount").innerText = `⚽ Goals: ${goalCount}`;
+}
+
+function addAlert(type,text){
+  const div = document.createElement("div");
+  div.className = "alert " + (type === "goal" ? "goal" : "smart");
+  const t = new Date().toLocaleTimeString();
+  div.innerHTML = `<b>${text}</b><div class='time'>${t}</div>`;
+  document.getElementById("alerts").prepend(div);
+  if(soundOn) (type === "goal"?sndGoal:sndSmart).play();
+  if(type==="goal") goalCount++; else smartCount++;
+  updateCounters();
+}
+
+async function pollAlerts(){
+  try{
+    // 1️⃣ Goal alerts
+    const g = await fetch("/api/goal_alerts").then(r=>r.json());
+    if(g?.new){addAlert("goal",g.message);}
+    // 2️⃣ Smart Money alerts
+    const s = await fetch("/api/smartmoney_scan").then(r=>r.json());
+    if(s?.alerts?.length){
+      s.alerts.forEach(a=>addAlert("smart",`💰 ${a.league} – ${a.match} (${a.movement})`));
     }
-
-    function playSoundForAlert(alert) {
-      try {
-        if (alert.source?.toLowerCase() === "smartmoney") {
-          document.getElementById("sound-smart").play();
-        } else if (alert.source?.toLowerCase() === "livefeed") {
-          if (alert.message.includes("Goal")) {
-            document.getElementById("sound-goal").play();
-          } else {
-            document.getElementById("sound-generic").play();
-          }
-        } else {
-          document.getElementById("sound-generic").play();
-        }
-      } catch (e) {
-        console.warn("Sound play error:", e);
-      }
-    }
-
-    function renderAlerts(level, alerts) {
-      const container = document.getElementById("alerts-container");
-      container.innerHTML = "";
-
-      let filtered =
-        level === "all"
-          ? alerts
-          : alerts.filter(a =>
-              level === "smartmoney"
-                ? a.source?.toLowerCase() === "smartmoney"
-                : level === "livefeed"
-                ? a.source?.toLowerCase() === "livefeed"
-                : a.level === level
-            );
-
-      if (filtered.length === 0) {
-        container.innerHTML = `<div class="no-alerts">No alerts found.</div>`;
-        return;
-      }
-
-      filtered.forEach(a => {
-        let cls = "alert-box " + (a.level || "info");
-        if (a.source?.toLowerCase() === "smartmoney") cls += " smartmoney";
-        if (a.source?.toLowerCase() === "livefeed") cls += " livefeed";
-
-        let badge = "";
-        if (a.source?.toLowerCase() === "smartmoney")
-          badge = `<span class="badge smart">SMART</span>`;
-        else if (a.source?.toLowerCase() === "livefeed")
-          badge = `<span class="badge live">LIVE</span>`;
-
-        container.innerHTML += `
-          <div class="${cls}">
-            <div class="alert-title">${a.message} ${badge}</div>
-            <div class="alert-meta">
-              ${a.source || "System"} • ${
-          a.timestamp ? a.timestamp.replace("T", " ").slice(0, 19) : ""
-        }
-            </div>
-          </div>
-        `;
-      });
-    }
-
-    async function clearAlerts() {
-      if (!confirm("Clear all alerts?")) return;
-      await fetch("/api/clear_alerts");
-      allAlerts = [];
-      renderAlerts("all", []);
-      lastCount = 0;
-    }
-
-    function filterAlerts(level) {
-      renderAlerts(level, allAlerts);
-    }
-
-    setInterval(fetchAlerts, 10000);
-    fetchAlerts();
-  </script>
+  }catch(e){console.log(e);}
+  setTimeout(pollAlerts,60000);
+}
+pollAlerts();
+updateCounters();
+</script>
 </body>
 </html>
