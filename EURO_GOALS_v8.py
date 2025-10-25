@@ -3,10 +3,9 @@
 # ==============================================
 
 from fastapi import FastAPI, Request
-from fastapi.responses import JSONResponse, HTMLResponse, FileResponse
+from fastapi.responses import JSONResponse, HTMLResponse, FileResponse, PlainTextResponse
 from fastapi.templating import Jinja2Templates
-from pydantic import BaseModel
-from sqlalchemy import create_engine, text
+from sqlalchemy import create_engine
 from datetime import datetime
 import os
 from dotenv import load_dotenv
@@ -42,9 +41,8 @@ def startup_event():
 from modules import asian_reader
 
 # ==============================================
-# ROUTES
+# BASIC ROUTES
 # ==============================================
-
 @app.get("/", response_class=HTMLResponse)
 async def home(request: Request):
     """Αρχική σελίδα"""
@@ -61,12 +59,12 @@ async def live_page(request: Request):
     return templates.TemplateResponse("live.html", {"request": request})
 
 # ==============================================
-# SMART MONEY ENDPOINT (ASIAN READER)
+# SMART MONEY – CORE ENDPOINT
 # ==============================================
 @app.get("/asian/smart-money")
 async def get_smart_money():
     """
-    Επιστρέφει τα αποτελέσματα του Smart Money Detector (asian_reader.py)
+    Επιστρέφει αποτελέσματα από τον Smart Money Detector (asian_reader.py)
     """
     try:
         result = asian_reader.detect_smart_money()
@@ -76,52 +74,32 @@ async def get_smart_money():
         return {"status": "error", "message": str(e)}
 
 # ==============================================
-# HEALTH CHECK ENDPOINT
+# SMART MONEY – SETTINGS & LOGGING
 # ==============================================
-@app.get("/health")
-async def health_check():
-    return {"status": "ok", "message": "EURO_GOALS v8 backend running successfully"}
-
-# ==============================================
-# STATIC FILES (optional, αν χρειάζεται)
-# ==============================================
-@app.get("/favicon.ico")
-async def favicon():
-    """επιστρέφει το εικονίδιο αν ζητηθεί"""
-    path = os.path.join("static", "icons", "ball.png")
-    if os.path.exists(path):
-        return FileResponse(path)
-    else:
-        return JSONResponse({"error": "Icon not found"}, status_code=404)
-# ===================== SMART MONEY – SETTINGS =====================
-from fastapi.responses import PlainTextResponse
 SMARTMONEY_LOG = "smartmoney_log.txt"
 
 def log_smartmoney(message: str):
-    from datetime import datetime
     ts = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     with open(SMARTMONEY_LOG, "a", encoding="utf-8") as f:
         f.write(f"[{ts}] {message}\n")
 
-# ===================== SMART MONEY – PAGE =========================
+# ==============================================
+# SMART MONEY – UI PAGE
+# ==============================================
 @app.get("/smartmoney", response_class=HTMLResponse)
 async def smartmoney_page(request: Request):
     """Ξεχωριστή καρτέλα Smart Money Monitor"""
     return templates.TemplateResponse("smartmoney.html", {"request": request})
 
-# ===================== SMART MONEY – API ==========================
+# ==============================================
+# SMART MONEY – API ROUTES
+# ==============================================
 @app.get("/api/smartmoney_scan")
 async def api_smartmoney_scan():
-    """
-    Καλεί το modules.asian_reader.detect_smart_money()
-    • επιστρέφει νέα alerts (λίστα)
-    • τα γράφει και στο smartmoney_log.txt
-    """
+    """Καλεί το asian_reader.detect_smart_money() και αποθηκεύει αποτελέσματα"""
     try:
-        results = asian_reader.detect_smart_money()  # list[dict] ή []
-        # αποθήκευση σε log
+        results = asian_reader.detect_smart_money()
         for a in results:
-            # φτιάχνουμε καθαρό μήνυμα
             league = a.get("league", "unknown")
             match_ = a.get("match", "unknown")
             movement = a.get("movement", "")
@@ -133,7 +111,7 @@ async def api_smartmoney_scan():
 
 @app.get("/api/smartmoney_history", response_class=PlainTextResponse)
 async def api_smartmoney_history():
-    """Επιστρέφει όλο το ιστορικό Smart Money (ως text)"""
+    """Επιστρέφει όλο το ιστορικό Smart Money"""
     if not os.path.exists(SMARTMONEY_LOG):
         return "No Smart Money alerts yet."
     with open(SMARTMONEY_LOG, "r", encoding="utf-8") as f:
@@ -141,7 +119,55 @@ async def api_smartmoney_history():
 
 @app.get("/api/smartmoney_clear")
 async def api_smartmoney_clear():
-    """(προαιρετικό) Καθαρίζει το log"""
+    """Καθαρίζει το log"""
     if os.path.exists(SMARTMONEY_LOG):
         os.remove(SMARTMONEY_LOG)
     return {"status": "ok", "message": "Smart Money log cleared."}
+
+# ==============================================
+# HEALTH CHECK ENDPOINT
+# ==============================================
+@app.get("/health")
+async def health_check():
+    return {"status": "ok", "message": "EURO_GOALS v8 backend running successfully"}
+
+# ==============================================
+# STATIC FILES (optional)
+# ==============================================
+@app.get("/favicon.ico")
+async def favicon():
+    """επιστρέφει το εικονίδιο αν ζητηθεί"""
+    path = os.path.join("static", "icons", "ball.png")
+    if os.path.exists(path):
+        return FileResponse(path)
+    else:
+        return JSONResponse({"error": "Icon not found"}, status_code=404)
+
+# ==============================================
+# SMART MONEY – SERVER-SIDE SCHEDULER
+# ==============================================
+from apscheduler.schedulers.background import BackgroundScheduler
+
+scheduler = BackgroundScheduler()
+
+def auto_smartmoney_job():
+    """Τρέχει περιοδικά στο background"""
+    from modules import asian_reader
+    try:
+        results = asian_reader.detect_smart_money()
+        if results:
+            for a in results:
+                league = a.get("league", "unknown")
+                match_ = a.get("match", "unknown")
+                movement = a.get("movement", "")
+                log_smartmoney(f"💰 {league} – {match_} ({movement}) [AUTO]")
+            print(f"[AUTO SMART MONEY] ✅ {len(results)} alerts logged.")
+        else:
+            print("[AUTO SMART MONEY] No movements detected.")
+    except Exception as e:
+        print("[AUTO SMART MONEY] ❌", e)
+
+# Εκτελείται κάθε 60 δευτερόλεπτα
+scheduler.add_job(auto_smartmoney_job, "interval", seconds=60)
+scheduler.start()
+print("[SCHEDULER] ⏱️ Smart Money auto-scanner ενεργό (κάθε 60 sec)")
