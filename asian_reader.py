@@ -1,10 +1,17 @@
 # ==============================================
 # ASIAN READER MODULE (Smart Money Detector)
 # ==============================================
-
+import os
 import requests
 import json
 from datetime import datetime
+from dotenv import load_dotenv
+
+# ✅ Φόρτωση .env από τον εξωτερικό φάκελο EURO_GOALS
+load_dotenv()
+
+THEODDS_API_KEY = os.getenv("THEODDS_API_KEY")
+
 
 # ----------------------------------------------
 # Ρυθμίσεις
