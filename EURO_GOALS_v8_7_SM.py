@@ -90,4 +90,5 @@ def shutdown_event():
 # ----------------------------------------------
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=int(os.getenv("PORT", 10000)))
+    port = int(os.environ.get("PORT", 8000))  # Render assigns this automatically
+    uvicorn.run(app, host="0.0.0.0", port=port)
