@@ -1,9 +1,6 @@
 # ==============================================
-# OPENFOOTBALL IMPORTER v8.2 (GitHub Version)
+# OPENFOOTBALL IMPORTER v8.3 (3-level fallback)
 # ==============================================
-# Εισαγωγή δεδομένων από τα GitHub repos του OpenFootball
-# ==============================================
-
 import os
 import requests
 import json
@@ -29,8 +26,10 @@ LEAGUES = {
     "scotland": "Premiership"
 }
 
+SEASONS = ["2024-25", "2023-24", "2022-23"]
+
 def import_league(league, season):
-    """Λήψη δεδομένων από το σωστό repo του GitHub"""
+    """Προσπάθεια λήψης δεδομένων για συγκεκριμένη σεζόν"""
     base_url = f"https://raw.githubusercontent.com/openfootball/{league}/master/{season}/en.1.json"
     print(f"[OPENFOOTBALL] 🌍 {league} {season} ...", end=" ")
 
@@ -58,16 +57,15 @@ def import_league(league, season):
 
 
 def main():
-    print("[OPENFOOTBALL] 🚀 Starting import for 2024-25...")
+    print("[OPENFOOTBALL] 🚀 Starting import...")
     total = 0
+
     for league in LEAGUES.keys():
-        # 1️⃣ Προσπάθησε 2024-25
-        matches = import_league(league, "2024-25")
-
-        # 2️⃣ Αν δεν βρεθεί, προσπάθησε 2023-24
-        if matches is None:
-            matches = import_league(league, "2023-24")
-
+        matches = None
+        for season in SEASONS:
+            matches = import_league(league, season)
+            if matches:
+                break  # αν βρει, σταματά
         if matches:
             total += matches
 
