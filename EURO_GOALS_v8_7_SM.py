@@ -8,14 +8,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from apscheduler.schedulers.background import BackgroundScheduler
 from datetime import datetime
 import os
-import json
 
-# Εισαγωγή Smart Money module
 from modules.asian_reader import detect_smart_money
 
-# ----------------------------------------------
-# FastAPI app setup
-# ----------------------------------------------
 app = FastAPI(title="EURO_GOALS v8.7_SM – Smart Money Detector")
 
 app.add_middleware(
@@ -26,69 +21,47 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# ----------------------------------------------
-# Ριζικό endpoint (προαιρετικό)
-# ----------------------------------------------
 @app.get("/")
 def root():
     return HTMLResponse(
         """
         <h2>⚽ EURO_GOALS v8.7_SM is Live!</h2>
-        <p>Smart Money detector running on Render.</p>
-        <p>Check health: <a href="/api/health" target="_blank">/api/health</a></p>
-        <p>Trigger scan manually: <a href="/api/smartmoney/scan" target="_blank">/api/smartmoney/scan</a></p>
+        <p>Health: <a href="/api/health" target="_blank">/api/health</a></p>
+        <p>Manual scan: <a href="/api/smartmoney/scan" target="_blank">/api/smartmoney/scan</a></p>
         """
     )
 
-# ----------------------------------------------
-# Health Check endpoint (Render)
-# ----------------------------------------------
+# Health Check για Render
 @app.get("/api/health")
 def health_check():
     return {"status": "ok", "service": "EURO_GOALS_SM", "timestamp": datetime.now().isoformat()}
 
-
-# ----------------------------------------------
-# Χειροκίνητο trigger Smart Money scan
-# ----------------------------------------------
+# Χειροκίνητη σάρωση
 @app.get("/api/smartmoney/scan")
 def manual_smartmoney_scan():
-    print("[EURO_GOALS] 🧠 Manual Smart Money scan requested")
-    results = detect_smart_money()
-    return JSONResponse({"status": "ok", "data": results})
+    res = detect_smart_money()
+    return JSONResponse({"status": "ok", "data": res})
 
-
-# ----------------------------------------------
-# Αυτόματος scheduler κάθε 60 δευτερόλεπτα
-# ----------------------------------------------
+# Scheduler ανά 60"
 scheduler = BackgroundScheduler()
-
 def scheduled_smartmoney_check():
-    print(f"[SCHEDULER] 🕒 Smart Money auto-scan ενεργό ({datetime.now().strftime('%H:%M:%S')})")
+    print(f"[SCHEDULER] 🕒 auto-scan {datetime.now().strftime('%H:%M:%S')}")
     detect_smart_money()
 
 scheduler.add_job(scheduled_smartmoney_check, "interval", seconds=60)
 scheduler.start()
 
-
-# ----------------------------------------------
-# Εκκίνηση εφαρμογής
-# ----------------------------------------------
 @app.on_event("startup")
-def startup_event():
-    print("[EURO_GOALS] ✅ Database connection established (mock).")
-    print("[EURO_GOALS] 🚀 Smart Money module ready.")
+def on_start():
+    print("[EURO_GOALS] 🚀 App startup OK.")
 
 @app.on_event("shutdown")
-def shutdown_event():
+def on_shutdown():
     scheduler.shutdown()
-    print("[EURO_GOALS] 📴 Application shutdown complete.")
+    print("[EURO_GOALS] 📴 Shutdown complete.")
 
-
-# ----------------------------------------------
-# Local run (μόνο για test)
-# ----------------------------------------------
+# Local run / Render uses Start Command
 if __name__ == "__main__":
     import uvicorn
-    port = int(os.environ.get("PORT", 8000))  # Render assigns this automatically
+    port = int(os.environ.get("PORT", 8000))  # Render δίνει αυτόματα PORT
     uvicorn.run(app, host="0.0.0.0", port=port)
