@@ -1,142 +1,78 @@
-# =======================================================
-# OPENFOOTBALL IMPORTER v1.0
-# Universal Historical Data Loader for EURO_GOALS
-# =======================================================
+# ==============================================
+# OPENFOOTBALL IMPORTER v8.2 (GitHub Version)
+# ==============================================
+# Εισαγωγή δεδομένων από τα GitHub repos του OpenFootball
+# ==============================================
 
 import os
-import json
 import requests
-import sqlite3
-from datetime import datetime
+import json
 
-# ----------------------------------------------
-# GitHub base URL for OpenFootball datasets
-# ----------------------------------------------
-BASE_URL = "https://raw.githubusercontent.com/openfootball"
+DATA_DIR = os.path.join("data", "openfootball_cache")
+os.makedirs(DATA_DIR, exist_ok=True)
 
-# ----------------------------------------------
-# Target database
-# ----------------------------------------------
-DB_PATH = os.getenv("DATABASE_URL", "matches.db")
+LEAGUES = {
+    "england": "Premier League",
+    "germany": "Bundesliga",
+    "greece": "Super League",
+    "italy": "Serie A",
+    "spain": "La Liga",
+    "france": "Ligue 1",
+    "netherlands": "Eredivisie",
+    "portugal": "Primeira Liga",
+    "turkey": "Super Lig",
+    "belgium": "Jupiler Pro League",
+    "austria": "Bundesliga",
+    "switzerland": "Super League",
+    "poland": "Ekstraklasa",
+    "denmark": "Superliga",
+    "scotland": "Premiership"
+}
 
-# ----------------------------------------------
-# Countries supported by EURO_GOALS
-# ----------------------------------------------
-COUNTRIES = [
-    "england",
-    "germany",
-    "greece",
-    "italy",
-    "spain",
-    "france",
-    "netherlands",
-    "portugal",
-    "turkey",
-    "belgium",
-    "austria",
-    "switzerland",
-    "poland",
-    "denmark",
-    "scotland",
-]
-
-# ----------------------------------------------
-# Local cache directory
-# ----------------------------------------------
-CACHE_DIR = os.path.join("data", "openfootball_cache")
-os.makedirs(CACHE_DIR, exist_ok=True)
-
-
-# =======================================================
-# Utility: download JSON file from OpenFootball GitHub
-# =======================================================
-def download_league(country, season):
-    """
-    Downloads league JSON for given country & season.
-    Example: england/2024-25/eng.1.json
-    """
-    season_path = f"{country}/{season}/{country[:2]}.1.json"
-    url = f"{BASE_URL}/{country}-football-data/master/{season_path}"
+def import_league(league, season):
+    """Λήψη δεδομένων από το σωστό repo του GitHub"""
+    base_url = f"https://raw.githubusercontent.com/openfootball/{league}/master/{season}/en.1.json"
+    print(f"[OPENFOOTBALL] 🌍 {league} {season} ...", end=" ")
 
     try:
-        response = requests.get(url, timeout=15)
-        if response.status_code == 200:
-            file_path = os.path.join(CACHE_DIR, f"{country}_{season}.json")
-            with open(file_path, "wb") as f:
-                f.write(response.content)
-            print(f"[OPENFOOTBALL] ✅ Downloaded {country} {season}")
-            return file_path
-        else:
-            print(f"[OPENFOOTBALL] ⚠️ {country} {season} not found ({response.status_code})")
-    except Exception as e:
-        print(f"[OPENFOOTBALL] ❌ Error downloading {country} {season}: {e}")
-    return None
+        res = requests.get(base_url, timeout=10)
+        if res.status_code == 404:
+            print("(404 not found)")
+            return None
+        elif res.status_code != 200:
+            print(f"(error {res.status_code})")
+            return None
 
+        data = res.json()
+        filepath = os.path.join(DATA_DIR, f"{league}_{season}.json")
 
-# =======================================================
-# Parse & store into SQLite
-# =======================================================
-def parse_and_store(file_path):
-    try:
-        conn = sqlite3.connect(DB_PATH)
-        cur = conn.cursor()
-        cur.execute(
-            """CREATE TABLE IF NOT EXISTS historical_matches (
-                   id INTEGER PRIMARY KEY AUTOINCREMENT,
-                   date TEXT,
-                   country TEXT,
-                   league TEXT,
-                   home TEXT,
-                   away TEXT,
-                   score TEXT
-               )"""
-        )
+        with open(filepath, "w", encoding="utf-8") as f:
+            json.dump(data, f, indent=2, ensure_ascii=False)
 
-        with open(file_path, "r", encoding="utf-8") as f:
-            data = json.load(f)
-
-        country = os.path.basename(file_path).split("_")[0]
-        season = os.path.basename(file_path).split("_")[1].replace(".json", "")
-
-        matches = data.get("matches", [])
-        for m in matches:
-            date = m.get("date")
-            home = m.get("team1")
-            away = m.get("team2")
-            score = m.get("score", "")
-            league = data.get("name", season)
-
-            cur.execute(
-                "INSERT INTO historical_matches (date, country, league, home, away, score) VALUES (?, ?, ?, ?, ?, ?)",
-                (date, country, league, home, away, score),
-            )
-
-        conn.commit()
-        conn.close()
-        print(f"[OPENFOOTBALL] 💾 Stored {len(matches)} matches from {country} {season}")
-        return len(matches)
+        print(f"✅ Saved {len(data.get('matches', []))} matches")
+        return len(data.get("matches", []))
 
     except Exception as e:
-        print(f"[OPENFOOTBALL] ❌ Error storing {file_path}: {e}")
-        return 0
+        print(f"(error: {e})")
+        return None
 
 
-# =======================================================
-# Import all countries (latest season)
-# =======================================================
-def import_all_countries(season="2024-25"):
+def main():
+    print("[OPENFOOTBALL] 🚀 Starting import for 2024-25...")
     total = 0
-    print(f"[OPENFOOTBALL] 🌍 Starting import for {season}...")
-    for country in COUNTRIES:
-        file_path = download_league(country, season)
-        if file_path:
-            total += parse_and_store(file_path)
+    for league in LEAGUES.keys():
+        # 1️⃣ Προσπάθησε 2024-25
+        matches = import_league(league, "2024-25")
+
+        # 2️⃣ Αν δεν βρεθεί, προσπάθησε 2023-24
+        if matches is None:
+            matches = import_league(league, "2023-24")
+
+        if matches:
+            total += matches
+
     print(f"[OPENFOOTBALL] ✅ Imported {total} matches total.")
-    return total
 
 
-# =======================================================
-# Main execution (for manual run)
-# =======================================================
 if __name__ == "__main__":
-    import_all_countries("2024-25")
+    main()
