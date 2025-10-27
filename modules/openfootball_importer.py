@@ -1,5 +1,5 @@
 # ==============================================
-# OPENFOOTBALL IMPORTER v8.3 (3-level fallback)
+# OPENFOOTBALL IMPORTER v8.4 (auto-season finder)
 # ==============================================
 import os
 import requests
@@ -8,13 +8,16 @@ import json
 DATA_DIR = os.path.join("data", "openfootball_cache")
 os.makedirs(DATA_DIR, exist_ok=True)
 
+GITHUB_API_BASE = "https://api.github.com/repos/openfootball"
+RAW_BASE = "https://raw.githubusercontent.com/openfootball"
+
 LEAGUES = {
     "england": "Premier League",
     "germany": "Bundesliga",
-    "greece": "Super League",
     "italy": "Serie A",
     "spain": "La Liga",
     "france": "Ligue 1",
+    "greece": "Super League",
     "netherlands": "Eredivisie",
     "portugal": "Primeira Liga",
     "turkey": "Super Lig",
@@ -26,50 +29,64 @@ LEAGUES = {
     "scotland": "Premiership"
 }
 
-SEASONS = ["2024-25", "2023-24", "2022-23"]
-
-def import_league(league, season):
-    """Προσπάθεια λήψης δεδομένων για συγκεκριμένη σεζόν"""
-    base_url = f"https://raw.githubusercontent.com/openfootball/{league}/master/{season}/en.1.json"
-    print(f"[OPENFOOTBALL] 🌍 {league} {season} ...", end=" ")
-
+def get_latest_season_folder(league):
+    """Αναζητά τον πιο πρόσφατο φάκελο season στο GitHub repo του OpenFootball"""
+    url = f"{GITHUB_API_BASE}/{league}/contents"
     try:
-        res = requests.get(base_url, timeout=10)
-        if res.status_code == 404:
-            print("(404 not found)")
-            return None
-        elif res.status_code != 200:
-            print(f"(error {res.status_code})")
+        r = requests.get(url, timeout=10)
+        if r.status_code != 200:
+            print(f"⚠️  {league}: cannot fetch repo contents ({r.status_code})")
             return None
 
-        data = res.json()
-        filepath = os.path.join(DATA_DIR, f"{league}_{season}.json")
+        folders = [f["name"] for f in r.json() if f["type"] == "dir" and "-" in f["name"]]
+        if not folders:
+            print(f"⚠️  {league}: no season folders found")
+            return None
 
-        with open(filepath, "w", encoding="utf-8") as f:
-            json.dump(data, f, indent=2, ensure_ascii=False)
-
-        print(f"✅ Saved {len(data.get('matches', []))} matches")
-        return len(data.get("matches", []))
+        # Ταξινόμηση π.χ. ["2019-20","2020-21","2021-22"] → τελευταίο
+        folders.sort(reverse=True)
+        return folders[0]
 
     except Exception as e:
-        print(f"(error: {e})")
+        print(f"❌ {league}: error checking seasons -> {e}")
         return None
 
 
+def import_league(league):
+    """Κατεβάζει δεδομένα για την πιο πρόσφατη σεζόν"""
+    latest = get_latest_season_folder(league)
+    if not latest:
+        print(f"❌ {league}: No season folder found")
+        return 0
+
+    url = f"{RAW_BASE}/{league}/master/{latest}/en.1.json"
+    print(f"[OPENFOOTBALL] ⚽ {league} ({latest}) -> {url}")
+
+    try:
+        r = requests.get(url, timeout=10)
+        if r.status_code != 200:
+            print(f"⚠️  {league}: {r.status_code} not found")
+            return 0
+
+        data = r.json()
+        matches = data.get("matches", [])
+        filepath = os.path.join(DATA_DIR, f"{league}_{latest}.json")
+        with open(filepath, "w", encoding="utf-8") as f:
+            json.dump(data, f, indent=2, ensure_ascii=False)
+        print(f"✅ {league}: Imported {len(matches)} matches from {latest}")
+        return len(matches)
+
+    except Exception as e:
+        print(f"❌ {league}: Error importing -> {e}")
+        return 0
+
+
 def main():
-    print("[OPENFOOTBALL] 🚀 Starting import...")
+    print("[OPENFOOTBALL] 🚀 Auto-importing latest data...")
     total = 0
-
     for league in LEAGUES.keys():
-        matches = None
-        for season in SEASONS:
-            matches = import_league(league, season)
-            if matches:
-                break  # αν βρει, σταματά
-        if matches:
-            total += matches
-
-    print(f"[OPENFOOTBALL] ✅ Imported {total} matches total.")
+        total += import_league(league)
+    print(f"\n[OPENFOOTBALL] ✅ Total matches imported: {total}")
 
 
 if __name__ == "__main__":

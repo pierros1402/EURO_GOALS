@@ -1,8 +1,11 @@
 # =======================================
-# EURO_GOALS Project .gitignore
+# EURO_GOALS Project .gitignore (Final)
+# =======================================
+# Καθαρή δομή για χρήση σε GitHub + Render
+# Αγνοεί τοπικά αρχεία, backups, test scripts & ευαίσθητα δεδομένα
 # =======================================
 
-# Python cache & virtual environments
+# --- Python cache & virtual environments ---
 __pycache__/
 *.pyc
 *.pyo
@@ -11,42 +14,71 @@ venv/
 env/
 .venv/
 
-# Databases
+# --- Databases ---
 *.db
 *.sqlite3
 
-# Local environment variables
+# --- Local environment variables ---
 .env
+.env.txt
+*.key
+*.pem
 
-# Backups
+# --- Backups & exported data ---
 BACKUPS/
 *.sql
+*.csv
+*.xlsx
+*.bak
 
-# Local executables / installers
+# --- Local executables / installers ---
 *.exe
 *.bat
 *.vbs
 *.lnk
 
-# Logs & runtime files
+# --- Logs & runtime files ---
 *.log
 runtime.txt
 version_local.txt
 version_online.txt
 
-# Local data folders
+# --- Local data / temp folders ---
 .tmp.driveupload/
 .cache/
 .DS_Store
 
-# Shortcuts folder (keep empty)
+# --- Shortcuts folder (keep empty for app icons etc.) ---
 shortcuts/
 !shortcuts/.keep
 
-# IDE / Editor folders
+# --- IDE / Editor folders ---
 .vscode/
 .idea/
+*.code-workspace
 
-# GitHub / Render artifacts
+# --- GitHub / Render internal artifacts ---
 .gitignore
 .git/
+
+# --- Local-only utility & debug scripts (excluded from deploy) ---
+db_test.py
+db_merger.py
+EURO_GOALS_AUTO_BACKUP.py
+EURO_GOALS_BACKUP_*.py
+EURO_GOALS_SYNC_*.py
+EURO_GOALS_ALERT_*.py
+EURO_GOALS_BA_COMBO_final.py
+EURO_GOALS_BACKUP_COMBO.py
+
+# --- Miscellaneous temporary or debug files ---
+*.tmp
+*.swp
+*.bak
+*.old
+debug/
+logs/
+
+# --- Ignore user-specific / OS-specific items ---
+Thumbs.db
+desktop.ini

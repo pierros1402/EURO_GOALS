@@ -1,34 +1,17 @@
 # ==============================================
-# EURO_GOALS v8.7_SM – Integrated Season Manager
+# EURO_GOALS – Season Manager v2 (Flashscore Parser)
 # ==============================================
-from fastapi import FastAPI, Request
-from fastapi.responses import JSONResponse, HTMLResponse
-from fastapi.templating import Jinja2Templates
-from sqlalchemy import create_engine, text
+import requests
 from datetime import datetime
-from dotenv import load_dotenv
+from bs4 import BeautifulSoup
+from sqlalchemy import create_engine, text
 import os
 
-# ------------------------------------------------------------
-# Φόρτωση μεταβλητών περιβάλλοντος
-# ------------------------------------------------------------
-load_dotenv()
+# --- Ρύθμιση βάσης --------------------------------
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///matches.db")
+engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False} if "sqlite" in DATABASE_URL else {})
 
-engine = create_engine(
-    DATABASE_URL,
-    connect_args={"check_same_thread": False} if "sqlite" in DATABASE_URL else {}
-)
-
-app = FastAPI()
-templates = Jinja2Templates(directory="templates")
-
-# ============================================================
-# SEASON MANAGER (Flashscore Parser – χωρίς API key)
-# ============================================================
-import requests
-from bs4 import BeautifulSoup
-
+# --- Flashscore URLs -----------------------------
 FLASH_BASE = "https://www.flashscore.com"
 FLASH_LEAGUES = {
     "Premier League": "/football/england/premier-league/",
@@ -39,10 +22,15 @@ FLASH_LEAGUES = {
     "Super League Greece": "/football/greece/super-league/"
 }
 
+# --- Δημιουργία λίστας τελευταίων 5 σεζόν ----------------
 def get_recent_seasons():
     current_year = datetime.now().year
-    return [f"{current_year-1-i}/{current_year-i}" for i in range(5)]
+    seasons = []
+    for i in range(5):
+        seasons.append(f"{current_year-1-i}/{current_year-i}")
+    return seasons  # π.χ. ['2024/2025', '2023/2024', '2022/2023', '2021/2022', '2020/2021']
 
+# --- Εξαγωγή αγώνων από Flashscore -------------------------------
 def fetch_matches(league_url, season):
     try:
         print(f"[SEASON MANAGER] 🔍 Λήψη δεδομένων για {season} – {league_url}")
@@ -58,10 +46,12 @@ def fetch_matches(league_url, season):
             matches.append({"date": date, "home": home, "away": away, "score": score})
         print(f"[SEASON MANAGER] ✅ {len(matches)} αγώνες ελήφθησαν")
         return matches
+
     except Exception as e:
         print(f"[SEASON MANAGER] ❌ Σφάλμα λήψης δεδομένων: {e}")
         return []
 
+# --- Έλεγχος αν υπάρχουν ήδη στη βάση -------------------------------
 def match_exists(conn, league, date, home, away):
     res = conn.execute(text("""
         SELECT 1 FROM matches 
@@ -70,6 +60,7 @@ def match_exists(conn, league, date, home, away):
     """), {"league": league, "date": date, "home": home, "away": away}).fetchone()
     return res is not None
 
+# --- Εισαγωγή στη βάση ------------------------------------------
 def insert_into_db(matches, league, season):
     if not matches:
         return
@@ -82,8 +73,9 @@ def insert_into_db(matches, league, season):
                     VALUES (:league, :season, :date, :home, :away, :score)
                 """), {"league": league, "season": season, "date": m["date"], "home": m["home"], "away": m["away"], "score": m["score"]})
                 new_count += 1
-        print(f"[SEASON MANAGER] 💾 {new_count} νέοι αγώνες για {league} ({season})")
+        print(f"[SEASON MANAGER] 💾 Εισαγωγή {new_count} νέων αγώνων για {league} ({season})")
 
+# --- Κύρια εκτέλεση ---------------------------------------------
 def update_all_leagues(current_only=False):
     seasons = [get_recent_seasons()[0]] if current_only else get_recent_seasons()
     for season in seasons:
@@ -91,47 +83,7 @@ def update_all_leagues(current_only=False):
             url = f"{FLASH_BASE}{path}"
             matches = fetch_matches(url, season)
             insert_into_db(matches, league_name, season)
-    print("[SEASON MANAGER] ✅ Ενημέρωση ολοκληρώθηκε.")
+    print("[SEASON MANAGER] ✅ Ολοκλήρωση ενημέρωσης.")
 
-# ============================================================
-# STARTUP EVENT – ενημέρωση βάσης με σεζόν
-# ============================================================
-@app.on_event("startup")
-def startup_event():
-    print("[EURO_GOALS] 🚀 Εκκίνηση εφαρμογής...")
+if __name__ == "__main__":
     update_all_leagues(current_only=False)
-    print("[EURO_GOALS] ✅ Βάση ενημερωμένη.")
-
-# ============================================================
-# ROUTES
-# ============================================================
-@app.get("/", response_class=HTMLResponse)
-def home(request: Request):
-    return templates.TemplateResponse("index.html", {"request": request, "message": "EURO_GOALS v8.7_SM – Active"})
-
-@app.get("/api/matches")
-def get_matches(limit: int = 50):
-    with engine.connect() as conn:
-        result = conn.execute(text("SELECT * FROM matches ORDER BY date DESC LIMIT :limit"), {"limit": limit})
-        data = [dict(row._mapping) for row in result]
-    return JSONResponse(content={"matches": data})
-
-# ============================================================
-# MANUAL REFRESH ENDPOINT
-# ============================================================
-@app.get("/api/refresh")
-def manual_refresh():
-    update_all_leagues(current_only=False)
-    return JSONResponse(content={"status": "ok", "message": "Ενημέρωση βάσης ολοκληρώθηκε."})
-
-# ============================================================
-# INFO
-# ============================================================
-@app.get("/api/info")
-def info():
-    return {
-        "version": "8.7_SM",
-        "status": "active",
-        "source": "Flashscore Parser (no API key)",
-        "seasons_loaded": get_recent_seasons()
-    }
