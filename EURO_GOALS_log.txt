@@ -2,3 +2,21 @@
 [2025-10-12 01:07:51] [FETCH/FS] ENG1 — England / Premier League
 [2025-10-12 01:11:10] EURO_GOALS v6f_debug — start (FS+SS, 7 days) → Excel: C:\Users\pierr\Desktop\EURO_GOALS\EURO_GOALS_2025-10-12.xlsx
 [2025-10-12 01:11:10] [FETCH/FS] ENG1 — England / Premier League
+[2025-10-27 17:04:14] 🩺 Έναρξη EURO_GOALS Health Check...
+[2025-10-27 17:04:25] [RENDER] ❌ Σφάλμα: HTTPSConnectionPool(host='euro-goalsv7-9.onrender.com', port=443): Read timed out. (read timeout=10)
+[2025-10-27 17:04:25] [DB] ❌ Δεν βρέθηκε η βάση δεδομένων.
+[2025-10-27 17:04:25] [ENV] ⚠️ Missing keys: THEODDS_API_KEY
+[2025-10-27 17:04:25] [UI] ✅ Templates OK
+[2025-10-27 17:04:32] ❌ Ο έλεγχος εντόπισε προβλήματα.
+[2025-10-27 17:04:32] 🩶 Ολοκλήρωση Health Check.
+
+[2025-10-27 17:22:14] 🩺 Έναρξη EURO_GOALS Health Check...
+[2025-10-27 17:22:35] [RENDER] ❌ Σφάλμα σύνδεσης Render: HTTPSConnectionPool(host='euro-goalsv7-9.onrender.com', port=443): Read timed out. (read timeout=20)
+[2025-10-27 17:22:35] [DB] ✅ Database OK (euro_goals_local.db)
+[2025-10-27 17:22:35] [ENV] ⚠️ Missing keys: THEODDS_API_KEY
+[2025-10-27 17:22:35] [UI] ✅ Templates OK
+[2025-10-27 17:22:35] ❌ Ο έλεγχος εντόπισε προβλήματα.
+[2025-10-27 17:22:35] 🩶 Ολοκλήρωση Health Check.
+
+[2025-10-27 17:22:35] ⏱️ Επόμενος έλεγχος σε 30 λεπτά...
+
