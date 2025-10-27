@@ -20,3 +20,36 @@
 
 [2025-10-27 17:22:35] ⏱️ Επόμενος έλεγχος σε 30 λεπτά...
 
+2025-10-27 18:18:26 [FOOTBALLDATA] ⚠️ Error loading competitions: 400 Client Error:  for url: https://api.football-data.org/v4/competitions
+2025-10-27 18:26:45 [FOOTBALLDATA] ⚠️ API key test returned status 400.
+2025-10-27 18:39:43 [FOOTBALLDATA] ✅ API key is valid and active.
+2025-10-27 18:39:44 [FOOTBALLDATA] ✅ Competitions loaded (13 total)
+2025-10-27 18:39:45 [FOOTBALLDATA] ✅ Retrieved 290 matches (PL - SCHEDULED)
+2025-10-27 22:46:51 [APIFOOTBALL] ✅ API key is valid and active.
+2025-10-27 22:46:52 [APIFOOTBALL] ✅ Loaded 1206 leagues.
+2025-10-27 22:46:53 [APIFOOTBALL] ✅ Retrieved 0 fixtures for league 39.
+2025-10-27 22:46:54 [APIFOOTBALL] ✅ Retrieved 0 odds entries for league 39.
+2025-10-27 22:51:50 [APIFOOTBALL] ✅ API key is valid and active.
+2025-10-27 22:51:51 [APIFOOTBALL] ✅ Retrieved 0 fixtures (league=39, season=2025).
+2025-10-27 22:51:53 [APIFOOTBALL] 💰 Retrieved 0 odds entries (league=39, season=2025).
+2025-10-27 22:55:07 [APIFOOTBALL] ✅ API key is valid and active.
+2025-10-27 22:55:08 [APIFOOTBALL] ✅ Retrieved 0 fixtures (league=39, season=2025).
+2025-10-27 22:55:10 [APIFOOTBALL] 💰 Retrieved 0 odds entries (league=39, season=2025).
+2025-10-27 22:58:43 [APIFOOTBALL] ✅ API key is valid and active.
+2025-10-27 22:58:44 [APIFOOTBALL] ✅ Retrieved 0 fixtures (league=39, season=2025).
+2025-10-27 22:58:46 [APIFOOTBALL] 💰 Retrieved 0 odds entries (league=39, season=2025).
+2025-10-27 23:01:59 [APIFOOTBALL] ✅ API key is valid and active.
+2025-10-27 23:02:01 [APIFOOTBALL] ✅ Retrieved 0 fixtures (league=39, season=2025).
+2025-10-27 23:02:02 [APIFOOTBALL] 💰 Retrieved 0 odds entries (league=39, season=2025).
+2025-10-27 23:07:36 [APIFOOTBALL] ✅ API key is valid and active.
+2025-10-27 23:07:38 [APIFOOTBALL] ✅ Retrieved 0 fixtures (league=39, season=2025).
+2025-10-27 23:07:39 [APIFOOTBALL] 💰 Retrieved 0 odds entries (league=39, season=2025).
+2025-10-27 23:12:04 [APIFOOTBALL] ✅ API key is valid and active.
+2025-10-27 23:12:06 [APIFOOTBALL] ✅ Retrieved 0 fixtures (league=39, season=2024).
+2025-10-27 23:12:07 [APIFOOTBALL] 💰 Retrieved 0 odds entries (league=39, season=2024).
+2025-10-27 23:16:06 [AGGREGATOR] 🚀 Starting full data aggregation...
+2025-10-27 23:16:08 [FOOTBALLDATA] ✅ Retrieved 290 matches (PL - SCHEDULED)
+2025-10-27 23:16:08 [AGGREGATOR] ⚽ Football-Data.org returned 290 fixtures.
+2025-10-27 23:16:10 [APIFOOTBALL] ✅ Retrieved 0 fixtures (league=39, season=2024).
+2025-10-27 23:16:10 [AGGREGATOR] 🏆 API-Football returned 0 fixtures.
+2025-10-27 23:16:10 [AGGREGATOR] ✅ Aggregated data saved to data\aggregated_fixtures_20251027_2316.csv
