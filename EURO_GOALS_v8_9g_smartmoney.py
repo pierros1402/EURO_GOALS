@@ -146,4 +146,4 @@ def api_smartmoney_status():
 
 @app.get("/", response_class=HTMLResponse)
 def index(request: Request):
-    return templates.TemplateResponse("index.html", {"request": request, "APP_VERSION": APP_VERSION})
+    return templates.TemplateResponse("system_status.html", {"request": request, "APP_VERSION": APP_VERSION})

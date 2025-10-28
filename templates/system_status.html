@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="el">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>EURO_GOALS – System Status Panel</title>
+  <link rel="icon" type="image/x-icon" href="/static/favicon.ico" />
+  <link rel="stylesheet" href="/static/css/status.css" />
+  <style>
+    body { background: #0b1120; color: #dfe9f6; font-family: 'Segoe UI', sans-serif; margin: 0; padding: 0; }
+    header, footer { padding: 12px 24px; background: #111a2b; border-bottom: 1px solid #1f2a44; }
+    .container { width: 95%; max-width: 1400px; margin: auto; }
+    h1 { margin: 0; font-size: 22px; color: #4da3ff; }
+    .h1-sub { font-size: 15px; opacity: 0.7; margin-left: 6px; }
+    .muted { opacity: 0.6; font-size: 13px; }
+    .toolbar { margin-top: 8px; }
+    .btn { background: #1b2b45; border: 1px solid #30486c; color: #cbe4ff; border-radius: 8px; padding: 6px 10px; cursor: pointer; margin-right: 6px; font-size: 13px; }
+    .btn.primary { background: #2563eb; border-color: #3b82f6; color: #fff; }
+    .panel { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; margin: 20px 0; }
+    .card-small { background: #121a2b; border: 1px solid #1f2a44; border-radius: 14px; padding: 12px; }
+    .kpi { font-size: 13px; opacity: 0.9; margin-bottom: 4px; }
+    .val { font-size: 18px; font-weight: 700; }
+    .dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 6px; vertical-align: middle; }
+    .ok { background: #23d18b; }
+    .bad { background: #ff5757; }
+    table { width: 100%; border-collapse: collapse; font-size: 14px; margin-top: 6px; }
+    th, td { border-bottom: 1px solid #1f2a44; padding: 4px 6px; text-align: left; }
+    th { background: #182844; font-weight: 600; color: #9ecbff; }
+    #logbox { background: #0c162a; color: #b7d0f0; font-family: monospace; font-size: 13px; height: 250px; overflow-y: auto; border: 1px solid #1f2a44; padding: 8px; }
+    footer { border-top: 1px solid #1f2a44; text-align: center; font-size: 13px; margin-top: 20px; }
+    @media(max-width:900px){.panel{grid-template-columns:1fr 1fr}}
+    @media(max-width:600px){.panel{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+  <header>
+    <div class="container">
+      <h1>EURO_GOALS <span class="h1-sub">System Status Panel</span></h1>
+      <div class="toolbar">
+        <button class="btn primary" onclick="manualRefresh()">🔄 Refresh Now</button>
+        <button class="btn" onclick="toggleAutoRefresh()">⏱️ Auto-Refresh: <span id="autoState">ON</span></button>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    <!-- ================= STATUS PANEL ================= -->
+    <section class="panel">
+      <div class="card-small">
+        <div class="kpi">Render</div>
+        <div class="val"><span id="st-render-dot" class="dot"></span><span id="st-render-txt">—</span></div>
+        <div class="muted" id="st-last-health">Last health: —</div>
+      </div>
+      <div class="card-small">
+        <div class="kpi">Database</div>
+        <div class="val" id="st-db">—</div>
+        <div class="muted">Auto-Fallback ενεργό</div>
+      </div>
+      <div class="card-small">
+        <div class="kpi">API Router</div>
+        <div class="val"><span id="st-router-dot" class="dot"></span><span id="st-router">—</span></div>
+        <div class="muted">Feeds monitor</div>
+      </div>
+      <div class="card-small">
+        <div class="kpi">Uptime</div>
+        <div class="val" id="st-uptime">—</div>
+        <div class="muted" id="st-version">Version: {{ APP_VERSION }}</div>
+      </div>
+      <div class="card-small">
+        <div class="kpi">Smart Money</div>
+        <div class="val"><span id="smartmoney-dot" class="dot"></span><span id="smartmoney-status">—</span></div>
+        <div class="muted" id="smartmoney-info">Sources: —</div>
+      </div>
+    </section>
+
+    <!-- ================= DETAIL TABLES ================= -->
+    <section class="grid">
+      <div class="card col-8">
+        <h3>🔎 Σύνοψη λειτουργίας</h3>
+        <div class="row">
+          <div class="stat"><span class="label">Εξυπηρετητής</span><span class="val" id="server_status">—</span></div>
+          <div class="stat"><span class="label">Βάση</span><span class="val" id="db_status">—</span></div>
+          <div class="stat"><span class="label">Τελευταία ενημέρωση</span><span class="val" id="last_update">—</span></div>
+          <div class="stat"><span class="label">Alerts 24h</span><span class="val" id="alerts_24h">—</span></div>
+        </div>
+      </div>
+
+      <div class="card col-4">
+        <h3>🩺 Health Check</h3>
+        <div class="kv"><div>CPU</div><div><span id="cpu"></span></div></div>
+        <div class="kv"><div>RAM</div><div><span id="ram"></span></div></div>
+        <div class="kv"><div>Δίσκος</div><div><span id="disk"></span></div></div>
+        <div class="kv"><div>Σφάλματα</div><div><span id="errors"></span></div></div>
+      </div>
+
+      <div class="card col-6">
+        <h3>🌐 Feeds & APIs</h3>
+        <table id="feeds_table">
+          <thead><tr><th>Πηγή</th><th>Κατάσταση</th><th>Λεπτομέρειες</th></tr></thead>
+          <tbody id="feeds_body"></tbody>
+        </table>
+      </div>
+
+      <div class="card col-6">
+        <h3>📦 Background Jobs</h3>
+        <table id="jobs_table">
+          <thead><tr><th>Εργασία</th><th>Κατάσταση</th><th>Επόμενη Εκτέλεση</th></tr></thead>
+          <tbody id="jobs_body"></tbody>
+        </table>
+      </div>
+
+      <div class="card col-12" id="logs">
+        <h3>📜 Live Logs</h3>
+        <div id="logbox"></div>
+      </div>
+    </section>
+
+    <footer>
+      <div class="muted">© EURO_GOALS – Όλα τα δικαιώματα διατηρούνται.</div>
+    </footer>
+  </main>
+
+  <!-- ================= JAVASCRIPT ================= -->
+  <script>
+    let autoOn = true;
+
+    function manualRefresh(){fetch('/api/status').then(r=>r.json()).then(updateStatus)}
+    function toggleAutoRefresh(){autoOn=!autoOn;document.getElementById('autoState').textContent=autoOn?'ON':'OFF';}
+    function updateStatus(data){
+      document.getElementById('st-render-txt').textContent = data.render_online ? 'Online' : 'Offline';
+      document.getElementById('st-render-dot').className = 'dot ' + (data.render_online ? 'ok' : 'bad');
+      document.getElementById('st-db').textContent = data.db_in_use;
+      document.getElementById('st-router').textContent = data.feeds_router_active ? 'Feeds Active' : 'Idle';
+      document.getElementById('st-router-dot').className = 'dot ' + (data.feeds_router_active ? 'ok' : 'bad');
+      const secs = data.uptime_seconds || 0;
+      const hh = String(Math.floor(secs/3600)).padStart(2,'0');
+      const mm = String(Math.floor((secs%3600)/60)).padStart(2,'0');
+      const ss = String(secs%60).padStart(2,'0');
+      document.getElementById('st-uptime').textContent = `${hh}:${mm}:${ss}`;
+      document.getElementById('st-version').textContent = `Version: ${data.version}`;
+      if(data.smartmoney) updateSmartMoneyUI(data.smartmoney);
+    }
+
+    function updateSmartMoneyUI(data){
+      const dot = document.getElementById('smartmoney-dot');
+      const status = document.getElementById('smartmoney-status');
+      const info = document.getElementById('smartmoney-info');
+      const sources = data.sources || [];
+      const active = sources.filter(s => s.status.includes('active') || s.status.includes('mock')).length;
+      const total = sources.length;
+      status.textContent = `${active}/${total} active`;
+      info.textContent = sources.map(s => `${s.name}: ${s.status}`).join(' | ');
+      dot.className = 'dot ' + (active>0 ? 'ok' : 'bad');
+    }
+
+    setInterval(()=>{if(autoOn)manualRefresh();},15000);
+    manualRefresh();
+  </script>
+</body>
+</html>
