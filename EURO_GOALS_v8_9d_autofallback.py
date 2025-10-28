@@ -141,3 +141,10 @@ def startup_event():
     print("[EURO_GOALS] 🚀 Starting v8.9d – Auto-Fallback + Live API")
     print(f"[EURO_GOALS] 🌐 Language: {LANGUAGE}")
     print(f"[EURO_GOALS] 📡 Data Router Ready (feeds monitored)")
+# =============================================================
+# Run App (Render compatible)
+# =============================================================
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run("EURO_GOALS_v8_9d_autofallback:app", host="0.0.0.0", port=10000)
+
