@@ -1,71 +1,115 @@
 <!DOCTYPE html>
 <html lang="el">
 <head>
-    <meta charset="UTF-8">
-    <title>EURO_GOALS Dashboard</title>
-    <link rel="icon" href="/static/icons/football.ico">
-    <style>
-        body { font-family: Arial, sans-serif; background-color: #101820; color: #e0e0e0; margin: 0; }
-        header { background-color: #14213d; padding: 10px 20px; display: flex; justify-content: space-between; align-items: center; }
-        header h1 { color: #fca311; font-size: 24px; margin: 0; }
-        nav { display: flex; gap: 10px; align-items: center; }
-        button { background-color: #fca311; border: none; color: #14213d; padding: 8px 12px; font-weight: bold; border-radius: 6px; cursor: pointer; }
-        button:hover { background-color: #ffbe4d; }
-        main { padding: 20px; }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; background-color: #1e293b; }
-        th, td { border: 1px solid #334155; padding: 8px; text-align: center; }
-        th { background-color: #0f172a; color: #fca311; }
-        #system-status { font-weight: bold; margin-left: 10px; }
-        footer { text-align: center; font-size: 12px; color: #888; margin-top: 40px; }
-    </style>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>EURO_GOALS – Σύστημα Παρακολούθησης</title>
+  <link rel="icon" type="image/x-icon" href="/static/favicon.ico" />
+  <link rel="stylesheet" href="/static/css/status.css" />
 </head>
 <body>
+  <header>
+    <div class="container">
+      <div class="brand">
+        <div class="ball"></div>
+        <div>
+          <h1>EURO_GOALS <span class="h1-sub">System Status Panel</span></h1>
+          <div class="muted">Ζωντανή εικόνα λειτουργίας πλατφόρμας</div>
+        </div>
+      </div>
+      <div class="toolbar">
+        <button class="btn primary" onclick="manualRefresh()">🔄 Refresh Now</button>
+        <button class="btn" onclick="toggleAutoRefresh()">⏱️ Auto‑Refresh: <span id="autoState">ON</span></button>
+        <button class="btn" onclick="scrollToPanel('logs')">📜 View Logs</button>
+      </div>
+    </div>
+  </header>
 
-<header>
-  <h1>⚽ EURO_GOALS Dashboard</h1>
-  <nav>
-    <button onclick="window.location.href='/alert_history'">Ιστορικό Ειδοποιήσεων</button>
-    <button onclick="window.location.href='/add_match'">Προσθήκη Αγώνα</button>
-    <button onclick="window.location.href='/export_excel'">Εξαγωγή σε Excel</button>
-    <div id="system-status">🟡 Checking...</div>
-  </nav>
-</header>
+  <main class="container">
+    <section class="grid">
+      <!-- OVERVIEW -->
+      <div class="card col-8">
+        <h3>🔎 Σύνοψη λειτουργίας</h3>
+        <div class="row">
+          <div class="stat"><span class="label">Εξυπηρετητής</span><span class="val" id="server_status">—</span></div>
+          <div class="stat"><span class="label">Βάση</span><span class="val" id="db_status">—</span></div>
+          <div class="stat"><span class="label">Τελευταία ενημέρωση</span><span class="val" id="last_update">—</span></div>
+          <div class="stat"><span class="label">Alerts 24h</span><span class="val" id="alerts_24h">—</span></div>
+        </div>
+      </div>
 
-<main>
-  <h2>Πίνακας Κατάστασης Συστήματος</h2>
-  <table id="status-table">
-    <thead>
-      <tr><th>Module</th><th>Status</th><th>Last Check</th></tr>
-    </thead>
-    <tbody></tbody>
-  </table>
-</main>
+      <!-- HEALTH -->
+      <div class="card col-4">
+        <h3>🩺 Health Check</h3>
+        <div class="kv"><div>CPU</div><div><span id="cpu"></span></div></div>
+        <div class="kv"><div>RAM</div><div><span id="ram"></span></div></div>
+        <div class="kv"><div>Δίσκος</div><div><span id="disk"></span></div></div>
+        <div class="kv"><div>Σφάλματα</div><div><span id="errors"></span></div></div>
+      </div>
 
-<footer>
-  EURO_GOALS © 2025 – Developed by Pierros | All Rights Reserved
-</footer>
+      <!-- FEEDS -->
+      <div class="card col-6">
+        <h3>🌐 Feeds & APIs</h3>
+        <table id="feeds_table">
+          <thead><tr><th>Πηγή</th><th>Κατάσταση</th><th>Λεπτομέρειες</th></tr></thead>
+          <tbody>
+            {% for feed in feeds %}
+            <tr>
+              <td>{{ feed.name }}</td>
+              <td>{{ feed.status }}</td>
+              <td>{{ feed.detail }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
 
-<script>
-async function updateStatusPanel() {
-  try {
-    const resp = await fetch('/api/status_panel');
-    const data = await resp.json();
-    const tbody = document.querySelector('#status-table tbody');
-    tbody.innerHTML = '';
-    data.modules.forEach(mod => {
-      const row = `<tr><td>${mod.module}</td><td>${mod.status}</td><td>${mod.last_check}</td></tr>`;
-      tbody.insertAdjacentHTML('beforeend', row);
-    });
-    document.getElementById('system-status').textContent = '🟢 Online';
-    document.getElementById('system-status').style.color = 'lightgreen';
-  } catch (err) {
-    document.getElementById('system-status').textContent = '🔴 Offline';
-    document.getElementById('system-status').style.color = 'red';
-  }
-}
-updateStatusPanel();
-setInterval(updateStatusPanel, 30000);
-</script>
+      <!-- JOBS -->
+      <div class="card col-6">
+        <h3>📦 Background Jobs</h3>
+        <table id="jobs_table">
+          <thead><tr><th>Εργασία</th><th>Κατάσταση</th><th>Επόμενη Εκτέλεση</th></tr></thead>
+          <tbody>
+            {% for job in jobs %}
+            <tr>
+              <td>{{ job.name }}</td>
+              <td>{{ job.status }}</td>
+              <td>{{ job.next_run }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
 
+      <!-- LOGS -->
+      <div class="card col-12" id="logs">
+        <h3>📜 Live Logs</h3>
+        <div id="logbox"></div>
+      </div>
+    </section>
+
+    <footer>
+      <div class="muted">© EURO_GOALS – Όλα τα δικαιώματα διατηρούνται.</div>
+    </footer>
+  </main>
+
+  <script>
+    let autoOn = true;
+    function manualRefresh(){fetch('/api/system_status').then(r=>r.json()).then(updateStatus)}
+    function toggleAutoRefresh(){autoOn=!autoOn;document.getElementById('autoState').textContent=autoOn?'ON':'OFF';}
+    function updateStatus(data){
+      document.getElementById('server_status').textContent=data.server;
+      document.getElementById('db_status').textContent=data.database;
+      document.getElementById('last_update').textContent=data.last_update;
+      document.getElementById('alerts_24h').textContent=data.alerts_24h;
+      document.getElementById('cpu').textContent=data.cpu+'%';
+      document.getElementById('ram').textContent=data.ram+' GB';
+      document.getElementById('disk').textContent=data.disk+'%';
+      document.getElementById('errors').textContent=data.errors;
+      document.getElementById('logbox').textContent=data.logs.join('\n');
+    }
+    setInterval(()=>{if(autoOn)manualRefresh();},30000);
+    manualRefresh();
+  </script>
 </body>
 </html>
