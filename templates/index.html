@@ -7,7 +7,7 @@
   <link rel="icon" type="image/x-icon" href="/static/favicon.ico" />
   <link rel="stylesheet" href="/static/css/status.css" />
   <style>
-    /* ΝΕΟ: Εμφάνιση Panel στην κορυφή */
+    /* === PANEL STYLE === */
     .panel {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
@@ -28,6 +28,25 @@
     }
     .ok { background: #23d18b; }
     .bad { background: #ff5757; }
+    /* === MODULE BADGES === */
+    #modules-container {
+      margin-bottom: 18px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .badge {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      border-radius: 12px;
+      padding: 4px 8px;
+      font-size: 13px;
+      border: 1px solid #1f2a44;
+      color: #dfe9f6;
+    }
+    .badge.active { background: #142a18; }
+    .badge.inactive { background: #2a1414; }
     @media(max-width:900px){.panel{grid-template-columns:1fr 1fr}}
     @media(max-width:600px){.panel{grid-template-columns:1fr}}
   </style>
@@ -52,7 +71,7 @@
 
   <main class="container">
     <!-- ===================================================== -->
-    <!-- ΝΕΟ LIVE PANEL  -->
+    <!-- SYSTEM STATUS PANEL -->
     <section class="panel" id="eg-status-panel">
       <div class="card-small">
         <div class="kpi">Render</div>
@@ -75,6 +94,11 @@
         <div class="muted" id="st-version">Version: {{ APP_VERSION }}</div>
       </div>
     </section>
+
+    <!-- === MODULE / LEAGUE BADGES === -->
+    <div id="modules-container">
+      <!-- Αυτό γεμίζει αυτόματα από system_status.js -->
+    </div>
     <!-- ===================================================== -->
 
     <section class="grid">
@@ -144,7 +168,7 @@
     </footer>
   </main>
 
-  <!-- ΕΝΗΜΕΡΩΣΗ ΠΑΝΩ PANEL -->
+  <!-- AUTO-REFRESH PANEL & BADGES -->
   <script src="/static/js/system_status.js"></script>
 
   <!-- ΠΑΛΙΟ SCRIPT (ΔΙΑΤΗΡΕΙΤΑΙ) -->
@@ -164,7 +188,3 @@
       document.getElementById('logbox').textContent=data.logs.join('\n');
     }
     setInterval(()=>{if(autoOn)manualRefresh();},30000);
-    manualRefresh();
-  </script>
-</body>
-</html>

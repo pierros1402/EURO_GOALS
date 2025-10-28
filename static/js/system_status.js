@@ -6,7 +6,6 @@ async function egFetchStatus(){
     const renderDot = document.getElementById('st-render-dot');
     const renderTxt = document.getElementById('st-render-txt');
     const lastHealth = document.getElementById('st-last-health');
-
     const db = document.getElementById('st-db');
     const routerDot = document.getElementById('st-router-dot');
     const router = document.getElementById('st-router');
@@ -35,7 +34,6 @@ async function egFetchStatus(){
     const ss = (secs%60).toString().padStart(2,'0');
     uptime.textContent = `${hh}:${mm}:${ss}`;
 
-    // Version & last health
     ver.textContent = `Version: ${j.version || '-'}`;
     if (j.last_health_ok_at){
       const dt = new Date(j.last_health_ok_at);
@@ -45,6 +43,27 @@ async function egFetchStatus(){
     } else {
       lastHealth.textContent = 'Last health: —';
     }
+
+    // ΝΕΟ: Module & League Badges
+    const cont = document.getElementById('modules-container');
+    cont.innerHTML = '';
+    if (j.modules){
+      Object.entries(j.modules).forEach(([name, state])=>{
+        const el = document.createElement('div');
+        el.style.display='flex';
+        el.style.alignItems='center';
+        el.style.gap='4px';
+        el.style.border='1px solid #1f2a44';
+        el.style.background= state ? '#142a18':'#2a1414';
+        el.style.color='#dfe9f6';
+        el.style.borderRadius='12px';
+        el.style.padding='4px 8px';
+        el.style.fontSize='13px';
+        el.innerHTML = `<span style="width:8px;height:8px;border-radius:50%;background:${state?'#23d18b':'#ff5757'};display:inline-block"></span>${name}`;
+        cont.appendChild(el);
+      });
+    }
+
   }catch(e){
     console.error('status fetch error', e);
   }
