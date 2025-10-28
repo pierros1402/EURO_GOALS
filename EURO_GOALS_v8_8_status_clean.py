@@ -1,22 +1,21 @@
 # ============================================================
-# EURO_GOALS v8.8 – System Status Panel (Dynamic Feeds Version)
+# EURO_GOALS v8.8 – System Status Panel (Dynamic Feeds + Admin)
 # ============================================================
 
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, Body
 from fastapi.responses import JSONResponse, HTMLResponse
 from fastapi.templating import Jinja2Templates
+from fastapi.staticfiles import StaticFiles
 from sqlalchemy import create_engine, text
 from datetime import datetime
+from pathlib import Path
 import os, psutil, random, json
 
 # ------------------------------------------------------------
-# 1. FastAPI & Database setup
+# 1. FastAPI & static / templates
 # ------------------------------------------------------------
 app = FastAPI(title="EURO_GOALS – System Status Panel")
 templates = Jinja2Templates(directory="templates")
-
-# ➕ Πρόσθεσε ακριβώς εδώ:
-from fastapi.staticfiles import StaticFiles
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///matches.db")
@@ -26,23 +25,33 @@ engine = create_engine(
 )
 
 # ------------------------------------------------------------
-# 2. Load feeds.json dynamically
+# 2. feeds.json helpers
 # ------------------------------------------------------------
-FEEDS_FILE = "feeds.json"
+FEEDS_FILE = Path("feeds.json")
 
 def load_feeds():
     try:
-        with open(FEEDS_FILE, "r", encoding="utf-8") as f:
-            feeds = json.load(f)
-        return feeds
+        with FEEDS_FILE.open("r", encoding="utf-8") as f:
+            return json.load(f)
     except Exception as e:
-        print("[EURO_GOALS] ⚠️ Δεν βρέθηκε ή δεν ανοίγει το feeds.json:", e)
+        print("[EURO_GOALS] ⚠️ feeds.json not loaded:", e)
         return []
 
-feeds_data = load_feeds()
+def save_feeds(feeds):
+    try:
+        tmp = FEEDS_FILE.with_suffix(".tmp")
+        with tmp.open("w", encoding="utf-8") as f:
+            json.dump(feeds, f, ensure_ascii=False, indent=2)
+        tmp.replace(FEEDS_FILE)
+        return True
+    except Exception as e:
+        print("[EURO_GOALS] ❌ save_feeds error:", e)
+        return False
+
+feeds_cache = load_feeds()
 
 # ------------------------------------------------------------
-# 3. Demo jobs (temporary)
+# 3. Demo jobs (placeholder)
 # ------------------------------------------------------------
 jobs_demo = [
     {"name": "Season Sync", "status": "Running", "next_run": "02:30"},
@@ -52,24 +61,24 @@ jobs_demo = [
 ]
 
 # ------------------------------------------------------------
-# 4. Routes
+# 4. Routes – UI
 # ------------------------------------------------------------
-
 @app.get("/", response_class=HTMLResponse)
 async def index(request: Request):
-    # Φόρτωση feeds πριν τη σελίδα
-    global feeds_data
-    feeds_data = load_feeds()
+    global feeds_cache
+    feeds_cache = load_feeds()
     return templates.TemplateResponse(
         "index.html",
-        {
-            "request": request,
-            "feeds": feeds_data,
-            "jobs": jobs_demo,
-        },
+        {"request": request, "feeds": feeds_cache, "jobs": jobs_demo},
     )
 
+@app.get("/admin/feeds", response_class=HTMLResponse)
+async def admin_feeds(request: Request):
+    return templates.TemplateResponse("admin_feeds.html", {"request": request})
 
+# ------------------------------------------------------------
+# 5. Routes – APIs
+# ------------------------------------------------------------
 @app.get("/api/system_status", response_class=JSONResponse)
 async def system_status():
     try:
@@ -79,21 +88,16 @@ async def system_status():
         errors = random.randint(0, 2)
         alerts_24h = random.randint(10, 25)
         db_status = "Connected"
-
-        # Basic DB check
         try:
             with engine.connect() as conn:
                 conn.execute(text("SELECT 1"))
         except Exception:
             db_status = "Error"
-
-        # Logs με αναφορά στα alias (εσωτερικά)
         log_lines = [
             f"[INFO] System OK ({random.randint(120,280)}ms)",
-            *[f"[FEED:{f['alias']}] status {f['status']}" for f in feeds_data],
+            *[f"[FEED:{f.get('alias','?')}] status {f.get('status','?')}" for f in feeds_cache],
             f"[DB] Connection {db_status}",
         ]
-
         return {
             "server": "Healthy",
             "database": db_status,
@@ -105,45 +109,66 @@ async def system_status():
             "errors": errors,
             "logs": log_lines,
         }
-
     except Exception as e:
         return JSONResponse({"error": str(e)}, status_code=500)
 
 
-# ------------------------------------------------------------
-# 5. New endpoint – Feeds JSON API
-# ------------------------------------------------------------
 @app.get("/api/feeds", response_class=JSONResponse)
 async def get_feeds():
-    try:
-        feeds = load_feeds()
-        return {"feeds": feeds, "count": len(feeds)}
-    except Exception as e:
-        return JSONResponse({"error": str(e)}, status_code=500)
+    feeds = load_feeds()
+    return {"feeds": feeds, "count": len(feeds)}
 
+
+@app.post("/api/feeds/save", response_class=JSONResponse)
+async def save_feeds_endpoint(payload: dict = Body(...)):
+    feeds = payload.get("feeds", [])
+    ok = save_feeds(feeds)
+    if ok:
+        global feeds_cache
+        feeds_cache = feeds
+        return {"ok": True, "count": len(feeds)}
+    return JSONResponse({"ok": False, "error": "write_failed"}, status_code=500)
+
+
+@app.post("/api/feeds/toggle", response_class=JSONResponse)
+async def toggle_feed(payload: dict = Body(...)):
+    alias = payload.get("alias")
+    active = bool(payload.get("active", True))
+    feeds = load_feeds()
+    changed = False
+    for f in feeds:
+        if f.get("alias") == alias:
+            f["active"] = active
+            changed = True
+            break
+    if not changed:
+        return JSONResponse({"ok": False, "error": "alias_not_found"}, status_code=404)
+    if save_feeds(feeds):
+        global feeds_cache
+        feeds_cache = feeds
+        return {"ok": True}
+    return JSONResponse({"ok": False, "error": "write_failed"}, status_code=500)
 
 # ------------------------------------------------------------
-# 6. Health check endpoint (για Render)
+# 6. Health check (Render)
 # ------------------------------------------------------------
 @app.get("/api/health")
 async def health_check():
     return {"status": "ok"}
-
 
 # ------------------------------------------------------------
 # 7. Startup event
 # ------------------------------------------------------------
 @app.on_event("startup")
 def startup_event():
-    print("[EURO_GOALS] 🚀 Εκκίνηση System Status Panel (Dynamic Feeds)...")
+    print("[EURO_GOALS] 🚀 System Status Panel starting…")
     with engine.connect() as conn:
         conn.execute(text("SELECT 1"))
-    print("[EURO_GOALS] ✅ Βάση συνδέθηκε επιτυχώς.")
-    print(f"[EURO_GOALS] 📡 Φορτώθηκαν {len(feeds_data)} πηγές από το feeds.json")
+    print(f"[EURO_GOALS] 📡 feeds.json loaded: {len(feeds_cache)} feeds")
 
 # ------------------------------------------------------------
 # 8. Local run
 # ------------------------------------------------------------
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run("EURO_GOALS_v8_8_status:app", host="0.0.0.0", port=8000, reload=True)
+    uvicorn.run("EURO_GOALS_v8_8_status_clean:app", host="0.0.0.0", port=8000, reload=True)
