@@ -13,6 +13,9 @@ from sqlalchemy import create_engine, text
 from sqlalchemy.exc import SQLAlchemyError
 from dotenv import load_dotenv
 
+# ----------------------------------------------------
+# 1️⃣  Φόρτωση περιβάλλοντος και global σταθερές
+# ----------------------------------------------------
 load_dotenv()
 
 APP_VERSION = "v8.9f"
@@ -33,7 +36,7 @@ runtime_status = {
     "uptime_seconds": 0,
 }
 
-# Ζωντανή κατάσταση modules
+# Modules / leagues – placeholders for live monitoring
 modules_state = {
     "Smart Money": True,
     "Flashscore Router": True,
@@ -45,6 +48,9 @@ modules_state = {
     "Serie A": True,
 }
 
+# ----------------------------------------------------
+# 2️⃣  FastAPI / Static / Templates
+# ----------------------------------------------------
 app = FastAPI(title="EURO_GOALS", version=APP_VERSION)
 
 if not os.path.isdir("static"):
@@ -58,7 +64,9 @@ templates = Jinja2Templates(directory="templates")
 engine = None
 engine_label = "unknown"
 
-
+# ----------------------------------------------------
+# 3️⃣  Database init / fallback
+# ----------------------------------------------------
 def _test_engine(url: str) -> bool:
     try:
         eng = create_engine(
@@ -94,10 +102,11 @@ def init_db():
 
     with status_lock:
         runtime_status["db_in_use"] = engine_label
-
     print(f"[EURO_GOALS][DB] ✅ Χρησιμοποιείται: {engine_label}")
 
-
+# ----------------------------------------------------
+# 4️⃣  Health monitor / uptime background thread
+# ----------------------------------------------------
 def _health_probe():
     try:
         with engine.connect() as conn:
@@ -121,20 +130,43 @@ def _background_monitor():
             )
         time.sleep(10)
 
-
+# ----------------------------------------------------
+# 5️⃣  Startup
+# ----------------------------------------------------
 @app.on_event("startup")
 def on_startup():
     print(f"[EURO_GOALS] 🚀 Starting {APP_VERSION} – Module & League Badges")
     print(f"[EURO_GOALS] 🌐 Language: {LANG}")
     init_db()
-
     t = threading.Thread(target=_background_monitor, daemon=True)
     t.start()
     print("[EURO_GOALS] 🔁 Background monitor active (health + uptime)")
 
+# ----------------------------------------------------
+# 6️⃣  API endpoints
+# ----------------------------------------------------
+@app.get("/api/health")
+def api_health():
+    """
+    Επιστρέφει βασική ένδειξη λειτουργίας για Render health checks.
+    """
+    ok = _health_probe()
+    with status_lock:
+        payload = {
+            "ok": ok,
+            "db_in_use": runtime_status["db_in_use"],
+            "last_health_ok_at": runtime_status["last_health_ok_at"],
+            "error": runtime_status["last_health_error"],
+            "version": APP_VERSION,
+        }
+    return JSONResponse(payload, status_code=200 if ok else 500)
+
 
 @app.get("/api/status")
 def api_status():
+    """
+    Επιστρέφει όλα τα KPIs για το System Panel + Modules.
+    """
     with status_lock:
         resp = {
             "render_online": runtime_status["render_online"],
@@ -149,6 +181,9 @@ def api_status():
     return JSONResponse(resp)
 
 
+# ----------------------------------------------------
+# 7️⃣  UI routes
+# ----------------------------------------------------
 @app.get("/", response_class=HTMLResponse)
 def index(request: Request):
     return templates.TemplateResponse(
