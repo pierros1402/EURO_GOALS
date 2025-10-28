@@ -99,6 +99,13 @@ async def system_status():
 
     except Exception as e:
         return JSONResponse({"error": str(e)}, status_code=500)
+# ------------------------------------------------------------
+# 6. Health check endpoint (για Render)
+# ------------------------------------------------------------
+@app.get("/api/health")
+async def health_check():
+    return {"status": "ok"}
+
 
 # ------------------------------------------------------------
 # 6. Startup event
