@@ -6,6 +6,31 @@
   <title>EURO_GOALS – Σύστημα Παρακολούθησης</title>
   <link rel="icon" type="image/x-icon" href="/static/favicon.ico" />
   <link rel="stylesheet" href="/static/css/status.css" />
+  <style>
+    /* ΝΕΟ: Εμφάνιση Panel στην κορυφή */
+    .panel {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+    .card-small {
+      background: #121a2b;
+      border: 1px solid #1f2a44;
+      border-radius: 14px;
+      padding: 12px;
+    }
+    .kpi { font-size: 13px; opacity: 0.9; margin-bottom: 4px; }
+    .val { font-size: 18px; font-weight: 700; }
+    .dot {
+      display: inline-block; width: 10px; height: 10px;
+      border-radius: 50%; margin-right: 6px; vertical-align: middle;
+    }
+    .ok { background: #23d18b; }
+    .bad { background: #ff5757; }
+    @media(max-width:900px){.panel{grid-template-columns:1fr 1fr}}
+    @media(max-width:600px){.panel{grid-template-columns:1fr}}
+  </style>
 </head>
 <body>
   <header>
@@ -19,13 +44,39 @@
       </div>
       <div class="toolbar">
         <button class="btn primary" onclick="manualRefresh()">🔄 Refresh Now</button>
-        <button class="btn" onclick="toggleAutoRefresh()">⏱️ Auto‑Refresh: <span id="autoState">ON</span></button>
+        <button class="btn" onclick="toggleAutoRefresh()">⏱️ Auto-Refresh: <span id="autoState">ON</span></button>
         <button class="btn" onclick="scrollToPanel('logs')">📜 View Logs</button>
       </div>
     </div>
   </header>
 
   <main class="container">
+    <!-- ===================================================== -->
+    <!-- ΝΕΟ LIVE PANEL  -->
+    <section class="panel" id="eg-status-panel">
+      <div class="card-small">
+        <div class="kpi">Render</div>
+        <div class="val"><span id="st-render-dot" class="dot"></span><span id="st-render-txt">—</span></div>
+        <div class="muted" id="st-last-health">Last health: —</div>
+      </div>
+      <div class="card-small">
+        <div class="kpi">Database</div>
+        <div class="val" id="st-db">—</div>
+        <div class="muted">Auto-Fallback ενεργό</div>
+      </div>
+      <div class="card-small">
+        <div class="kpi">API Router</div>
+        <div class="val"><span id="st-router-dot" class="dot"></span><span id="st-router">—</span></div>
+        <div class="muted">Feeds monitor</div>
+      </div>
+      <div class="card-small">
+        <div class="kpi">Uptime</div>
+        <div class="val" id="st-uptime">—</div>
+        <div class="muted" id="st-version">Version: {{ APP_VERSION }}</div>
+      </div>
+    </section>
+    <!-- ===================================================== -->
+
     <section class="grid">
       <!-- OVERVIEW -->
       <div class="card col-8">
@@ -93,6 +144,10 @@
     </footer>
   </main>
 
+  <!-- ΕΝΗΜΕΡΩΣΗ ΠΑΝΩ PANEL -->
+  <script src="/static/js/system_status.js"></script>
+
+  <!-- ΠΑΛΙΟ SCRIPT (ΔΙΑΤΗΡΕΙΤΑΙ) -->
   <script>
     let autoOn = true;
     function manualRefresh(){fetch('/api/system_status').then(r=>r.json()).then(updateStatus)}
