@@ -5,108 +5,67 @@
     <title>EURO_GOALS Dashboard</title>
     <link rel="icon" href="/static/icons/football.ico">
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #101820;
-            color: #e0e0e0;
-            margin: 0;
-            padding: 0;
-        }
-        header {
-            background-color: #14213d;
-            padding: 10px 20px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
-        }
-        header h1 {
-            color: #fca311;
-            font-size: 24px;
-            margin: 0;
-        }
-        nav {
-            display: flex;
-            gap: 10px;
-            align-items: center;
-        }
-        button {
-            background-color: #fca311;
-            border: none;
-            color: #14213d;
-            padding: 8px 12px;
-            font-weight: bold;
-            border-radius: 6px;
-            cursor: pointer;
-        }
-        button:hover {
-            background-color: #ffbe4d;
-        }
-        #system-status {
-            font-weight: bold;
-            margin-left: 10px;
-            font-size: 14px;
-        }
-        main {
-            padding: 20px;
-        }
-        footer {
-            text-align: center;
-            font-size: 12px;
-            color: #888;
-            margin-top: 40px;
-        }
+        body { font-family: Arial, sans-serif; background-color: #101820; color: #e0e0e0; margin: 0; }
+        header { background-color: #14213d; padding: 10px 20px; display: flex; justify-content: space-between; align-items: center; }
+        header h1 { color: #fca311; font-size: 24px; margin: 0; }
+        nav { display: flex; gap: 10px; align-items: center; }
+        button { background-color: #fca311; border: none; color: #14213d; padding: 8px 12px; font-weight: bold; border-radius: 6px; cursor: pointer; }
+        button:hover { background-color: #ffbe4d; }
+        main { padding: 20px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; background-color: #1e293b; }
+        th, td { border: 1px solid #334155; padding: 8px; text-align: center; }
+        th { background-color: #0f172a; color: #fca311; }
+        #system-status { font-weight: bold; margin-left: 10px; }
+        footer { text-align: center; font-size: 12px; color: #888; margin-top: 40px; }
     </style>
 </head>
 <body>
 
-    <!-- ================= HEADER ================= -->
-    <header>
-        <h1>⚽ EURO_GOALS Dashboard</h1>
-        <nav>
-            <button onclick="window.location.href='/alert_history'">Ιστορικό Ειδοποιήσεων</button>
-            <button onclick="window.location.href='/add_match'">Προσθήκη Αγώνα</button>
-            <button onclick="window.location.href='/export_excel'">Εξαγωγή σε Excel</button>
-            <div id="system-status">🟡 Checking...</div>
-        </nav>
-    </header>
+<header>
+  <h1>⚽ EURO_GOALS Dashboard</h1>
+  <nav>
+    <button onclick="window.location.href='/alert_history'">Ιστορικό Ειδοποιήσεων</button>
+    <button onclick="window.location.href='/add_match'">Προσθήκη Αγώνα</button>
+    <button onclick="window.location.href='/export_excel'">Εξαγωγή σε Excel</button>
+    <div id="system-status">🟡 Checking...</div>
+  </nav>
+</header>
 
-    <!-- ================= MAIN ================= -->
-    <main>
-        <h2>Καλωσόρισες στο EURO_GOALS v8.7_SM</h2>
-        <p>Η πλατφόρμα αναλύει δεδομένα αγώνων, ειδοποιήσεις “Smart Money” και ενημερώνει σε πραγματικό χρόνο.</p>
-        <p>Τα δεδομένα προέρχονται από <b>Football-Data.org</b>, <b>API-Football</b>, και σύντομα <b>BeSoccer API</b>.</p>
-    </main>
+<main>
+  <h2>Πίνακας Κατάστασης Συστήματος</h2>
+  <table id="status-table">
+    <thead>
+      <tr><th>Module</th><th>Status</th><th>Last Check</th></tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+</main>
 
-    <footer>
-        EURO_GOALS © 2025 – Developed by Pierros | All Rights Reserved
-    </footer>
+<footer>
+  EURO_GOALS © 2025 – Developed by Pierros | All Rights Reserved
+</footer>
 
-    <!-- ================= STATUS SCRIPT ================= -->
-    <script>
-    async function checkSystemStatus() {
-        try {
-            const response = await fetch('/api/status');
-            const data = await response.json();
-            const el = document.getElementById('system-status');
-            if (data.status === 'online') {
-                el.textContent = '🟢 Online';
-                el.style.color = 'lightgreen';
-            } else {
-                el.textContent = '🔴 Offline';
-                el.style.color = 'red';
-            }
-        } catch (err) {
-            const el = document.getElementById('system-status');
-            el.textContent = '🔴 Offline';
-            el.style.color = 'red';
-        }
-    }
-
-    // Έλεγχος κάθε 30 δευτερόλεπτα
-    checkSystemStatus();
-    setInterval(checkSystemStatus, 30000);
-    </script>
+<script>
+async function updateStatusPanel() {
+  try {
+    const resp = await fetch('/api/status_panel');
+    const data = await resp.json();
+    const tbody = document.querySelector('#status-table tbody');
+    tbody.innerHTML = '';
+    data.modules.forEach(mod => {
+      const row = `<tr><td>${mod.module}</td><td>${mod.status}</td><td>${mod.last_check}</td></tr>`;
+      tbody.insertAdjacentHTML('beforeend', row);
+    });
+    document.getElementById('system-status').textContent = '🟢 Online';
+    document.getElementById('system-status').style.color = 'lightgreen';
+  } catch (err) {
+    document.getElementById('system-status').textContent = '🔴 Offline';
+    document.getElementById('system-status').style.color = 'red';
+  }
+}
+updateStatusPanel();
+setInterval(updateStatusPanel, 30000);
+</script>
 
 </body>
 </html>
