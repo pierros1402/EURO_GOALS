@@ -148,3 +148,49 @@ def info():
         "source": "Flashscore Parser (no API key)",
         "seasons_loaded": get_recent_seasons()
     }
+# ============================================================
+# STARTUP EVENT – ενημέρωση βάσης με σεζόν
+# ============================================================
+@app.on_event("startup")
+def startup_event():
+    import time
+    print("[EURO_GOALS] 🚀 Εκκίνηση εφαρμογής...")
+
+    # Μικρή καθυστέρηση για να προλάβει το Render health check
+    time.sleep(10)
+
+    try:
+        update_all_leagues(current_only=False)
+        print("[EURO_GOALS] ✅ Βάση ενημερωμένη.")
+    except Exception as e:
+        print(f"[EURO_GOALS] ⚠️ Σφάλμα κατά την ενημέρωση βάσης: {e}")
+    finally:
+        print("[EURO_GOALS] 🩺 Startup check ολοκληρώθηκε.")
+
+
+# ============================================================
+# HEALTH CHECK ENDPOINT (Render)
+# ============================================================
+from fastapi.responses import JSONResponse
+
+@app.get("/api/health")
+async def health_check():
+    """
+    Render health check endpoint.
+    Επιστρέφει 200 OK για να θεωρηθεί επιτυχής η εκκίνηση.
+    """
+    return JSONResponse(content={"status": "ok"}, status_code=200)
+
+
+@app.head("/api/health")
+async def health_check_head():
+    """
+    Υποστήριξη HEAD αιτημάτων (που στέλνει το Render).
+    """
+    return JSONResponse(content={}, status_code=200)
+
+
+# ============================================================
+# ΤΕΛΟΣ EURO_GOALS_v8_7_SM
+# ============================================================
+
