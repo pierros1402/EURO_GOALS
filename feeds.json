@@ -1,0 +1,47 @@
+[
+  {
+    "name": "Live Source #1",
+    "alias": "flashscore",
+    "type": "unofficial_feed",
+    "base_url": "https://www.flashscore.com/x/feed/",
+    "status": "OK",
+    "active": true,
+    "fallback": "openfootball"
+  },
+  {
+    "name": "Live Source #2",
+    "alias": "sofascore",
+    "type": "semi_official_api",
+    "base_url": "https://api.sofascore.com/api/v1/",
+    "status": "OK",
+    "active": true,
+    "fallback": "openfootball"
+  },
+  {
+    "name": "Historic Data Feed",
+    "alias": "besoccer",
+    "type": "official_api",
+    "base_url": "https://apiclient.besoccerapps.com/scripts/api/api.php",
+    "status": "Pending",
+    "active": true,
+    "fallback": "openfootball"
+  },
+  {
+    "name": "Smart Odds Monitor",
+    "alias": "pinnacle",
+    "type": "asian_odds_feed",
+    "base_url": "https://api.pinnacle.com/",
+    "status": "Planned",
+    "active": false,
+    "fallback": "none"
+  },
+  {
+    "name": "Backup Data Source",
+    "alias": "openfootball",
+    "type": "open_source",
+    "base_url": "https://github.com/openfootball",
+    "status": "OK",
+    "active": true,
+    "fallback": "none"
+  }
+]
