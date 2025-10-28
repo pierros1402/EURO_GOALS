@@ -1,174 +1,112 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="el">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>EURO_GOALS v8.6 – Alert Center</title>
-  <link rel="icon" href="/static/icons/ball_icon.png" />
-  <style>
-    body {
-      background-color: #0f1117;
-      color: #e0e0e0;
-      font-family: "Segoe UI", sans-serif;
-      margin: 0;
-      padding: 0;
-    }
-    header {
-      background-color: #1a1d29;
-      padding: 12px 20px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.4);
-    }
-    h1 {
-      font-size: 22px;
-      color: #4fc3f7;
-      margin: 0;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-    .mute-btn {
-      background-color: #2a2f3f;
-      border: none;
-      color: #fff;
-      padding: 6px 14px;
-      border-radius: 6px;
-      cursor: pointer;
-      transition: background 0.2s;
-    }
-    .mute-btn:hover {
-      background-color: #3b4257;
-    }
-    .volume-slider {
-      width: 100px;
-      vertical-align: middle;
-      margin-left: 10px;
-    }
-    .alert-container {
-      padding: 20px;
-    }
-    .alert-box {
-      background-color: #1e2233;
-      border-left: 5px solid #4fc3f7;
-      padding: 12px 16px;
-      margin-bottom: 12px;
-      border-radius: 6px;
-      box-shadow: 0 0 5px rgba(0,0,0,0.3);
-      animation: fadeIn 0.4s ease-in;
-    }
-    @keyframes fadeIn {
-      from {opacity: 0; transform: translateY(-5px);}
-      to {opacity: 1; transform: translateY(0);}
-    }
-    .timestamp {
-      font-size: 12px;
-      color: #aaa;
-      margin-top: 4px;
-    }
-    pre {
-      font-family: "Consolas", monospace;
-      font-size: 13px;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <title>EURO_GOALS Dashboard</title>
+    <link rel="icon" href="/static/icons/football.ico">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #101820;
+            color: #e0e0e0;
+            margin: 0;
+            padding: 0;
+        }
+        header {
+            background-color: #14213d;
+            padding: 10px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+        }
+        header h1 {
+            color: #fca311;
+            font-size: 24px;
+            margin: 0;
+        }
+        nav {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        button {
+            background-color: #fca311;
+            border: none;
+            color: #14213d;
+            padding: 8px 12px;
+            font-weight: bold;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #ffbe4d;
+        }
+        #system-status {
+            font-weight: bold;
+            margin-left: 10px;
+            font-size: 14px;
+        }
+        main {
+            padding: 20px;
+        }
+        footer {
+            text-align: center;
+            font-size: 12px;
+            color: #888;
+            margin-top: 40px;
+        }
+    </style>
 </head>
 <body>
-  <header>
-    <h1>⚽ EURO_GOALS v8.6 – Alert Center</h1>
-    <div>
-      <button id="soundToggle" class="mute-btn">🔇 Sound: OFF</button>
-      <input id="volumeControl" class="volume-slider" type="range" min="0" max="1" step="0.05" value="0.8" />
-    </div>
-  </header>
 
-  <div class="alert-container" id="alertContainer">
-    <p style="color:#888;font-size:14px;">Waiting for live alerts...</p>
-  </div>
+    <!-- ================= HEADER ================= -->
+    <header>
+        <h1>⚽ EURO_GOALS Dashboard</h1>
+        <nav>
+            <button onclick="window.location.href='/alert_history'">Ιστορικό Ειδοποιήσεων</button>
+            <button onclick="window.location.href='/add_match'">Προσθήκη Αγώνα</button>
+            <button onclick="window.location.href='/export_excel'">Εξαγωγή σε Excel</button>
+            <div id="system-status">🟡 Checking...</div>
+        </nav>
+    </header>
 
-  <div style="padding: 20px; border-top: 1px solid #2a2a2a;">
-    <h2 style="color:#4fc3f7;">📜 Alert History</h2>
-    <pre id="alertHistory" style="background:#1b1f2e;color:#bfbfbf;padding:10px;border-radius:8px;max-height:200px;overflow-y:auto;"></pre>
-  </div>
+    <!-- ================= MAIN ================= -->
+    <main>
+        <h2>Καλωσόρισες στο EURO_GOALS v8.7_SM</h2>
+        <p>Η πλατφόρμα αναλύει δεδομένα αγώνων, ειδοποιήσεις “Smart Money” και ενημερώνει σε πραγματικό χρόνο.</p>
+        <p>Τα δεδομένα προέρχονται από <b>Football-Data.org</b>, <b>API-Football</b>, και σύντομα <b>BeSoccer API</b>.</p>
+    </main>
 
-  <!-- ====== ALERT SOUNDS ====== -->
-  <audio id="goalSound" src="/static/sounds/goal_alert.mp3" preload="auto"></audio>
-  <audio id="smartMoneySound" src="/static/sounds/smartmoney_alert.mp3" preload="auto"></audio>
+    <footer>
+        EURO_GOALS © 2025 – Developed by Pierros | All Rights Reserved
+    </footer>
 
-  <script>
-    let soundEnabled = false;
-    const goalAudio = document.getElementById('goalSound');
-    const smartAudio = document.getElementById('smartMoneySound');
-    const toggleBtn = document.getElementById('soundToggle');
-    const volumeControl = document.getElementById('volumeControl');
-    const container = document.getElementById('alertContainer');
-
-    // Chrome requirement: activate sound on first click
-    document.body.addEventListener('click', () => {
-      if (!soundEnabled) {
-        soundEnabled = true;
-        toggleBtn.textContent = '🔊 Sound: ON';
-        console.log('Sound activated by user click.');
-      }
-    }, { once: true });
-
-    toggleBtn.addEventListener('click', () => {
-      soundEnabled = !soundEnabled;
-      toggleBtn.textContent = soundEnabled ? '🔊 Sound: ON' : '🔇 Sound: OFF';
-    });
-
-    volumeControl.addEventListener('input', () => {
-      goalAudio.volume = volumeControl.value;
-      smartAudio.volume = volumeControl.value;
-    });
-
-    function playSound(type) {
-      if (!soundEnabled) return;
-      if (type === 'goal') goalAudio.play();
-      if (type === 'smartmoney') smartAudio.play();
-    }
-
-    function showAlert(message, type) {
-      const alert = document.createElement('div');
-      alert.classList.add('alert-box');
-      alert.innerHTML = `<strong>${message}</strong><div class="timestamp">${new Date().toLocaleTimeString()}</div>`;
-      container.prepend(alert);
-      playSound(type);
-    }
-
-    // === Poll live alerts every 10 seconds ===
-    async function pollAlerts() {
-      try {
-        const goalRes = await fetch('/api/trigger_goal_alert');
-        const goalData = await goalRes.json();
-        if (goalData.alert_type === 'goal') {
-          showAlert('⚽ ' + goalData.message, 'goal');
+    <!-- ================= STATUS SCRIPT ================= -->
+    <script>
+    async function checkSystemStatus() {
+        try {
+            const response = await fetch('/api/status');
+            const data = await response.json();
+            const el = document.getElementById('system-status');
+            if (data.status === 'online') {
+                el.textContent = '🟢 Online';
+                el.style.color = 'lightgreen';
+            } else {
+                el.textContent = '🔴 Offline';
+                el.style.color = 'red';
+            }
+        } catch (err) {
+            const el = document.getElementById('system-status');
+            el.textContent = '🔴 Offline';
+            el.style.color = 'red';
         }
-
-        const smartRes = await fetch('/api/trigger_smartmoney_alert');
-        const smartData = await smartRes.json();
-        if (smartData.alert_type === 'smartmoney') {
-          showAlert('💰 ' + smartData.message, 'smartmoney');
-        }
-      } catch (err) {
-        console.error('Error fetching alerts', err);
-      }
     }
 
-    // === Update alert history panel ===
-    async function updateHistory() {
-      try {
-        const res = await fetch('/api/alert_history');
-        const text = await res.text();
-        document.getElementById('alertHistory').textContent = text;
-      } catch (err) {
-        console.error('Error loading history', err);
-      }
-    }
+    // Έλεγχος κάθε 30 δευτερόλεπτα
+    checkSystemStatus();
+    setInterval(checkSystemStatus, 30000);
+    </script>
 
-    setInterval(pollAlerts, 10000);
-    setInterval(updateHistory, 10000);
-    updateHistory();
-  </script>
 </body>
 </html>
