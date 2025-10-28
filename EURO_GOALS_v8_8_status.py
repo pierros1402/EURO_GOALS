@@ -15,6 +15,10 @@ import os, psutil, random, json
 app = FastAPI(title="EURO_GOALS – System Status Panel")
 templates = Jinja2Templates(directory="templates")
 
+# ➕ Πρόσθεσε ακριβώς εδώ:
+from fastapi.staticfiles import StaticFiles
+app.mount("/static", StaticFiles(directory="static"), name="static")
+
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///matches.db")
 engine = create_engine(
     DATABASE_URL,
