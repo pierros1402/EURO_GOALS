@@ -26,7 +26,9 @@
     table { width: 100%; border-collapse: collapse; font-size: 14px; margin-top: 6px; }
     th, td { border-bottom: 1px solid #1f2a44; padding: 4px 6px; text-align: left; }
     th { background: #182844; font-weight: 600; color: #9ecbff; }
-    #logbox { background: #0c162a; color: #b7d0f0; font-family: monospace; font-size: 13px; height: 250px; overflow-y: auto; border: 1px solid #1f2a44; padding: 8px; }
+    #logbox, #smartlogbox { background: #0c162a; color: #c0e6ff; font-family: monospace; font-size: 13px; border: 1px solid #1f2a44; padding: 8px; white-space: pre-line; }
+    #logbox { height: 250px; overflow-y: auto; }
+    #smartlogbox { height: 160px; overflow-y: auto; margin-top: 5px; }
     footer { border-top: 1px solid #1f2a44; text-align: center; font-size: 13px; margin-top: 20px; }
     @media(max-width:900px){.panel{grid-template-columns:1fr 1fr}}
     @media(max-width:600px){.panel{grid-template-columns:1fr}}
@@ -113,6 +115,12 @@
         <h3>📜 Live Logs</h3>
         <div id="logbox"></div>
       </div>
+
+      <!-- === SMART MONEY MINI LOG === -->
+      <div class="card col-12" id="smartmoney-log">
+        <h3>💸 Smart Money Log</h3>
+        <div id="smartlogbox"></div>
+      </div>
     </section>
 
     <footer>
@@ -153,8 +161,26 @@
       dot.className = 'dot ' + (active>0 ? 'ok' : 'bad');
     }
 
+    // === SMART MONEY MINI-LOG ===
+    let smartLog = [];
+    function updateSmartMoneyLog() {
+      fetch('/api/smartmoney_status')
+        .then(r => r.json())
+        .then(data => {
+          const timestamp = new Date().toLocaleTimeString('el-GR', {hour12: false});
+          const sources = (data.sources || []).map(s => `${s.name}: ${s.status}`).join(' | ');
+          const line = `[${timestamp}] Alerts: ${data.alerts_today} | ${sources}`;
+          smartLog.unshift(line);
+          if (smartLog.length > 10) smartLog.pop();
+          document.getElementById('smartlogbox').textContent = smartLog.join('\n');
+        })
+        .catch(err => console.error('SmartMoneyLog error', err));
+    }
+
     setInterval(()=>{if(autoOn)manualRefresh();},15000);
+    setInterval(updateSmartMoneyLog, 20000);
     manualRefresh();
+    updateSmartMoneyLog();
   </script>
 </body>
 </html>
