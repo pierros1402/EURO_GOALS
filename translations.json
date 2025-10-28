@@ -1,0 +1,22 @@
+{
+  "gr": {
+    "save": "Αποθήκευση",
+    "refresh": "Ανανέωση",
+    "back": "Πίσω στο Panel",
+    "feeds_title": "Διαχείριση Πηγών",
+    "status_panel": "Πίνακας Κατάστασης",
+    "active": "Ενεργή",
+    "inactive": "Ανενεργή",
+    "actions": "Ενέργειες"
+  },
+  "en": {
+    "save": "Save",
+    "refresh": "Refresh",
+    "back": "Back to Panel",
+    "feeds_title": "Feed Management",
+    "status_panel": "System Status Panel",
+    "active": "Active",
+    "inactive": "Inactive",
+    "actions": "Actions"
+  }
+}
