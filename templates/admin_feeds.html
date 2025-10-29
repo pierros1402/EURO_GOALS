@@ -1,57 +1,72 @@
 <!DOCTYPE html>
-const r = await fetch('/api/feeds');
-const j = await r.json();
-feeds = j.feeds || [];
-render();
-}
+<html lang="el">
+<head>
+  <meta charset="UTF-8">
+  <title>EURO_GOALS – Admin Feeds Panel</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" href="/static/icon_blue.png">
+  <link rel="stylesheet" href="/static/css/style_dark.css">
+</head>
+<body>
 
+  <h1>📡 Admin Feeds Panel</h1>
 
-function render(){
-TBL.innerHTML = '';
-feeds.forEach((f,idx)=>{
-const tr = el('tr',{},
-el('td',{}, el('input',{class:'input', value:f.name||'', oninput:`feeds[${idx}].name=this.value`})),
-el('td',{}, el('input',{class:'input', value:f.alias||'', oninput:`feeds[${idx}].alias=this.value`})),
-el('td',{}, el('input',{class:'input', value:f.type||'', oninput:`feeds[${idx}].type=this.value`})),
-el('td',{}, el('input',{class:'input', value:f.base_url||'', oninput:`feeds[${idx}].base_url=this.value`})),
-el('td',{}, (function(){
-const s = el('select',{class:'input', onchange:`feeds[${idx}].status=this.value`});
-['OK','Pending','Planned','Error'].forEach(v=>{ const o=document.createElement('option'); o.value=v; o.textContent=v; if(f.status===v) o.selected=true; s.appendChild(o); });
-return s;})()
-),
-el('td',{class:'center'}, (function(){
-const c = el('input',{type:'checkbox'}); c.checked = !!f.active; c.onchange = ()=> feeds[idx].active = c.checked; return c;})()
-),
-el('td',{}, el('input',{class:'input', value:f.fallback||'', oninput:`feeds[${idx}].fallback=this.value`})),
-el('td',{}, el('div',{class:'tbl-actions'},
-el('button',{class:'btn', onclick:`duplicateRow(${idx})`}, '⎘ Αντιγραφή'),
-el('button',{class:'btn', onclick:`deleteRow(${idx})`}, '🗑 Διαγραφή')
-))
-);
-TBL.appendChild(tr);
-});
-}
+  <table>
+    <thead>
+      <tr>
+        <th>Feed</th>
+        <th>Κατάσταση</th>
+        <th>Τελευταία ενημέρωση</th>
+        <th>Λεπτομέρειες</th>
+      </tr>
+    </thead>
+    <tbody id="feedTable">
+      <tr><td colspan="4">Φόρτωση δεδομένων...</td></tr>
+    </tbody>
+  </table>
 
+  <div id="timestamp">Αναμονή δεδομένων...</div>
 
-function addRow(){
-feeds.push({name:'New Feed', alias:'alias', type:'type', base_url:'https://', status:'Pending', active:false, fallback:'none'});
-render();
-}
-function duplicateRow(i){ feeds.splice(i+1,0, JSON.parse(JSON.stringify(feeds[i])) ); render(); }
-function deleteRow(i){ if(confirm('Διαγραφή πηγής;')) { feeds.splice(i,1); render(); } }
+  <div class="status-bar">Παρακολούθηση feeds κάθε 60 δευτερόλεπτα</div>
 
+  <script>
+    async function loadFeeds() {
+      try {
+        const response = await fetch("/feeds_status");
+        if (!response.ok) throw new Error("Σφάλμα HTTP " + response.status);
+        const data = await response.json();
+        const tbody = document.getElementById("feedTable");
+        tbody.innerHTML = "";
 
-async function saveChanges(){
-const r = await fetch('/api/feeds/save', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({feeds})});
-const j = await r.json();
-alert(j.ok? `Αποθηκεύτηκαν (${j.count}) πηγές.` : ('Σφάλμα: '+(j.error||'unknown')));
-}
+        data.forEach(feed => {
+          const row = document.createElement("tr");
+          row.className = feed.status === "OK" ? "normal" : "alert";
 
+          row.innerHTML = `
+            <td>${feed.name}</td>
+            <td>${feed.status}</td>
+            <td>${feed.last_update || "-"}</td>
+            <td>${feed.details || ""}</td>
+          `;
+          tbody.appendChild(row);
+        });
 
-async function reloadFeeds(){ await loadFeeds(); alert('Τα feeds επαναφορτώθηκαν.'); }
+        document.getElementById("timestamp").innerText =
+          "Τελευταία ενημέρωση: " + new Date().toLocaleTimeString("el-GR");
 
+      } catch (err) {
+        console.error("Σφάλμα:", err);
+        const tbody = document.getElementById("feedTable");
+        tbody.innerHTML = `<tr class="alert"><td colspan="4">❌ Σφάλμα φόρτωσης feeds</td></tr>`;
+        document.getElementById("timestamp").innerText = "❌ Πρόβλημα φόρτωσης δεδομένων";
+      }
+    }
 
-loadFeeds();
-</script>
+    loadFeeds();
+    setInterval(loadFeeds, 60000);
+  </script>
+
+  <div class="footer">EURO_GOALS Admin Feeds Panel v8.9g © 2025</div>
+
 </body>
 </html>

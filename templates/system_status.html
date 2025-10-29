@@ -1,141 +1,168 @@
 <!DOCTYPE html>
 <html lang="el">
 <head>
-<meta charset="UTF-8">
-<title>⚽ EURO_GOALS – System Status Panel</title>
-<link rel="icon" type="image/png" id="favicon" href="/static/icon_blue.png">
-<style>
-body{
-  font-family:'Segoe UI',Arial,sans-serif;
-  background:#0d1117;
-  color:#fff;
-  margin:0;
-  padding:0;
-}
-header{
-  text-align:center;
-  background:#111927;
-  padding:20px 0;
-  border-bottom:2px solid #0b84ff;
-}
-header h1{
-  font-size:28px;
-  color:#00b0ff;
-  margin:0;
-  display:inline-flex;
-  align-items:center;
-  gap:10px;
-}
-header img{
-  width:36px;
-  height:36px;
-  border-radius:50%;
-  transition:filter .8s ease,transform .8s ease;
-}
-header img.pulse{
-  animation:pulse 2s infinite;
-}
-@keyframes pulse{
-  0%{filter:drop-shadow(0 0 0px #ff4444);}
-  50%{filter:drop-shadow(0 0 6px #ff4444);}
-  100%{filter:drop-shadow(0 0 0px #ff4444);}
-}
-#status-bar{
-  text-align:center;
-  margin:15px auto;
-  padding:10px;
-  max-width:900px;
-  border-radius:8px;
-  font-size:16px;
-  background:#1c1c1c;
-  display:none;
-}
-#status-bar.active{display:block;}
-#status-bar.ok{border:1px solid #0078d4;color:#00a2ff;background:rgba(0,90,180,0.25);}
-#status-bar.error{border:1px solid #c00;color:#ff6b6b;background:rgba(180,0,0,0.25);}
-.grid{
-  display:grid;
-  grid-template-columns:repeat(auto-fit,minmax(240px,1fr));
-  gap:20px;
-  padding:20px;
-  max-width:1200px;
-  margin:auto;
-}
-.card{
-  background:#161b22;
-  border:1px solid #242b35;
-  border-radius:12px;
-  padding:16px;
-  text-align:center;
-  box-shadow:0 0 8px rgba(0,0,0,0.3);
-}
-.card h2{color:#00b0ff;margin-bottom:8px;}
-.ok{color:#4ef04e;}
-.fail{color:#ff4c4c;}
-footer{text-align:center;color:#888;margin:30px 0 20px;font-size:13px;}
-</style>
-</head>
+  <meta charset="UTF-8">
+  <title>⚽ EURO_GOALS – System Status Panel</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" type="image/png" href="/static/icon_blue.png">
+  <link rel="stylesheet" href="/static/css/style_dark.css">
 
-<body>
-<header>
-  <h1>
-    <img id="statusIcon" src="/static/icon_blue.png" alt="Status">
-    EURO_GOALS – System Status Panel
-  </h1>
-</header>
-
-<div id="status-bar"></div>
-
-<main class="grid">
-  <div class="card"><h2>Render</h2><p class="ok">Online</p></div>
-  <div class="card"><h2>Database</h2><p>PostgreSQL<br><small>Auto-Fallback ενεργό</small></p></div>
-  <div class="card"><h2>API Router</h2><p class="ok">Feeds Active</p></div>
-  <div class="card"><h2>Smart Money</h2><p class="fail">0/0 active</p></div>
-</main>
-
-<audio id="alertSound" src="/static/sounds/alert.mp3" preload="auto"></audio>
-
-<script>
-const icon=document.getElementById('statusIcon');
-const bar=document.getElementById('status-bar');
-const sound=document.getElementById('alertSound');
-let lastStatus="";
-
-async function checkStatus(){
-  try{
-    const res=await fetch("/check_asianconnect");
-    const data=await res.json();
-
-    if(data.status==="DOWN"||data.status==="NO_KEY"){
-      icon.src="/static/icon_red.png";
-      icon.classList.add("pulse");
-      bar.textContent=data.banner||"Asianconnect API: DOWN – Auto-Fallback ενεργό";
-      bar.className="active error";
-      if(lastStatus!=="DOWN"){sound.play().catch(()=>{});}
-      lastStatus="DOWN";
-    }else{
-      icon.src="/static/icon_blue.png";
-      icon.classList.remove("pulse");
-      bar.textContent="Asianconnect: OK";
-      bar.className="active ok";
-      if(lastStatus==="DOWN"){sound.play().catch(()=>{});}
-      lastStatus="OK";
+  <style>
+    /* 🔘 LED INDICATORS */
+    .led {
+      display: inline-block;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      margin-right: 8px;
+      box-shadow: 0 0 5px rgba(0,0,0,0.4);
     }
-  }catch(e){
-    icon.src="/static/icon_red.png";
-    icon.classList.add("pulse");
-    bar.textContent="Σφάλμα σύνδεσης με το API.";
-    bar.className="active error";
-    if(lastStatus!=="DOWN"){sound.play().catch(()=>{});}
-    lastStatus="DOWN";
-  }
-}
+    .led.ok { background-color: #00ff66; box-shadow: 0 0 6px #00ff66; }
+    .led.fail { background-color: #ff3333; box-shadow: 0 0 6px #ff3333; }
+    .led.pending { background-color: #ffcc00; box-shadow: 0 0 6px #ffcc00; }
 
-// first run + auto refresh
-checkStatus();
-setInterval(checkStatus,60000);
-</script>
+    /* ⚙️ ALERT CONTROL BAR */
+    #alert-controls {
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+      background-color: #161616;
+      padding: 10px;
+      border-radius: 8px;
+      border: 1px solid #333;
+      margin: 15px auto;
+      width: fit-content;
+      box-shadow: 0 0 6px rgba(0,255,174,0.1);
+    }
 
-<footer>EURO_GOALS v8.9k – Soft Pulse Edition (Auto-Refresh + Alert Animation)</footer>
+    #alert-controls label {
+      color: #ccc;
+      font-size: 14px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    #alert-controls input[type="checkbox"] {
+      transform: scale(1.2);
+      accent-color: #00ffae;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>🖥️ System Status Panel</h1>
+
+  <!-- 🔔 Alert Control Bar -->
+  <div id="alert-controls">
+    <label><input type="checkbox" id="alertSmartMoney" checked> SmartMoney Alerts</label>
+    <label><input type="checkbox" id="alertSystem" checked> System Alerts</label>
+    <label><input type="checkbox" id="alertFeeds"> Feeds Alerts</label>
+    <label><input type="checkbox" id="alertBrowser" checked> Browser Notifications</label>
+  </div>
+
+  <!-- Status Table -->
+  <table id="statusTable">
+    <thead>
+      <tr>
+        <th>Υπηρεσία</th>
+        <th>Κατάσταση</th>
+        <th>Τελευταία ενημέρωση</th>
+        <th>Λεπτομέρειες</th>
+      </tr>
+    </thead>
+    <tbody id="statusBody">
+      <tr><td colspan="4">Φόρτωση δεδομένων...</td></tr>
+    </tbody>
+  </table>
+
+  <div id="timestamp">Αναμονή δεδομένων...</div>
+  <div class="status-bar">Αυτόματος έλεγχος κατάστασης κάθε 60 δευτερόλεπτα</div>
+
+  <audio id="alertSound" src="/static/sounds/smartmoney_alert.mp3" preload="auto"></audio>
+
+  <script>
+    // 🔧 Αποθήκευση / Ανάκτηση επιλογών
+    const controls = ["alertSmartMoney", "alertSystem", "alertFeeds", "alertBrowser"];
+    controls.forEach(id => {
+      const checkbox = document.getElementById(id);
+      const saved = localStorage.getItem(id);
+      if (saved === "off") checkbox.checked = false;
+
+      checkbox.addEventListener("change", () => {
+        localStorage.setItem(id, checkbox.checked ? "on" : "off");
+      });
+    });
+
+    const audio = document.getElementById("alertSound");
+    let lastStatuses = {};
+
+    async function updateStatusTable() {
+      try {
+        const response = await fetch("/status_feed");
+        const data = await response.json();
+        const tbody = document.getElementById("statusBody");
+        tbody.innerHTML = "";
+
+        data.forEach(service => {
+          const row = document.createElement("tr");
+          row.className = service.status === "OK" ? "normal" : 
+                          service.status === "PENDING" ? "normal" : "alert";
+
+          let ledClass = "fail";
+          if (service.status === "OK") ledClass = "ok";
+          else if (service.status === "PENDING") ledClass = "pending";
+
+          // Αν η κατάσταση άλλαξε σε FAIL → ήχος (μόνο αν ενεργό)
+          if (service.status === "FAIL" && lastStatuses[service.name] !== "FAIL") {
+            if (localStorage.getItem("alertSystem") === "on") {
+              audio.currentTime = 0;
+              audio.play().catch(()=>{});
+            }
+
+            if (localStorage.getItem("alertBrowser") === "on" && "Notification" in window) {
+              if (Notification.permission === "granted") {
+                new Notification(`⚠️ ${service.name} FAILURE`, {
+                  body: service.details,
+                  icon: "/static/icon_red.png"
+                });
+              } else if (Notification.permission !== "denied") {
+                Notification.requestPermission();
+              }
+            }
+          }
+
+          lastStatuses[service.name] = service.status;
+
+          row.innerHTML = `
+            <td>${service.name}</td>
+            <td><span class="led ${ledClass}"></span>${service.status}</td>
+            <td>${service.timestamp}</td>
+            <td>${service.details}</td>
+          `;
+          tbody.appendChild(row);
+        });
+
+        document.getElementById("timestamp").innerText =
+          "Τελευταίος έλεγχος: " + new Date().toLocaleTimeString("el-GR");
+
+      } catch (err) {
+        console.error("Σφάλμα φόρτωσης κατάστασης:", err);
+        const tbody = document.getElementById("statusBody");
+        tbody.innerHTML = `<tr class="alert"><td colspan="4">❌ Αποτυχία φόρτωσης δεδομένων</td></tr>`;
+        document.getElementById("timestamp").innerText = "❌ Πρόβλημα επικοινωνίας με /status_feed";
+      }
+    }
+
+    updateStatusTable();
+    setInterval(updateStatusTable, 60000);
+  </script>
+
+  <div class="footer">
+    EURO_GOALS System Status v8.9i © 2025
+  </div>
+
 </body>
 </html>
