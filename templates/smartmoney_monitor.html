@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="el">
+<head>
+  <meta charset="UTF-8">
+  <title>Smart Money Monitor – EURO_GOALS</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" href="/static/icon_blue.png">
+  <style>
+    body {
+      background-color: #0f0f0f;
+      color: #e0e0e0;
+      font-family: "Segoe UI", sans-serif;
+      margin: 0;
+      padding: 20px;
+    }
+    h1 {
+      text-align: center;
+      color: #00ffae;
+      margin-bottom: 20px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background-color: #1b1b1b;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    th, td {
+      text-align: center;
+      padding: 10px;
+      border-bottom: 1px solid #333;
+    }
+    th {
+      background-color: #222;
+      color: #00ffa1;
+    }
+    tr.normal {
+      background-color: #181818;
+    }
+    tr.alert {
+      background-color: #3b0000;
+      color: #ff6b6b;
+      font-weight: bold;
+    }
+    #timestamp {
+      text-align: right;
+      font-size: 14px;
+      margin-top: 10px;
+      color: #888;
+    }
+    #statusBar {
+      text-align: center;
+      padding: 6px;
+      background-color: #161616;
+      color: #bbb;
+      border-top: 1px solid #333;
+      margin-top: 15px;
+      font-size: 13px;
+    }
+    .loading {
+      color: #555;
+      text-align: center;
+      margin-top: 50px;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>⚡ Smart Money Monitor</h1>
+
+  <table id="smartmoneyTable">
+    <thead>
+      <tr>
+        <th>Αγώνας</th>
+        <th>Αγορά</th>
+        <th>Money Flow Index %</th>
+        <th>Ώρα</th>
+      </tr>
+    </thead>
+    <tbody id="tableBody">
+      <tr><td colspan="4" class="loading">Φόρτωση δεδομένων...</td></tr>
+    </tbody>
+  </table>
+
+  <div id="timestamp">Αναμονή δεδομένων...</div>
+  <div id="statusBar">Παρακολούθηση ροών κάθε 60 δευτερόλεπτα</div>
+
+  <audio id="alertSound" src="/static/sounds/smartmoney_alert.mp3" preload="auto"></audio>
+
+  <script>
+    async function loadSmartMoney() {
+      try {
+        const response = await fetch("/smartmoney_feed");
+        const data = await response.json();
+        const tbody = document.getElementById("tableBody");
+        tbody.innerHTML = "";
+
+        let alertTriggered = false;
+
+        data.forEach(item => {
+          const row = document.createElement("tr");
+          row.className = item.money_flow_index > 80 ? "alert" : "normal";
+
+          row.innerHTML = `
+            <td>${item.match}</td>
+            <td>${item.market}</td>
+            <td>${item.money_flow_index}%</td>
+            <td>${item.timestamp}</td>
+          `;
+          tbody.appendChild(row);
+
+          if (item.money_flow_index > 80) alertTriggered = true;
+        });
+
+        document.getElementById("timestamp").innerText =
+          "Τελευταία ενημέρωση: " + new Date().toLocaleTimeString("el-GR");
+
+        if (alertTriggered) {
+          const sound = document.getElementById("alertSound");
+          sound.currentTime = 0;
+          sound.play();
+        }
+      } catch (err) {
+        console.error("Σφάλμα φόρτωσης δεδομένων:", err);
+        document.getElementById("timestamp").innerText = "❌ Πρόβλημα φόρτωσης δεδομένων";
+      }
+    }
+
+    // Πρώτη φόρτωση
+    loadSmartMoney();
+    // Αυτόματη ανανέωση κάθε 60s
+    setInterval(loadSmartMoney, 60000);
+  </script>
+
+</body>
+</html>

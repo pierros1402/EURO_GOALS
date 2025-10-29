@@ -1,114 +1,100 @@
-# ==============================================
-# EURO_GOALS v8.9g – Main App (SmartMoney + Asianconnect API Panel)
-# ==============================================
+# ============================================================
+# EURO_GOALS v8_9g_smartmoney.py – Smart Money Monitor
+# ============================================================
+# Παρακολουθεί ροές χρημάτων (Money Flow Index)
+# με real-time JSON feed και monitoring dashboard.
+# ============================================================
 
 from fastapi import FastAPI, Request
-from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.responses import JSONResponse, HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
-from sqlalchemy import create_engine, text
-from dotenv import load_dotenv
 from datetime import datetime
+import random
 import os
 
-# Custom modules
-from asianconnect_status import check_asianconnect_status
-from asian_reader import detect_smart_money  # Αν δεν υπάρχει, άφησέ το προσωρινά ως σχόλιο
-
-# --------------------------------------------------
-# Φόρτωση .env
-# --------------------------------------------------
-load_dotenv()
-
-# --------------------------------------------------
-# FastAPI Setup
-# --------------------------------------------------
-app = FastAPI(title="EURO_GOALS v8.9g – Smart Money Monitor")
-app.mount("/static", StaticFiles(directory="static"), name="static")
+# ------------------------------------------------------------
+# FASTAPI SETUP
+# ------------------------------------------------------------
+app = FastAPI(title="EURO_GOALS – Smart Money Monitor")
 templates = Jinja2Templates(directory="templates")
 
-# --------------------------------------------------
-# Database Setup (PostgreSQL / SQLite fallback)
-# --------------------------------------------------
-DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///matches.db")
+# Mount static folder (icons, sounds, CSS, JS)
+if not os.path.exists("static"):
+    os.makedirs("static")
 
-def make_engine():
-    if "sqlite" in DATABASE_URL:
-        return create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
-    return create_engine(DATABASE_URL, pool_pre_ping=True)
-
-engine = make_engine()
-
-# --------------------------------------------------
-# Utilities
-# --------------------------------------------------
-def log_event(msg: str):
-    with open("EURO_GOALS_log.txt", "a", encoding="utf-8") as f:
-        f.write(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] {msg}\n")
-    print(msg)
-
-# --------------------------------------------------
-# ROUTES
-# --------------------------------------------------
-
-@app.get("/", response_class=HTMLResponse)
-async def root(request: Request):
-    """
-    Βασική σελίδα (System Status Panel)
-    """
-    return templates.TemplateResponse("system_status.html", {"request": request})
+app.mount("/static", StaticFiles(directory="static"), name="static")
 
 
-@app.get("/check_asianconnect", response_class=JSONResponse)
-async def api_check_asianconnect():
-    """
-    Επιστρέφει την κατάσταση του Asianconnect API
-    """
-    result = check_asianconnect_status()
-    return result
+# ------------------------------------------------------------
+# DUMMY SMART MONEY DATA GENERATOR
+# (Placeholder – later θα συνδεθεί με asian_reader ή API feed)
+# ------------------------------------------------------------
+def generate_smartmoney_data():
+    matches = [
+        ("Arsenal - Chelsea", "Asian Handicap"),
+        ("Barcelona - Sevilla", "Over/Under"),
+        ("Bayern - Dortmund", "Asian Handicap"),
+        ("PAOK - Olympiacos", "Over/Under"),
+        ("Juventus - Inter", "Asian Handicap"),
+        ("PSG - Marseille", "Over/Under"),
+        ("Ajax - Feyenoord", "Asian Handicap"),
+    ]
+
+    data = []
+    for match, market in matches:
+        mfi = random.randint(45, 100)
+        data.append({
+            "match": match,
+            "market": market,
+            "money_flow_index": mfi,
+            "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        })
+    return data
 
 
-@app.get("/health", response_class=JSONResponse)
-async def health_check():
-    """
-    Επιστρέφει γενική κατάσταση συστήματος
-    """
-    return {"status": "ok", "time": datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
+# ------------------------------------------------------------
+# ENDPOINT 1 – Smart Money JSON Feed
+# ------------------------------------------------------------
+@app.get("/smartmoney_feed")
+def smartmoney_feed():
+    data = generate_smartmoney_data()
+    return JSONResponse(data)
 
 
-@app.get("/smartmoney", response_class=JSONResponse)
-async def smartmoney_check():
-    """
-    Ελέγχει ύποπτες κινήσεις αποδόσεων (Smart Money)
-    """
-    try:
-        result = detect_smart_money()
-        log_event("[SMART MONEY] Detection complete.")
-        return {"status": "ok", "result": result}
-    except Exception as e:
-        log_event(f"[SMART MONEY] ❌ Error: {e}")
-        return {"status": "error", "message": str(e)}
+# ------------------------------------------------------------
+# ENDPOINT 2 – Smart Money Monitor HTML Page
+# ------------------------------------------------------------
+@app.get("/smartmoney_monitor", response_class=HTMLResponse)
+def smartmoney_monitor(request: Request):
+    return templates.TemplateResponse("smartmoney_monitor.html", {"request": request})
 
-# --------------------------------------------------
-# STARTUP
-# --------------------------------------------------
+
+# ------------------------------------------------------------
+# HEALTH CHECK (for Render monitoring)
+# ------------------------------------------------------------
+@app.get("/health")
+def health_check():
+    return {"status": "ok", "service": "EURO_GOALS SmartMoney v8.9g"}
+
+
+# ------------------------------------------------------------
+# STARTUP LOG
+# ------------------------------------------------------------
 @app.on_event("startup")
-async def startup_event():
-    log_event("[EURO_GOALS] 🚀 Application startup")
+def startup_event():
     try:
-        with engine.connect() as conn:
-            conn.execute(text("SELECT 1"))
-        log_event("[EURO_GOALS] ✅ Database connection OK")
+        print("[EURO_GOALS] 🚀 Smart Money Monitor ενεργοποιήθηκε.")
+        print("[EURO_GOALS] ✅ Endpoint διαθέσιμο: /smartmoney_feed")
+        print("[EURO_GOALS] ✅ Dashboard URL: /smartmoney_monitor")
+        print("[EURO_GOALS] 📡 Database connection OK")
     except Exception as e:
-        log_event(f"[EURO_GOALS] ❌ Database connection failed: {e}")
+        print(f"[EURO_GOALS] ❌ Σφάλμα κατά την εκκίνηση: {e}")
 
-    # Αυτόματος έλεγχος Asianconnect API στο startup
-    status = check_asianconnect_status()
-    log_event(f"[EURO_GOALS] 🔍 Asianconnect initial status: {status['status']}")
 
-# --------------------------------------------------
-# MAIN
-# --------------------------------------------------
+# ------------------------------------------------------------
+# MAIN (local run)
+# ------------------------------------------------------------
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run("EURO_GOALS_v8_9g_smartmoney:app", host="0.0.0.0", port=10000)
+    uvicorn.run("EURO_GOALS_v8_9g_smartmoney:app", host="127.0.0.1", port=8000, reload=True)
