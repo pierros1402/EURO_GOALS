@@ -2,87 +2,140 @@
 <html lang="el">
 <head>
 <meta charset="UTF-8">
-<title>EURO_GOALS – System Status Panel</title>
+<title>⚽ EURO_GOALS – System Status Panel</title>
+<link rel="icon" type="image/png" id="favicon" href="/static/icon_blue.png">
 <style>
-body{font-family:Arial,sans-serif;background:#0d1117;color:#fff;margin:0;padding:20px}
-h1{text-align:center;color:#00b0ff}
-.section-title{font-size:1.2em;margin:25px auto 10px;color:#00b0ff;max-width:1200px}
-.panel-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:20px;max-width:1200px;margin:0 auto 20px}
-.card{background:#161b22;border:1px solid #30363d;border-radius:12px;padding:18px;text-align:center;transition:.2s}
-.card h3{margin-top:0;color:#00b0ff}
-.ok-card{border-color:#1b5e20;box-shadow:0 0 12px rgba(76,175,80,.25)}
-.down-card{border-color:#8e0000;box-shadow:0 0 14px rgba(244,67,54,.35)}
-.nokey-card{border-color:#8d6e00;box-shadow:0 0 12px rgba(255,193,7,.25)}
-.banner{display:none;max-width:1200px;margin:0 auto 15px;background:#2a1b1b;border:1px solid #8e0000;color:#ffbfbf;border-radius:10px;padding:10px 14px;box-shadow:0 0 10px rgba(244,67,54,.25)}
-.banner.show{display:block}
-#log-box{background:#0c1015;border:1px solid #333;border-radius:8px;margin-top:10px;padding:8px;text-align:left;font-family:monospace;color:#aaa;max-height:100px;overflow-y:auto;font-size:.85em}
-button{margin-top:10px;padding:6px 16px;border:none;border-radius:6px;cursor:pointer;background:#1976d2;color:#fff}
-button:hover{background:#1565c0}
-footer{text-align:center;margin:40px 0 10px;font-size:.8em;color:#777}
+body{
+  font-family:'Segoe UI',Arial,sans-serif;
+  background:#0d1117;
+  color:#fff;
+  margin:0;
+  padding:0;
+}
+header{
+  text-align:center;
+  background:#111927;
+  padding:20px 0;
+  border-bottom:2px solid #0b84ff;
+}
+header h1{
+  font-size:28px;
+  color:#00b0ff;
+  margin:0;
+  display:inline-flex;
+  align-items:center;
+  gap:10px;
+}
+header img{
+  width:36px;
+  height:36px;
+  border-radius:50%;
+  transition:filter .8s ease,transform .8s ease;
+}
+header img.pulse{
+  animation:pulse 2s infinite;
+}
+@keyframes pulse{
+  0%{filter:drop-shadow(0 0 0px #ff4444);}
+  50%{filter:drop-shadow(0 0 6px #ff4444);}
+  100%{filter:drop-shadow(0 0 0px #ff4444);}
+}
+#status-bar{
+  text-align:center;
+  margin:15px auto;
+  padding:10px;
+  max-width:900px;
+  border-radius:8px;
+  font-size:16px;
+  background:#1c1c1c;
+  display:none;
+}
+#status-bar.active{display:block;}
+#status-bar.ok{border:1px solid #0078d4;color:#00a2ff;background:rgba(0,90,180,0.25);}
+#status-bar.error{border:1px solid #c00;color:#ff6b6b;background:rgba(180,0,0,0.25);}
+.grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(240px,1fr));
+  gap:20px;
+  padding:20px;
+  max-width:1200px;
+  margin:auto;
+}
+.card{
+  background:#161b22;
+  border:1px solid #242b35;
+  border-radius:12px;
+  padding:16px;
+  text-align:center;
+  box-shadow:0 0 8px rgba(0,0,0,0.3);
+}
+.card h2{color:#00b0ff;margin-bottom:8px;}
+.ok{color:#4ef04e;}
+.fail{color:#ff4c4c;}
+footer{text-align:center;color:#888;margin:30px 0 20px;font-size:13px;}
 </style>
 </head>
+
 <body>
-<h1>⚽ EURO_GOALS – System Status Panel</h1>
-<div id="alert-banner" class="banner">—</div>
+<header>
+  <h1>
+    <img id="statusIcon" src="/static/icon_blue.png" alt="Status">
+    EURO_GOALS – System Status Panel
+  </h1>
+</header>
 
-<!-- Asianconnect panel -->
-<div id="ac-card" class="card" style="max-width:500px;margin:0 auto 20px;">
-  <h3>Asianconnect API</h3>
-  <p><span id="status-text">Έλεγχος...</span></p>
-  <p id="timestamp" style="color:#bbb;font-size:.9em"></p>
-  <p id="last-good" style="color:#777;font-size:.85em"></p>
-  <button onclick="checkStatus()">Έλεγχος τώρα</button>
-  <div id="log-box"><strong>📜 Log:</strong><br><div id="logs"></div></div>
-</div>
+<div id="status-bar"></div>
 
-<footer>EURO_GOALS v8.9i – Asianconnect Auto-Recovery + Sound Alerts</footer>
+<main class="grid">
+  <div class="card"><h2>Render</h2><p class="ok">Online</p></div>
+  <div class="card"><h2>Database</h2><p>PostgreSQL<br><small>Auto-Fallback ενεργό</small></p></div>
+  <div class="card"><h2>API Router</h2><p class="ok">Feeds Active</p></div>
+  <div class="card"><h2>Smart Money</h2><p class="fail">0/0 active</p></div>
+</main>
 
-<audio id="alert-sound" src="/static/sounds/alert.mp3" preload="auto"></audio>
+<audio id="alertSound" src="/static/sounds/alert.mp3" preload="auto"></audio>
 
 <script>
+const icon=document.getElementById('statusIcon');
+const bar=document.getElementById('status-bar');
+const sound=document.getElementById('alertSound');
 let lastStatus="";
+
 async function checkStatus(){
   try{
     const res=await fetch("/check_asianconnect");
     const data=await res.json();
 
-    const text=document.getElementById("status-text");
-    const time=document.getElementById("timestamp");
-    const good=document.getElementById("last-good");
-    const logs=document.getElementById("logs");
-    const card=document.getElementById("ac-card");
-    const banner=document.getElementById("alert-banner");
-    const sound=document.getElementById("alert-sound");
-
-    card.classList.remove("ok-card","down-card","nokey-card");
-    banner.classList.remove("show");
-
-    if(data.status==="OK"){card.classList.add("ok-card");text.textContent="🟢 API reachable";}
-    else if(data.status==="DOWN"){card.classList.add("down-card");text.textContent="🔴 "+data.message;}
-    else{card.classList.add("nokey-card");text.textContent="🟡 "+data.message;}
-
-    time.textContent="Τελευταίος έλεγχος: "+data.timestamp;
-    good.textContent="Τελευταία επιτυχής σύνδεση: "+data.last_good;
-    logs.innerHTML=(data.logs||[]).map(l=>"• "+l).join("<br>");
-
-    if(data.banner){banner.textContent=data.banner;banner.classList.add("show");}
-
-    // ---- Sound & Notification logic ----
-    if(lastStatus && data.status!==lastStatus){
-      sound.currentTime=0;
-      sound.play().catch(()=>{});
-      if(Notification.permission==="granted"){
-        new Notification("Asianconnect API "+data.status,
-          {body:data.message,icon:"/static/icon.png"});
-      }
+    if(data.status==="DOWN"||data.status==="NO_KEY"){
+      icon.src="/static/icon_red.png";
+      icon.classList.add("pulse");
+      bar.textContent=data.banner||"Asianconnect API: DOWN – Auto-Fallback ενεργό";
+      bar.className="active error";
+      if(lastStatus!=="DOWN"){sound.play().catch(()=>{});}
+      lastStatus="DOWN";
+    }else{
+      icon.src="/static/icon_blue.png";
+      icon.classList.remove("pulse");
+      bar.textContent="Asianconnect: OK";
+      bar.className="active ok";
+      if(lastStatus==="DOWN"){sound.play().catch(()=>{});}
+      lastStatus="OK";
     }
-    lastStatus=data.status;
-  }catch(e){document.getElementById("status-text").textContent="Σφάλμα σύνδεσης.";}
+  }catch(e){
+    icon.src="/static/icon_red.png";
+    icon.classList.add("pulse");
+    bar.textContent="Σφάλμα σύνδεσης με το API.";
+    bar.className="active error";
+    if(lastStatus!=="DOWN"){sound.play().catch(()=>{});}
+    lastStatus="DOWN";
+  }
 }
 
-if(Notification.permission!=="granted"){Notification.requestPermission();}
+// first run + auto refresh
 checkStatus();
 setInterval(checkStatus,60000);
 </script>
+
+<footer>EURO_GOALS v8.9k – Soft Pulse Edition (Auto-Refresh + Alert Animation)</footer>
 </body>
 </html>
