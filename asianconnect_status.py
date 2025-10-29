@@ -1,9 +1,7 @@
-# ============================================================
-# ASIANCONNECT STATUS MODULE – EURO_GOALS v8.1
-# ============================================================
-# Ελέγχει την κατάσταση σύνδεσης με το Asianconnect / Asianodds API
-# και ενημερώνει το log + το dashboard panel
-# ============================================================
+# ==============================================
+# asianconnect_status.py – v2
+# EURO_GOALS – Asianconnect / Asianodds API Status Panel
+# ==============================================
 
 import os
 import requests
@@ -11,48 +9,62 @@ from datetime import datetime
 from dotenv import load_dotenv
 
 load_dotenv()
+API_KEY = os.getenv("ASIANCONNECT_API_KEY")
+BASE_URL = "https://api.asianodds88.com"  # placeholder
 
-ASIAN_API_URL = os.getenv("ASIAN_API_URL", "https://asianodds88.com/api/status")  # placeholder
-ASIAN_API_KEY = os.getenv("ASIAN_API_KEY", "")
 LOG_FILE = "EURO_GOALS_log.txt"
 
-
-def log_message(message: str):
-    """Καταγραφή μηνύματος στο EURO_GOALS_log.txt"""
-    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+def log_event(msg: str):
     with open(LOG_FILE, "a", encoding="utf-8") as f:
-        f.write(f"[{timestamp}] {message}\n")
+        f.write(msg + "\n")
 
+def get_recent_logs(n=5):
+    """Επιστρέφει τα τελευταία n log entries που περιέχουν [ASIANCONNECT]"""
+    try:
+        with open(LOG_FILE, "r", encoding="utf-8") as f:
+            lines = [line.strip() for line in f.readlines() if "[ASIANCONNECT]" in line]
+        return lines[-n:] if lines else []
+    except FileNotFoundError:
+        return []
 
 def check_asianconnect_status():
-    """
-    Επιστρέφει dict με την κατάσταση API:
-    {"status": "ok" | "error", "message": "..."}
-    """
+    """Ελέγχει τη σύνδεση με το Asianconnect/Asianodds API"""
     try:
-        if not ASIAN_API_KEY:
-            msg = "⚠️ No API key defined for Asianconnect."
-            log_message("[ASIANCONNECT] " + msg)
-            return {"status": "error", "message": msg}
+        if not API_KEY:
+            msg = "[ASIANCONNECT] ⚠️ No API key set in environment (.env)"
+            log_event(msg)
+            return {
+                "status": "NO_KEY",
+                "message": "API key not set in environment (.env)",
+                "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                "logs": get_recent_logs()
+            }
 
-        headers = {"Authorization": f"Bearer {ASIAN_API_KEY}"}
-        response = requests.get(ASIAN_API_URL, headers=headers, timeout=5)
+        test_url = f"{BASE_URL}/status?apiKey={API_KEY}"
+        response = requests.get(test_url, timeout=10)
 
         if response.status_code == 200:
-            msg = "✅ Asianconnect API reachable."
-            log_message("[ASIANCONNECT] " + msg)
-            return {"status": "ok", "message": msg}
+            msg = f"[ASIANCONNECT] ✅ API reachable ({datetime.now().strftime('%H:%M:%S')})"
+            status = "OK"
         else:
-            msg = f"❌ Asianconnect API responded with status {response.status_code}"
-            log_message("[ASIANCONNECT] " + msg)
-            return {"status": "error", "message": msg}
+            msg = f"[ASIANCONNECT] ⚠️ API responded with code {response.status_code}"
+            status = "DOWN"
+
+        log_event(msg)
+
+        return {
+            "status": status,
+            "message": msg,
+            "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            "logs": get_recent_logs()
+        }
 
     except Exception as e:
-        msg = f"❌ Asianconnect API error: {e}"
-        log_message("[ASIANCONNECT] " + msg)
-        return {"status": "error", "message": msg}
-
-
-if __name__ == "__main__":
-    result = check_asianconnect_status()
-    print(result)
+        msg = f"[ASIANCONNECT] ❌ Connection error: {e}"
+        log_event(msg)
+        return {
+            "status": "DOWN",
+            "message": msg,
+            "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            "logs": get_recent_logs()
+        }

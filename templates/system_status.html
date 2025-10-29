@@ -8,13 +8,12 @@
             font-family: Arial, sans-serif;
             background: #0d1117;
             color: #fff;
-            margin: 0;
-            padding: 20px;
             text-align: center;
+            padding: 20px;
         }
         h1 {
             color: #00b0ff;
-            margin-bottom: 20px;
+            margin-bottom: 25px;
         }
         .status-panel {
             background: #161b22;
@@ -23,7 +22,8 @@
             display: inline-block;
             padding: 20px 40px;
             box-shadow: 0 0 10px #000;
-            margin-top: 30px;
+            margin-bottom: 25px;
+            width: 400px;
         }
         .status-indicator {
             width: 16px;
@@ -50,6 +50,19 @@
             font-size: 0.9em;
             margin-top: 5px;
         }
+        #log-box {
+            background: #0c1015;
+            border: 1px solid #333;
+            border-radius: 8px;
+            width: 450px;
+            margin: 20px auto 0;
+            padding: 10px;
+            text-align: left;
+            font-family: monospace;
+            color: #aaa;
+            max-height: 150px;
+            overflow-y: auto;
+        }
         footer {
             margin-top: 40px;
             font-size: 0.8em;
@@ -70,6 +83,11 @@
         <button onclick="checkStatus()">Έλεγχος τώρα</button>
     </div>
 
+    <div id="log-box">
+        <strong>📜 Log τελευταίων ελέγχων:</strong><br>
+        <div id="logs"></div>
+    </div>
+
     <script>
         async function checkStatus() {
             try {
@@ -78,6 +96,7 @@
                 const indicator = document.querySelector(".status-indicator");
                 const text = document.getElementById("status-text");
                 const time = document.getElementById("timestamp");
+                const logsDiv = document.getElementById("logs");
 
                 indicator.className = "status-indicator";
                 if (data.status === "OK") indicator.classList.add("ok");
@@ -86,17 +105,21 @@
 
                 text.textContent = data.message;
                 time.textContent = "Τελευταίος έλεγχος: " + data.timestamp;
+
+                logsDiv.innerHTML = data.logs.map(l => "• " + l).join("<br>");
             } catch (e) {
                 document.getElementById("status-text").textContent = "Σφάλμα σύνδεσης.";
             }
         }
 
-        // Αυτόματος έλεγχος κατά την εκκίνηση
+        // Έλεγχος κατά την εκκίνηση
         checkStatus();
+        // Αυτόματο refresh κάθε 60"
+        setInterval(checkStatus, 60000);
     </script>
 
     <footer>
-        EURO_GOALS v8.9g – Asianconnect API Monitor
+        EURO_GOALS v8.9g – Asianconnect API Monitor (auto-refresh)
     </footer>
 </body>
 </html>
