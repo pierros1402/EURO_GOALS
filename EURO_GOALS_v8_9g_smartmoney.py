@@ -1,6 +1,6 @@
 # ============================================================
-# EURO_GOALS v8_9g_smartmoney.py
-# Smart Money Monitor + Admin Feeds + System Status + Auto Health Refresh
+# EURO_GOALS v8_9h_smartmoney.py
+# Smart Money – Odds Tracker με Start / Current / Movement
 # ============================================================
 
 from fastapi import FastAPI, Request
@@ -9,173 +9,109 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from datetime import datetime
 from dotenv import load_dotenv
-from threading import Thread
-import time
-import random
-import requests
-import os
+import random, os
 
 # ------------------------------------------------------------
 # ENVIRONMENT
 # ------------------------------------------------------------
 load_dotenv()
-RENDER_API_KEY = os.getenv("RENDER_API_KEY")
 
-# ------------------------------------------------------------
-# FASTAPI SETUP
-# ------------------------------------------------------------
-app = FastAPI(title="EURO_GOALS – Smart Money & System Status")
+app = FastAPI(title="EURO_GOALS – SmartMoney Odds Tracker")
 templates = Jinja2Templates(directory="templates")
 
 if not os.path.exists("static"):
     os.makedirs("static")
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
-# ============================================================
-# GLOBAL STATUS SNAPSHOT (ανανεώνεται κάθε 5 λεπτά)
-# ============================================================
-latest_status_snapshot = []
+# ------------------------------------------------------------
+# ΔΕΙΓΜΑ ΑΓΩΝΩΝ (θα αντικατασταθούν με live feeds)
+# ------------------------------------------------------------
+matches_list = [
+    "Arsenal - Chelsea",
+    "Barcelona - Sevilla",
+    "Bayern - Dortmund",
+    "Juventus - Inter",
+    "PSG - Marseille",
+    "PAOK - Olympiacos",
+]
 
 # ------------------------------------------------------------
-# SMART MONEY GENERATOR
+# ΑΠΟΘΗΚΗ ΤΙΜΩΝ (start / current)
 # ------------------------------------------------------------
-def generate_smartmoney_data():
-    matches = [
-        ("Arsenal - Chelsea", "Asian Handicap"),
-        ("Barcelona - Sevilla", "Over/Under"),
-        ("Bayern - Dortmund", "Asian Handicap"),
-        ("PAOK - Olympiacos", "Over/Under"),
-        ("Juventus - Inter", "Asian Handicap"),
-        ("PSG - Marseille", "Over/Under"),
-        ("Ajax - Feyenoord", "Asian Handicap"),
-    ]
+odds_memory = {}
+
+def generate_odds_data():
+    global odds_memory
     data = []
-    for match, market in matches:
-        mfi = random.randint(45, 100)
+
+    for match in matches_list:
+        # Δημιουργία start odds αν δεν υπάρχουν
+        if match not in odds_memory:
+            start_odds = {
+                "1": round(random.uniform(1.70, 2.50), 2),
+                "X": round(random.uniform(2.90, 3.60), 2),
+                "2": round(random.uniform(2.40, 3.10), 2)
+            }
+            odds_memory[match] = {
+                "start_odds": start_odds,
+                "current_odds": start_odds.copy(),
+                "movement": "Stable"
+            }
+
+        # Προσομοίωση μεταβολής
+        current = odds_memory[match]["current_odds"]
+        current = {
+            "1": round(current["1"] + random.uniform(-0.10, 0.10), 2),
+            "X": round(current["X"] + random.uniform(-0.10, 0.10), 2),
+            "2": round(current["2"] + random.uniform(-0.10, 0.10), 2),
+        }
+
+        # Movement detection
+        start = odds_memory[match]["start_odds"]
+        diff_home = start["1"] - current["1"]
+        diff_draw = start["X"] - current["X"]
+        diff_away = start["2"] - current["2"]
+
+        if abs(diff_home) > abs(diff_draw) and abs(diff_home) > abs(diff_away):
+            movement = "Home↑" if diff_home > 0 else "Home↓"
+        elif abs(diff_draw) > abs(diff_home) and abs(diff_draw) > abs(diff_away):
+            movement = "Draw↑" if diff_draw > 0 else "Draw↓"
+        else:
+            movement = "Away↑" if diff_away > 0 else "Away↓"
+
+        # Ενημέρωση μνήμης
+        odds_memory[match]["current_odds"] = current
+        odds_memory[match]["movement"] = movement
+
         data.append({
             "match": match,
-            "market": market,
-            "money_flow_index": mfi,
+            "market": "1X2",
+            "start_odds": start,
+            "current_odds": current,
+            "movement": movement,
             "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         })
     return data
-
-# ------------------------------------------------------------
-# FEEDS GENERATOR
-# ------------------------------------------------------------
-def generate_feeds_status():
-    feeds = [
-        {"name": "BeSoccer API", "status": "OK", "details": "Historical & Live Data"},
-        {"name": "Flashscore Parser", "status": "OK", "details": "Live Scores Feed"},
-        {"name": "Betfair Monitor", "status": "FAIL", "details": "Proxy timeout"},
-        {"name": "Asian Reader", "status": "OK", "details": "Smart Money Engine"},
-        {"name": "Digitain Lead", "status": "PENDING", "details": "Awaiting API access"},
-    ]
-    for f in feeds:
-        f["last_update"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    return feeds
-
-# ------------------------------------------------------------
-# RENDER API CHECK
-# ------------------------------------------------------------
-def check_render_api():
-    """Ελέγχει αν το Render API απαντά κανονικά."""
-    if not RENDER_API_KEY:
-        return {"status": "FAIL", "details": "API key missing"}
-    try:
-        headers = {"Authorization": f"Bearer {RENDER_API_KEY}"}
-        response = requests.get("https://api.render.com/v1/services", headers=headers, timeout=5)
-        if response.status_code == 200:
-            return {"status": "OK", "details": "Render API reachable"}
-        else:
-            return {"status": "FAIL", "details": f"HTTP {response.status_code}"}
-    except Exception as e:
-        return {"status": "FAIL", "details": f"Error: {str(e)}"}
-
-# ------------------------------------------------------------
-# SYSTEM STATUS GENERATOR
-# ------------------------------------------------------------
-def generate_system_status():
-    render_check = check_render_api()
-    system_services = [
-        {"name": "SmartMoney Engine", "status": "OK", "details": "Active feed check OK"},
-        {"name": "Alert Center", "status": "OK", "details": "Browser alerts operational"},
-        {"name": "Live Feeds", "status": "OK", "details": "Flashscore Sync running"},
-        {"name": "Database", "status": "OK", "details": "Render PostgreSQL Connected"},
-        {"name": "Render Auto-Refresh", "status": render_check["status"], "details": render_check["details"]},
-    ]
-    for s in system_services:
-        s["timestamp"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    return system_services
-
-# ------------------------------------------------------------
-# BACKGROUND THREAD – AUTO HEALTH REFRESH
-# ------------------------------------------------------------
-def background_health_refresher():
-    global latest_status_snapshot
-    while True:
-        try:
-            latest_status_snapshot = generate_system_status()
-            print(f"[EURO_GOALS] 🔁 System health refreshed at {datetime.now().strftime('%H:%M:%S')}")
-        except Exception as e:
-            print("[EURO_GOALS] ❌ Error refreshing system health:", e)
-        time.sleep(300)  # κάθε 5 λεπτά (300 sec)
 
 # ------------------------------------------------------------
 # ENDPOINTS
 # ------------------------------------------------------------
 @app.get("/smartmoney_feed")
 def smartmoney_feed():
-    return JSONResponse(generate_smartmoney_data())
+    return JSONResponse(generate_odds_data())
 
 @app.get("/smartmoney_monitor", response_class=HTMLResponse)
 def smartmoney_monitor(request: Request):
     return templates.TemplateResponse("smartmoney_monitor.html", {"request": request})
 
-@app.get("/feeds_status")
-def feeds_status():
-    return JSONResponse(generate_feeds_status())
-
-@app.get("/admin_feeds", response_class=HTMLResponse)
-def admin_feeds(request: Request):
-    return templates.TemplateResponse("admin_feeds.html", {"request": request})
-
-@app.get("/status_feed")
-def status_feed():
-    """Επιστρέφει το τελευταίο snapshot που ανανεώνεται στο παρασκήνιο."""
-    if not latest_status_snapshot:
-        return JSONResponse(generate_system_status())
-    return JSONResponse(latest_status_snapshot)
-
-@app.get("/system_status", response_class=HTMLResponse)
-def system_status(request: Request):
-    return templates.TemplateResponse("system_status.html", {"request": request})
-
-@app.get("/health")
-def health_check():
-    return {"status": "ok", "service": "EURO_GOALS SmartMoney + AutoHealth v8.9h"}
-
-# ------------------------------------------------------------
-# STARTUP EVENT
-# ------------------------------------------------------------
 @app.on_event("startup")
 def startup_event():
-    print("[EURO_GOALS] 🚀 Smart Money, Feeds & Status Monitor ενεργοποιήθηκε.")
-    print("[EURO_GOALS] ✅ Endpoints διαθέσιμα:")
-    print("   - /smartmoney_monitor")
-    print("   - /admin_feeds")
-    print("   - /system_status")
-    print("   - /status_feed")
-    print("   - /health")
-    print("[EURO_GOALS] 📡 Database connection OK")
-
-    # Εκκίνηση background thread για αυτόματη ανανέωση health
-    thread = Thread(target=background_health_refresher, daemon=True)
-    thread.start()
+    print("[EURO_GOALS] 🚀 SmartMoney Odds Tracker ενεργοποιήθηκε")
+    print("[EURO_GOALS] ✅ Endpoint διαθέσιμο: /smartmoney_monitor")
 
 # ------------------------------------------------------------
-# MAIN (Local Run)
+# MAIN (Local)
 # ------------------------------------------------------------
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run("EURO_GOALS_v8_9g_smartmoney:app", host="127.0.0.1", port=8000, reload=True)
+    uvicorn.run("EURO_GOALS_v8_9h_smartmoney:app", host="127.0.0.1", port=8000, reload=True)

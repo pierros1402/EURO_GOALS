@@ -8,52 +8,79 @@
   <link rel="stylesheet" href="/static/css/style_dark.css">
 
   <style>
-    /* 🔘 LED INDICATORS */
-    .led {
-      display: inline-block;
-      width: 12px;
-      height: 12px;
-      border-radius: 50%;
-      margin-right: 8px;
-      box-shadow: 0 0 5px rgba(0,0,0,0.4);
-    }
-    .led.ok { background-color: #00ff66; box-shadow: 0 0 6px #00ff66; }
-    .led.fail { background-color: #ff3333; box-shadow: 0 0 6px #ff3333; }
-    .led.pending { background-color: #ffcc00; box-shadow: 0 0 6px #ffcc00; }
+    body { color:#fff; background:#0d1117; font-family:'Segoe UI',Arial,sans-serif; }
 
-    /* ⚙️ ALERT CONTROL BAR */
+    .led { display:inline-block;width:12px;height:12px;border-radius:50%;margin-right:8px;box-shadow:0 0 5px rgba(0,0,0,0.4); }
+    .led.ok { background:#00ff66;box-shadow:0 0 6px #00ff66; }
+    .led.fail { background:#ff3333;box-shadow:0 0 6px #ff3333; }
+    .led.pending { background:#ffcc00;box-shadow:0 0 6px #ffcc00; }
+
     #alert-controls {
-      display: flex;
-      justify-content: center;
-      gap: 20px;
-      background-color: #161616;
-      padding: 10px;
-      border-radius: 8px;
-      border: 1px solid #333;
-      margin: 15px auto;
-      width: fit-content;
-      box-shadow: 0 0 6px rgba(0,255,174,0.1);
+      display:flex;justify-content:center;gap:20px;
+      background:#161616;padding:10px;border-radius:8px;
+      border:1px solid #333;margin:15px auto;width:fit-content;
+      box-shadow:0 0 6px rgba(0,255,174,0.1);
     }
+    #alert-controls label {color:#ccc;font-size:14px;cursor:pointer;display:flex;align-items:center;gap:6px;}
+    #alert-controls input[type="checkbox"] {transform:scale(1.2);accent-color:#00ffae;cursor:pointer;}
 
-    #alert-controls label {
-      color: #ccc;
-      font-size: 14px;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      gap: 6px;
+    table {width:90%;margin:auto;border-collapse:collapse;}
+    th,td {padding:8px 10px;text-align:center;border-bottom:1px solid #222;}
+    th {background:#111927;color:#00b0ff;}
+    tr.alert {background:rgba(255,0,0,0.08);}
+    tr.normal:hover {background:rgba(255,255,255,0.05);}
+
+    /* 📋 DIAGNOSTICS BOX */
+    #diagnostics {
+      display:none;
+      margin:25px auto;
+      padding:15px;
+      max-width:850px;
+      background:#161b22;
+      border:1px solid #333;
+      border-radius:10px;
+      color:#ccc;
+      box-shadow:0 0 10px rgba(0,255,174,0.1);
     }
+    #diagnostics h3 { color:#00b0ff;margin-top:0;text-align:center; }
+    #diagnostics ul { list-style:none;padding:0;margin:10px 0; }
+    #diagnostics li { padding:6px 0; font-size:15px; }
+    .oktxt { color:#00ff6a;font-weight:600; }
+    .failtxt { color:#ff4444;font-weight:600; }
+    .pendingtxt { color:#ffcc00;font-weight:600; }
 
-    #alert-controls input[type="checkbox"] {
-      transform: scale(1.2);
-      accent-color: #00ffae;
-      cursor: pointer;
+    #health-btn {
+      background:#00b0ff;
+      color:#000;
+      border:none;
+      border-radius:6px;
+      padding:8px 16px;
+      font-weight:bold;
+      cursor:pointer;
+      transition:0.3s;
+      display:block;
+      margin:20px auto;
+    }
+    #health-btn:hover { background:#00e6a0; }
+
+    #lastHealth {
+      display:none;
+      text-align:center;
+      color:#00b0ff;
+      margin-top:5px;
+      font-size:14px;
+      background:rgba(0,176,255,0.08);
+      border-radius:6px;
+      padding:4px 10px;
+      width:fit-content;
+      margin-left:auto;
+      margin-right:auto;
     }
   </style>
 </head>
 <body>
 
-  <h1>🖥️ System Status Panel</h1>
+  <h1 style="text-align:center;">🖥️ System Status Panel</h1>
 
   <!-- 🔔 Alert Control Bar -->
   <div id="alert-controls">
@@ -63,7 +90,7 @@
     <label><input type="checkbox" id="alertBrowser" checked> Browser Notifications</label>
   </div>
 
-  <!-- Status Table -->
+  <!-- Πίνακας κατάστασης -->
   <table id="statusTable">
     <thead>
       <tr>
@@ -79,64 +106,89 @@
   </table>
 
   <div id="timestamp">Αναμονή δεδομένων...</div>
-  <div class="status-bar">Αυτόματος έλεγχος κατάστασης κάθε 60 δευτερόλεπτα</div>
+  <button id="health-btn">🔍 Εκτέλεση Health Check</button>
+  <div id="lastHealth">🩺 Τελευταίος πλήρης έλεγχος:</div>
+  <div id="diagnostics"></div>
+  <div class="status-bar" style="text-align:center;margin-top:15px;">Αυτόματος έλεγχος κατάστασης κάθε 60 δευτερόλεπτα</div>
 
   <audio id="alertSound" src="/static/sounds/smartmoney_alert.mp3" preload="auto"></audio>
+  <audio id="beepSound" src="/static/sounds/beep_soft.mp3" preload="auto"></audio>
 
   <script>
-    // 🔧 Αποθήκευση / Ανάκτηση επιλογών
-    const controls = ["alertSmartMoney", "alertSystem", "alertFeeds", "alertBrowser"];
-    controls.forEach(id => {
-      const checkbox = document.getElementById(id);
-      const saved = localStorage.getItem(id);
-      if (saved === "off") checkbox.checked = false;
-
-      checkbox.addEventListener("change", () => {
-        localStorage.setItem(id, checkbox.checked ? "on" : "off");
-      });
+    const controls=["alertSmartMoney","alertSystem","alertFeeds","alertBrowser"];
+    controls.forEach(id=>{
+      const cb=document.getElementById(id);
+      const saved=localStorage.getItem(id);
+      if(saved==="off")cb.checked=false;
+      cb.addEventListener("change",()=>localStorage.setItem(id,cb.checked?"on":"off"));
     });
 
-    const audio = document.getElementById("alertSound");
-    let lastStatuses = {};
+    const audio=document.getElementById("alertSound");
+    const beep=document.getElementById("beepSound");
+    const diagBox=document.getElementById("diagnostics");
+    const lastHealth=document.getElementById("lastHealth");
+    let lastStatuses={};
 
-    async function updateStatusTable() {
-      try {
-        const response = await fetch("/status_feed");
-        const data = await response.json();
-        const tbody = document.getElementById("statusBody");
-        tbody.innerHTML = "";
+    document.getElementById("health-btn").addEventListener("click",()=>runHealthCheck(true));
 
-        data.forEach(service => {
-          const row = document.createElement("tr");
-          row.className = service.status === "OK" ? "normal" : 
-                          service.status === "PENDING" ? "normal" : "alert";
+    async function runHealthCheck(manual){
+      try{
+        const res=await fetch("/health");
+        const data=await res.json();
+        showDiagnostics(data,manual);
+      }catch(err){
+        diagBox.style.display="block";
+        diagBox.innerHTML=`<h3>❌ Health check error</h3><p>${err}</p>`;
+      }
+    }
 
-          let ledClass = "fail";
-          if (service.status === "OK") ledClass = "ok";
-          else if (service.status === "PENDING") ledClass = "pending";
+    function showDiagnostics(data,manual){
+      const comp=data.components||{};
+      let html=`<h3>🩺 Health Diagnostics (${data.timestamp})</h3>`;
+      html+=`<p><b>Συνολικό status:</b> ${data.status}</p><ul>`;
+      for(const [k,v] of Object.entries(comp)){
+        let cls="oktxt";
+        if(v==="FAIL")cls="failtxt";
+        else if(v==="PENDING")cls="pendingtxt";
+        html+=`<li><b>${k}</b>: <span class="${cls}">${v}</span></li>`;
+      }
+      html+=`</ul><p>${data.summary}</p>`;
+      diagBox.innerHTML=html;
+      diagBox.style.display="block";
 
-          // Αν η κατάσταση άλλαξε σε FAIL → ήχος (μόνο αν ενεργό)
-          if (service.status === "FAIL" && lastStatuses[service.name] !== "FAIL") {
-            if (localStorage.getItem("alertSystem") === "on") {
-              audio.currentTime = 0;
-              audio.play().catch(()=>{});
-            }
+      // Ενημέρωση timestamp
+      lastHealth.style.display="block";
+      lastHealth.innerHTML=`🩺 Τελευταίος πλήρης έλεγχος: ${new Date().toLocaleTimeString("el-GR")}`;
 
-            if (localStorage.getItem("alertBrowser") === "on" && "Notification" in window) {
-              if (Notification.permission === "granted") {
-                new Notification(`⚠️ ${service.name} FAILURE`, {
-                  body: service.details,
-                  icon: "/static/icon_red.png"
-                });
-              } else if (Notification.permission !== "denied") {
-                Notification.requestPermission();
-              }
+      // Ήχος beep μόνο αν FAIL
+      if(data.status==="FAIL"){
+        beep.currentTime=0;
+        beep.play().catch(()=>{});
+      }
+    }
+
+    async function updateStatusTable(){
+      try{
+        const response=await fetch("/status_feed");
+        const data=await response.json();
+        const tbody=document.getElementById("statusBody");
+        tbody.innerHTML="";
+        let hasFail=false;
+
+        data.forEach(service=>{
+          const row=document.createElement("tr");
+          row.className=service.status==="OK"?"normal":service.status==="PENDING"?"normal":"alert";
+          const ledClass=service.status==="OK"?"ok":service.status==="PENDING"?"pending":"fail";
+
+          if(service.status==="FAIL"&&lastStatuses[service.name]!=="FAIL"){
+            hasFail=true;
+            if(localStorage.getItem("alertSystem")==="on"){
+              audio.currentTime=0;audio.play().catch(()=>{});
             }
           }
+          lastStatuses[service.name]=service.status;
 
-          lastStatuses[service.name] = service.status;
-
-          row.innerHTML = `
+          row.innerHTML=`
             <td>${service.name}</td>
             <td><span class="led ${ledClass}"></span>${service.status}</td>
             <td>${service.timestamp}</td>
@@ -145,23 +197,25 @@
           tbody.appendChild(row);
         });
 
-        document.getElementById("timestamp").innerText =
-          "Τελευταίος έλεγχος: " + new Date().toLocaleTimeString("el-GR");
+        // Αν FAIL → αυτόματο health check
+        if(hasFail){
+          const res=await fetch("/health");
+          const data=await res.json();
+          showDiagnostics(data,false);
+        }
 
-      } catch (err) {
-        console.error("Σφάλμα φόρτωσης κατάστασης:", err);
-        const tbody = document.getElementById("statusBody");
-        tbody.innerHTML = `<tr class="alert"><td colspan="4">❌ Αποτυχία φόρτωσης δεδομένων</td></tr>`;
-        document.getElementById("timestamp").innerText = "❌ Πρόβλημα επικοινωνίας με /status_feed";
+        document.getElementById("timestamp").innerText="Τελευταίος έλεγχος: "+new Date().toLocaleTimeString("el-GR");
+      }catch(err){
+        console.error("Σφάλμα status_feed:",err);
       }
     }
 
     updateStatusTable();
-    setInterval(updateStatusTable, 60000);
+    setInterval(updateStatusTable,60000);
   </script>
 
-  <div class="footer">
-    EURO_GOALS System Status v8.9i © 2025
+  <div class="footer" style="text-align:center;margin-top:25px;color:#777;">
+    EURO_GOALS System Status v8.9m © 2025
   </div>
 
 </body>

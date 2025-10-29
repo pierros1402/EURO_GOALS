@@ -2,14 +2,53 @@
 <html lang="el">
 <head>
   <meta charset="UTF-8">
-  <title>EURO_GOALS – Admin Feeds Panel</title>
+  <title>📡 EURO_GOALS – Admin Feeds Monitor</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="icon" href="/static/icon_blue.png">
   <link rel="stylesheet" href="/static/css/style_dark.css">
+
+  <style>
+    /* ⚙️ ALERT CONTROL BAR */
+    #alert-controls {
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+      background-color: #161616;
+      padding: 10px;
+      border-radius: 8px;
+      border: 1px solid #333;
+      margin: 15px auto;
+      width: fit-content;
+      box-shadow: 0 0 6px rgba(0,255,174,0.1);
+    }
+
+    #alert-controls label {
+      color: #ccc;
+      font-size: 14px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    #alert-controls input[type="checkbox"] {
+      transform: scale(1.2);
+      accent-color: #00ffae;
+      cursor: pointer;
+    }
+  </style>
 </head>
 <body>
 
   <h1>📡 Admin Feeds Panel</h1>
+
+  <!-- 🔔 Alert Control Bar -->
+  <div id="alert-controls">
+    <label><input type="checkbox" id="alertSmartMoney" checked> SmartMoney Alerts</label>
+    <label><input type="checkbox" id="alertSystem" checked> System Alerts</label>
+    <label><input type="checkbox" id="alertFeeds" checked> Feeds Alerts</label>
+    <label><input type="checkbox" id="alertBrowser" checked> Browser Notifications</label>
+  </div>
 
   <table>
     <thead>
@@ -26,27 +65,62 @@
   </table>
 
   <div id="timestamp">Αναμονή δεδομένων...</div>
+  <div class="status-bar">Αυτόματη ενημέρωση κάθε 60 δευτερόλεπτα</div>
 
-  <div class="status-bar">Παρακολούθηση feeds κάθε 60 δευτερόλεπτα</div>
+  <audio id="alertSound" src="/static/sounds/smartmoney_alert.mp3" preload="auto"></audio>
 
   <script>
+    // 🔧 LocalStorage επιλογές
+    const controls = ["alertSmartMoney", "alertSystem", "alertFeeds", "alertBrowser"];
+    controls.forEach(id => {
+      const checkbox = document.getElementById(id);
+      const saved = localStorage.getItem(id);
+      if (saved === "off") checkbox.checked = false;
+      checkbox.addEventListener("change", () => {
+        localStorage.setItem(id, checkbox.checked ? "on" : "off");
+      });
+    });
+
+    const audio = document.getElementById("alertSound");
+    let lastStatuses = {};
+
     async function loadFeeds() {
       try {
         const response = await fetch("/feeds_status");
-        if (!response.ok) throw new Error("Σφάλμα HTTP " + response.status);
         const data = await response.json();
         const tbody = document.getElementById("feedTable");
         tbody.innerHTML = "";
 
         data.forEach(feed => {
           const row = document.createElement("tr");
-          row.className = feed.status === "OK" ? "normal" : "alert";
+          row.className = feed.status === "OK" ? "normal" : 
+                          feed.status === "PENDING" ? "normal" : "alert";
+
+          // Αν αλλάξει σε FAIL και είναι ενεργό το Feeds Alerts → ήχος
+          if (feed.status === "FAIL" && lastStatuses[feed.name] !== "FAIL") {
+            if (localStorage.getItem("alertFeeds") === "on") {
+              audio.currentTime = 0;
+              audio.play().catch(()=>{});
+            }
+            if (localStorage.getItem("alertBrowser") === "on" && "Notification" in window) {
+              if (Notification.permission === "granted") {
+                new Notification(`❌ Feed Failure`, {
+                  body: `${feed.name} – ${feed.details}`,
+                  icon: "/static/icon_red.png"
+                });
+              } else if (Notification.permission !== "denied") {
+                Notification.requestPermission();
+              }
+            }
+          }
+
+          lastStatuses[feed.name] = feed.status;
 
           row.innerHTML = `
             <td>${feed.name}</td>
             <td>${feed.status}</td>
-            <td>${feed.last_update || "-"}</td>
-            <td>${feed.details || ""}</td>
+            <td>${feed.last_update}</td>
+            <td>${feed.details}</td>
           `;
           tbody.appendChild(row);
         });
@@ -55,10 +129,9 @@
           "Τελευταία ενημέρωση: " + new Date().toLocaleTimeString("el-GR");
 
       } catch (err) {
-        console.error("Σφάλμα:", err);
-        const tbody = document.getElementById("feedTable");
-        tbody.innerHTML = `<tr class="alert"><td colspan="4">❌ Σφάλμα φόρτωσης feeds</td></tr>`;
-        document.getElementById("timestamp").innerText = "❌ Πρόβλημα φόρτωσης δεδομένων";
+        console.error("Σφάλμα φόρτωσης Feeds:", err);
+        document.getElementById("feedTable").innerHTML =
+          `<tr class="alert"><td colspan="4">❌ Σφάλμα σύνδεσης με /feeds_status</td></tr>`;
       }
     }
 
@@ -66,7 +139,9 @@
     setInterval(loadFeeds, 60000);
   </script>
 
-  <div class="footer">EURO_GOALS Admin Feeds Panel v8.9g © 2025</div>
+  <div class="footer">
+    EURO_GOALS Admin Feeds Monitor v8.9i © 2025
+  </div>
 
 </body>
 </html>

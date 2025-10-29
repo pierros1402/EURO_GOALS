@@ -2,78 +2,101 @@
 <html lang="el">
 <head>
   <meta charset="UTF-8">
-  <title>Smart Money Monitor – EURO_GOALS</title>
+  <title>💰 EURO_GOALS – Smart Money Odds Monitor</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="icon" href="/static/icon_blue.png">
-  <link rel="stylesheet" href="/static/css/style_dark.css">
+  <link rel="icon" href="/static/icon_green.png">
+  <style>
+    body { background:#0d1117;color:#fff;font-family:'Segoe UI',Arial,sans-serif;margin:0;padding:0; }
+    h1 { text-align:center;color:#00ffae;margin:15px 0; }
+    table { width:95%;margin:auto;border-collapse:collapse; }
+    th,td { text-align:center;padding:8px;border-bottom:1px solid #222; }
+    th { background:#111927;color:#00b0ff; }
+    tr.alert { background:rgba(255,0,0,0.08); }
+    tr:hover { background:rgba(255,255,255,0.05); }
+    .movement-up { color:#00ff88;font-weight:bold; }
+    .movement-down { color:#ff4444;font-weight:bold; }
+    #timestamp { text-align:center;color:#888;margin-top:15px; }
+    .status-bar { text-align:center;color:#777;margin:20px 0;font-size:13px; }
+  </style>
 </head>
 <body>
 
-  <h1>⚡ Smart Money Monitor</h1>
+  <h1>💰 Smart Money Odds Tracker</h1>
 
-  <table id="smartmoneyTable">
+  <table id="smartTable">
     <thead>
       <tr>
         <th>Αγώνας</th>
         <th>Αγορά</th>
-        <th>Money Flow Index %</th>
-        <th>Ώρα</th>
+        <th>Start Odds</th>
+        <th>Current Odds</th>
+        <th>Μεταβολή</th>
+        <th>Ώρα Ενημέρωσης</th>
       </tr>
     </thead>
-    <tbody id="tableBody">
-      <tr><td colspan="4" class="loading">Φόρτωση δεδομένων...</td></tr>
+    <tbody id="smartBody">
+      <tr><td colspan="6">Φόρτωση δεδομένων...</td></tr>
     </tbody>
   </table>
 
   <div id="timestamp">Αναμονή δεδομένων...</div>
-  <div class="status-bar">Παρακολούθηση ροών κάθε 60 δευτερόλεπτα</div>
+  <div class="status-bar">Αυτόματη ενημέρωση κάθε 60 δευτερόλεπτα</div>
 
   <audio id="alertSound" src="/static/sounds/smartmoney_alert.mp3" preload="auto"></audio>
 
   <script>
-    async function loadSmartMoney() {
-      try {
-        const response = await fetch("/smartmoney_feed");
-        const data = await response.json();
-        const tbody = document.getElementById("tableBody");
-        tbody.innerHTML = "";
+    const audio=document.getElementById("alertSound");
+    let lastMovements={};
 
-        let alertTriggered = false;
+    async function updateSmartMoney(){
+      try{
+        const res=await fetch("/smartmoney_feed");
+        const data=await res.json();
+        const tbody=document.getElementById("smartBody");
+        tbody.innerHTML="";
 
-        data.forEach(item => {
-          const row = document.createElement("tr");
-          row.className = item.money_flow_index > 80 ? "alert" : "normal";
+        data.forEach(item=>{
+          let trendClass="";
+          if(item.movement.includes("↑")) trendClass="movement-up";
+          if(item.movement.includes("↓")) trendClass="movement-down";
 
-          row.innerHTML = `
+          // Αν υπάρχει νέα αλλαγή & σημαντική διαφορά → ήχος
+          if(lastMovements[item.match]!==item.movement){
+            const start=item.start_odds["1"];
+            const current=item.current_odds["1"];
+            if(Math.abs(start-current)>0.15){
+              audio.currentTime=0;
+              audio.play().catch(()=>{});
+            }
+          }
+          lastMovements[item.match]=item.movement;
+
+          const row=document.createElement("tr");
+          row.innerHTML=`
             <td>${item.match}</td>
             <td>${item.market}</td>
-            <td>${item.money_flow_index}%</td>
+            <td>${item.start_odds["1"].toFixed(2)} – ${item.start_odds["X"].toFixed(2)} – ${item.start_odds["2"].toFixed(2)}</td>
+            <td>${item.current_odds["1"].toFixed(2)} – ${item.current_odds["X"].toFixed(2)} – ${item.current_odds["2"].toFixed(2)}</td>
+            <td class="${trendClass}">${item.movement}</td>
             <td>${item.timestamp}</td>
           `;
           tbody.appendChild(row);
-
-          if (item.money_flow_index > 80) alertTriggered = true;
         });
 
-        document.getElementById("timestamp").innerText =
-          "Τελευταία ενημέρωση: " + new Date().toLocaleTimeString("el-GR");
+        document.getElementById("timestamp").innerText=
+          "Τελευταία ενημέρωση: "+new Date().toLocaleTimeString("el-GR");
 
-        if (alertTriggered) {
-          const sound = document.getElementById("alertSound");
-          sound.currentTime = 0;
-          sound.play();
-        }
-      } catch (err) {
-        console.error("Σφάλμα φόρτωσης δεδομένων:", err);
-        document.getElementById("timestamp").innerText = "❌ Πρόβλημα φόρτωσης δεδομένων";
+      }catch(err){
+        console.error("Σφάλμα SmartMoney feed:",err);
       }
     }
 
-    loadSmartMoney();
-    setInterval(loadSmartMoney, 60000);
+    updateSmartMoney();
+    setInterval(updateSmartMoney,60000);
   </script>
 
-  <div class="footer">EURO_GOALS SmartMoney Monitor v8.9g</div>
-
+  <div class="footer" style="text-align:center;color:#777;margin:25px 0;">
+    EURO_GOALS SmartMoney v8.9h © 2025
+  </div>
 </body>
 </html>
