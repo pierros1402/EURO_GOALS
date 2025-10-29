@@ -13,15 +13,15 @@
         }
         h1 {
             color: #00b0ff;
-            margin-bottom: 20px;
+            margin-bottom: 25px;
             text-align: center;
         }
-        .grid {
+        .panel-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
             gap: 20px;
-            max-width: 1100px;
-            margin: 0 auto;
+            max-width: 1200px;
+            margin: 0 auto 20px;
         }
         .card {
             background: #161b22;
@@ -35,6 +35,17 @@
             margin-top: 0;
             color: #00b0ff;
         }
+        .section-title {
+            font-size: 1.2em;
+            margin-top: 30px;
+            margin-bottom: 10px;
+            color: #00b0ff;
+            text-align: left;
+            max-width: 1200px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
         .status-indicator {
             width: 14px;
             height: 14px;
@@ -61,18 +72,35 @@
             background: #0c1015;
             border: 1px solid #333;
             border-radius: 8px;
-            margin-top: 15px;
+            margin-top: 10px;
             padding: 8px;
             text-align: left;
             font-family: monospace;
             color: #aaa;
-            max-height: 120px;
+            max-height: 100px;
             overflow-y: auto;
             font-size: 0.85em;
         }
 
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: #161b22;
+            border-radius: 8px;
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+        th, td {
+            padding: 10px;
+            border-bottom: 1px solid #30363d;
+            text-align: left;
+        }
+        th {
+            background: #1f2937;
+            color: #00b0ff;
+        }
         footer {
-            margin-top: 30px;
+            margin-top: 40px;
             text-align: center;
             font-size: 0.8em;
             color: #777;
@@ -82,7 +110,8 @@
 <body>
     <h1>⚽ EURO_GOALS – System Status Panel</h1>
 
-    <div class="grid">
+    <!-- ======== TOP SYSTEM CARDS ======== -->
+    <div class="panel-grid">
         <div class="card">
             <h3>Render</h3>
             <p>🟢 Online</p>
@@ -106,22 +135,80 @@
             <p>🔴 0/0 active</p>
             <small>SmartMoney detector</small>
         </div>
+    </div>
 
-        <!-- ✅ Εδώ ενσωματώνουμε το Asianconnect Panel -->
-        <div class="card">
-            <h3>Asianconnect API</h3>
-            <div id="status">
-                <span class="status-indicator no-key"></span>
-                <span id="status-text">Έλεγχος...</span>
-            </div>
-            <p id="timestamp" style="color:#bbb;font-size:0.9em;margin:5px 0;"></p>
-            <button onclick="checkStatus()">Έλεγχος τώρα</button>
-            <div id="log-box">
-                <strong>📜 Log:</strong><br>
-                <div id="logs"></div>
-            </div>
+    <!-- ======== SYSTEM SUMMARY ======== -->
+    <h2 class="section-title">🔹 Σύνοψη λειτουργίας</h2>
+    <div class="panel-grid">
+        <div class="card"><h3>Εξυπηρετητής</h3><p>—</p></div>
+        <div class="card"><h3>Βάση</h3><p>—</p></div>
+        <div class="card"><h3>Τελευταία ενημέρωση</h3><p>—</p></div>
+        <div class="card"><h3>Alerts 24h</h3><p>—</p></div>
+    </div>
+
+    <!-- ======== HEALTH CHECK ======== -->
+    <h2 class="section-title">🧠 Health Check</h2>
+    <div class="panel-grid">
+        <div class="card"><h3>CPU</h3><p>—</p></div>
+        <div class="card"><h3>RAM</h3><p>—</p></div>
+        <div class="card"><h3>Δίσκος</h3><p>—</p></div>
+        <div class="card"><h3>Σφάλματα</h3><p>—</p></div>
+    </div>
+
+    <!-- ======== FEEDS & APIS ======== -->
+    <h2 class="section-title">🌍 Feeds & APIs</h2>
+    <table>
+        <thead>
+            <tr><th>ΠΗΓΗ</th><th>ΚΑΤΑΣΤΑΣΗ</th><th>ΛΕΠΤΟΜΕΡΕΙΕΣ</th></tr>
+        </thead>
+        <tbody>
+            <tr><td>Flashscore</td><td>🟢 Active</td><td>Real-time feed</td></tr>
+            <tr><td>Sofascore</td><td>🟢 Active</td><td>Verified sync</td></tr>
+        </tbody>
+    </table>
+
+    <!-- ======== ASIANCONNECT PANEL ======== -->
+    <div class="card" style="max-width:500px;margin:0 auto;">
+        <h3>Asianconnect API</h3>
+        <div id="status">
+            <span class="status-indicator no-key"></span>
+            <span id="status-text">Έλεγχος...</span>
+        </div>
+        <p id="timestamp" style="color:#bbb;font-size:0.9em;margin:5px 0;"></p>
+        <button onclick="checkStatus()">Έλεγχος τώρα</button>
+        <div id="log-box">
+            <strong>📜 Log:</strong><br>
+            <div id="logs"></div>
         </div>
     </div>
+
+    <!-- ======== BACKGROUND JOBS ======== -->
+    <h2 class="section-title">⚙️ Background Jobs</h2>
+    <table>
+        <thead>
+            <tr><th>ΕΡΓΑΣΙΑ</th><th>ΚΑΤΑΣΤΑΣΗ</th><th>ΕΠΟΜΕΝΗ ΕΚΤΕΛΕΣΗ</th></tr>
+        </thead>
+        <tbody>
+            <tr><td>SmartMoney Checker</td><td>🕒 Scheduled</td><td>Every 5 min</td></tr>
+            <tr><td>Auto Backup</td><td>🟢 Active</td><td>Daily 03:00</td></tr>
+        </tbody>
+    </table>
+
+    <!-- ======== LIVE LOGS ======== -->
+    <h2 class="section-title">📡 Live Logs</h2>
+    <div class="card" style="text-align:left;max-width:1100px;margin:auto;min-height:120px;">
+        <p id="live-logs">—</p>
+    </div>
+
+    <!-- ======== SMART MONEY LOG ======== -->
+    <h2 class="section-title">💰 Smart Money Log</h2>
+    <div class="card" style="text-align:left;max-width:1100px;margin:auto;min-height:120px;">
+        <p id="smartmoney-logs">—</p>
+    </div>
+
+    <footer>
+        EURO_GOALS v8.9g – Asianconnect Integration (Full Dashboard View)
+    </footer>
 
     <script>
         async function checkStatus() {
@@ -149,9 +236,5 @@
         checkStatus();
         setInterval(checkStatus, 60000);
     </script>
-
-    <footer>
-        EURO_GOALS v8.9g – Asianconnect API Monitor (Integrated Dashboard)
-    </footer>
 </body>
 </html>
