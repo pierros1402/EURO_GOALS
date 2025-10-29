@@ -1,6 +1,7 @@
 # ============================================================
-# EURO_GOALS v8_9h_smartmoney.py
+# EURO_GOALS v8_9g_smartmoney.py
 # Smart Money – Odds Tracker με Start / Current / Movement
+# + Root Status Page για Render health check
 # ============================================================
 
 from fastapi import FastAPI, Request
@@ -104,14 +105,33 @@ def smartmoney_feed():
 def smartmoney_monitor(request: Request):
     return templates.TemplateResponse("smartmoney_monitor.html", {"request": request})
 
+# ------------------------------------------------------------
+# ROOT STATUS PAGE (για Render health check)
+# ------------------------------------------------------------
+@app.get("/")
+def root_status():
+    """
+    Επιστρέφει απλό status JSON για health monitoring.
+    """
+    return {
+        "service": "EURO_GOALS SmartMoney Odds Tracker",
+        "status": "✅ Running",
+        "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "endpoint": "/smartmoney_monitor"
+    }
+
+# ------------------------------------------------------------
+# STARTUP LOG
+# ------------------------------------------------------------
 @app.on_event("startup")
 def startup_event():
     print("[EURO_GOALS] 🚀 SmartMoney Odds Tracker ενεργοποιήθηκε")
     print("[EURO_GOALS] ✅ Endpoint διαθέσιμο: /smartmoney_monitor")
+    print("[EURO_GOALS] 🧠 Database connection OK")
 
 # ------------------------------------------------------------
 # MAIN (Local)
 # ------------------------------------------------------------
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run("EURO_GOALS_v8_9h_smartmoney:app", host="127.0.0.1", port=8000, reload=True)
+    uvicorn.run("EURO_GOALS_v8_9g_smartmoney:app", host="127.0.0.1", port=8000, reload=True)
