@@ -1,11 +1,11 @@
 # ============================================================
 # EURO_GOALS v8_9g_smartmoney.py
 # Smart Money – Odds Tracker με Start / Current / Movement
-# + Root Status Page για Render health check
+# + HTML Root Status Page για Render health check (auto-refresh)
 # ============================================================
 
 from fastapi import FastAPI, Request
-from fastapi.responses import JSONResponse, HTMLResponse
+from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from datetime import datetime
@@ -106,19 +106,73 @@ def smartmoney_monitor(request: Request):
     return templates.TemplateResponse("smartmoney_monitor.html", {"request": request})
 
 # ------------------------------------------------------------
-# ROOT STATUS PAGE (για Render health check)
+# ROOT STATUS PAGE (HTML + Auto-refresh + Favicon)
 # ------------------------------------------------------------
-@app.get("/")
-def root_status():
+@app.get("/", response_class=HTMLResponse)
+def root_status(request: Request):
+    last_update = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    html = f"""
+    <html>
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="refresh" content="60">
+        <title>EURO_GOALS SmartMoney Status</title>
+        <link rel="icon" type="image/png" href="/static/icon_blue.png">
+        <style>
+            body {{
+                background-color: #0d1117;
+                color: #e6e6e6;
+                font-family: 'Segoe UI', Arial, sans-serif;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                height: 100vh;
+                text-align: center;
+                margin: 0;
+            }}
+            h1 {{
+                color: #00b0ff;
+                font-size: 32px;
+                margin-bottom: 8px;
+            }}
+            p {{
+                font-size: 18px;
+                margin: 4px;
+            }}
+            a {{
+                color: #00d4ff;
+                text-decoration: none;
+                font-weight: bold;
+            }}
+            .status {{
+                margin-top: 15px;
+                padding: 14px 24px;
+                border-radius: 10px;
+                background-color: #161b22;
+                border: 1px solid #00b0ff;
+                box-shadow: 0 0 12px rgba(0, 176, 255, 0.35);
+            }}
+            footer {{
+                position: absolute;
+                bottom: 10px;
+                font-size: 13px;
+                color: #888;
+            }}
+        </style>
+    </head>
+    <body>
+        <h1>✅ EURO_GOALS SmartMoney Service is LIVE</h1>
+        <div class="status">
+            <p><b>Status:</b> Running normally</p>
+            <p><b>Last update:</b> {last_update}</p>
+            <p><a href="/smartmoney_monitor">Go to SmartMoney Monitor →</a></p>
+        </div>
+        <footer>Auto-refresh every 60s • Render Health OK</footer>
+    </body>
+    </html>
     """
-    Επιστρέφει απλό status JSON για health monitoring.
-    """
-    return {
-        "service": "EURO_GOALS SmartMoney Odds Tracker",
-        "status": "✅ Running",
-        "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-        "endpoint": "/smartmoney_monitor"
-    }
+    return HTMLResponse(content=html)
 
 # ------------------------------------------------------------
 # STARTUP LOG
