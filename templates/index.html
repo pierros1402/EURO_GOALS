@@ -2,7 +2,7 @@
 <html lang="el">
 <head>
     <meta charset="UTF-8">
-    <title>EURO_GOALS – Dashboard</title>
+    <title>EURO_GOALS – System Dashboard</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -11,6 +11,10 @@
             text-align: center;
             padding-top: 40px;
         }
+        h1 {
+            color: #00b0ff;
+            margin-bottom: 20px;
+        }
         .status-panel {
             background: #1a1a1a;
             border: 1px solid #333;
@@ -18,6 +22,7 @@
             display: inline-block;
             padding: 20px 40px;
             box-shadow: 0 0 10px #000;
+            margin-bottom: 30px;
         }
         .status-indicator {
             width: 18px;
@@ -39,6 +44,11 @@
             color: white;
         }
         button:hover { background: #1565c0; }
+        #timestamp {
+            color: #bbb;
+            font-size: 0.9em;
+            margin-top: 5px;
+        }
     </style>
 </head>
 <body>
@@ -75,8 +85,9 @@
             }
         }
 
-        // Έλεγχος κατά την εκκίνηση
+        // Αυτόματος έλεγχος κατά την εκκίνηση
         checkStatus();
     </script>
 </body>
 </html>
+
