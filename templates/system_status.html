@@ -1,240 +1,170 @@
 <!DOCTYPE html>
 <html lang="el">
 <head>
-    <meta charset="UTF-8">
-    <title>EURO_GOALS – System Status Panel</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background: #0d1117;
-            color: #fff;
-            margin: 0;
-            padding: 20px;
-        }
-        h1 {
-            color: #00b0ff;
-            margin-bottom: 25px;
-            text-align: center;
-        }
-        .panel-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 20px;
-            max-width: 1200px;
-            margin: 0 auto 20px;
-        }
-        .card {
-            background: #161b22;
-            border: 1px solid #30363d;
-            border-radius: 12px;
-            padding: 18px;
-            box-shadow: 0 0 10px #000;
-            text-align: center;
-        }
-        .card h3 {
-            margin-top: 0;
-            color: #00b0ff;
-        }
-        .section-title {
-            font-size: 1.2em;
-            margin-top: 30px;
-            margin-bottom: 10px;
-            color: #00b0ff;
-            text-align: left;
-            max-width: 1200px;
-            margin-left: auto;
-            margin-right: auto;
-        }
-
-        .status-indicator {
-            width: 14px;
-            height: 14px;
-            border-radius: 50%;
-            display: inline-block;
-            margin-right: 6px;
-        }
-        .ok { background: #00c853; }
-        .down { background: #d50000; }
-        .no-key { background: #ffb300; }
-
-        button {
-            margin-top: 10px;
-            padding: 6px 16px;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            background: #1976d2;
-            color: white;
-        }
-        button:hover { background: #1565c0; }
-
-        #log-box {
-            background: #0c1015;
-            border: 1px solid #333;
-            border-radius: 8px;
-            margin-top: 10px;
-            padding: 8px;
-            text-align: left;
-            font-family: monospace;
-            color: #aaa;
-            max-height: 100px;
-            overflow-y: auto;
-            font-size: 0.85em;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            background: #161b22;
-            border-radius: 8px;
-            overflow: hidden;
-            margin-bottom: 20px;
-        }
-        th, td {
-            padding: 10px;
-            border-bottom: 1px solid #30363d;
-            text-align: left;
-        }
-        th {
-            background: #1f2937;
-            color: #00b0ff;
-        }
-        footer {
-            margin-top: 40px;
-            text-align: center;
-            font-size: 0.8em;
-            color: #777;
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <title>EURO_GOALS – System Status Panel</title>
+  <style>
+    body{font-family:Arial,sans-serif;background:#0d1117;color:#fff;margin:0;padding:20px}
+    h1{color:#00b0ff;margin-bottom:25px;text-align:center}
+    .panel-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:20px;max-width:1200px;margin:0 auto 20px}
+    .card{background:#161b22;border:1px solid #30363d;border-radius:12px;padding:18px;box-shadow:0 0 10px #000;text-align:center;transition:box-shadow .2s,border-color .2s,background .2s}
+    .card h3{margin-top:0;color:#00b0ff}
+    .section-title{font-size:1.2em;margin:30px auto 10px;color:#00b0ff;text-align:left;max-width:1200px}
+    .status-indicator{width:14px;height:14px;border-radius:50%;display:inline-block;margin-right:6px}
+    .ok{background:#00c853}.down{background:#d50000}.no-key{background:#ffb300}
+    .ok-card{border-color:#1b5e20;box-shadow:0 0 12px rgba(76,175,80,.25)}
+    .down-card{border-color:#8e0000;box-shadow:0 0 14px rgba(244,67,54,.35)}
+    .nokey-card{border-color:#8d6e00;box-shadow:0 0 12px rgba(255,193,7,.25)}
+    button{margin-top:10px;padding:6px 16px;border:none;border-radius:6px;cursor:pointer;background:#1976d2;color:#fff}
+    button:hover{background:#1565c0}
+    #log-box{background:#0c1015;border:1px solid #333;border-radius:8px;margin-top:10px;padding:8px;text-align:left;font-family:monospace;color:#aaa;max-height:100px;overflow-y:auto;font-size:.85em}
+    table{width:100%;border-collapse:collapse;background:#161b22;border-radius:8px;overflow:hidden;margin-bottom:20px}
+    th,td{padding:10px;border-bottom:1px solid #30363d;text-align:left}
+    th{background:#1f2937;color:#00b0ff}
+    footer{margin:40px 0 10px;text-align:center;font-size:.8em;color:#777}
+    .banner{display:none;max-width:1200px;margin:0 auto 15px;background:#2a1b1b;border:1px solid #8e0000;color:#ffbfbf;border-radius:10px;padding:10px 14px;box-shadow:0 0 10px rgba(244,67,54,.25)}
+    .banner.show{display:block}
+  </style>
 </head>
 <body>
-    <h1>⚽ EURO_GOALS – System Status Panel</h1>
+  <h1>⚽ EURO_GOALS – System Status Panel</h1>
 
-    <!-- ======== TOP SYSTEM CARDS ======== -->
-    <div class="panel-grid">
-        <div class="card">
-            <h3>Render</h3>
-            <p>🟢 Online</p>
-            <small>Last health: OK</small>
-        </div>
+  <!-- 🔔 Dynamic alert banner (fills when API is DOWN/NO_KEY) -->
+  <div id="alert-banner" class="banner">—</div>
 
-        <div class="card">
-            <h3>Database</h3>
-            <p>🟢 PostgreSQL</p>
-            <small>Auto-Fallback ενεργό</small>
-        </div>
-
-        <div class="card">
-            <h3>API Router</h3>
-            <p>🟢 Feeds Active</p>
-            <small>Feeds monitor</small>
-        </div>
-
-        <div class="card">
-            <h3>Smart Money</h3>
-            <p>🔴 0/0 active</p>
-            <small>SmartMoney detector</small>
-        </div>
+  <!-- ======== TOP SYSTEM CARDS ======== -->
+  <div class="panel-grid">
+    <div class="card">
+      <h3>Render</h3>
+      <p>🟢 Online</p><small>Last health: OK</small>
     </div>
 
-    <!-- ======== SYSTEM SUMMARY ======== -->
-    <h2 class="section-title">🔹 Σύνοψη λειτουργίας</h2>
-    <div class="panel-grid">
-        <div class="card"><h3>Εξυπηρετητής</h3><p>—</p></div>
-        <div class="card"><h3>Βάση</h3><p>—</p></div>
-        <div class="card"><h3>Τελευταία ενημέρωση</h3><p>—</p></div>
-        <div class="card"><h3>Alerts 24h</h3><p>—</p></div>
+    <div class="card">
+      <h3>Database</h3>
+      <p>🟢 PostgreSQL</p><small>Auto-Fallback ενεργό</small>
     </div>
 
-    <!-- ======== HEALTH CHECK ======== -->
-    <h2 class="section-title">🧠 Health Check</h2>
-    <div class="panel-grid">
-        <div class="card"><h3>CPU</h3><p>—</p></div>
-        <div class="card"><h3>RAM</h3><p>—</p></div>
-        <div class="card"><h3>Δίσκος</h3><p>—</p></div>
-        <div class="card"><h3>Σφάλματα</h3><p>—</p></div>
+    <div class="card">
+      <h3>API Router</h3>
+      <p>🟢 Feeds Active</p><small>Feeds monitor</small>
     </div>
 
-    <!-- ======== FEEDS & APIS ======== -->
-    <h2 class="section-title">🌍 Feeds & APIs</h2>
-    <table>
-        <thead>
-            <tr><th>ΠΗΓΗ</th><th>ΚΑΤΑΣΤΑΣΗ</th><th>ΛΕΠΤΟΜΕΡΕΙΕΣ</th></tr>
-        </thead>
-        <tbody>
-            <tr><td>Flashscore</td><td>🟢 Active</td><td>Real-time feed</td></tr>
-            <tr><td>Sofascore</td><td>🟢 Active</td><td>Verified sync</td></tr>
-        </tbody>
-    </table>
-
-    <!-- ======== ASIANCONNECT PANEL ======== -->
-    <div class="card" style="max-width:500px;margin:0 auto;">
-        <h3>Asianconnect API</h3>
-        <div id="status">
-            <span class="status-indicator no-key"></span>
-            <span id="status-text">Έλεγχος...</span>
-        </div>
-        <p id="timestamp" style="color:#bbb;font-size:0.9em;margin:5px 0;"></p>
-        <button onclick="checkStatus()">Έλεγχος τώρα</button>
-        <div id="log-box">
-            <strong>📜 Log:</strong><br>
-            <div id="logs"></div>
-        </div>
+    <div class="card">
+      <h3>Smart Money</h3>
+      <p>🔴 0/0 active</p><small>SmartMoney detector</small>
     </div>
+  </div>
 
-    <!-- ======== BACKGROUND JOBS ======== -->
-    <h2 class="section-title">⚙️ Background Jobs</h2>
-    <table>
-        <thead>
-            <tr><th>ΕΡΓΑΣΙΑ</th><th>ΚΑΤΑΣΤΑΣΗ</th><th>ΕΠΟΜΕΝΗ ΕΚΤΕΛΕΣΗ</th></tr>
-        </thead>
-        <tbody>
-            <tr><td>SmartMoney Checker</td><td>🕒 Scheduled</td><td>Every 5 min</td></tr>
-            <tr><td>Auto Backup</td><td>🟢 Active</td><td>Daily 03:00</td></tr>
-        </tbody>
-    </table>
+  <!-- ======== SYSTEM SUMMARY ======== -->
+  <h2 class="section-title">🔹 Σύνοψη λειτουργίας</h2>
+  <div class="panel-grid">
+    <div class="card"><h3>Εξυπηρετητής</h3><p>—</p></div>
+    <div class="card"><h3>Βάση</h3><p>—</p></div>
+    <div class="card"><h3>Τελευταία ενημέρωση</h3><p>—</p></div>
+    <div class="card"><h3>Alerts 24h</h3><p>—</p></div>
+  </div>
 
-    <!-- ======== LIVE LOGS ======== -->
-    <h2 class="section-title">📡 Live Logs</h2>
-    <div class="card" style="text-align:left;max-width:1100px;margin:auto;min-height:120px;">
-        <p id="live-logs">—</p>
+  <!-- ======== HEALTH CHECK ======== -->
+  <h2 class="section-title">🧠 Health Check</h2>
+  <div class="panel-grid">
+    <div class="card"><h3>CPU</h3><p>—</p></div>
+    <div class="card"><h3>RAM</h3><p>—</p></div>
+    <div class="card"><h3>Δίσκος</h3><p>—</p></div>
+    <div class="card"><h3>Σφάλματα</h3><p>—</p></div>
+  </div>
+
+  <!-- ======== FEEDS & APIS ======== -->
+  <h2 class="section-title">🌍 Feeds & APIs</h2>
+  <table>
+    <thead><tr><th>ΠΗΓΗ</th><th>ΚΑΤΑΣΤΑΣΗ</th><th>ΛΕΠΤΟΜΕΡΕΙΕΣ</th></tr></thead>
+    <tbody>
+      <tr><td>Flashscore</td><td>🟢 Active</td><td>Real-time feed</td></tr>
+      <tr><td>Sofascore</td><td>🟢 Active</td><td>Verified sync</td></tr>
+    </tbody>
+  </table>
+
+  <!-- ======== ASIANCONNECT PANEL (dynamic colors + logs) ======== -->
+  <div id="ac-card" class="card" style="max-width:500px;margin:0 auto;">
+    <h3>Asianconnect API</h3>
+    <div id="status">
+      <span id="ac-dot" class="status-indicator no-key"></span>
+      <span id="status-text">Έλεγχος...</span>
     </div>
-
-    <!-- ======== SMART MONEY LOG ======== -->
-    <h2 class="section-title">💰 Smart Money Log</h2>
-    <div class="card" style="text-align:left;max-width:1100px;margin:auto;min-height:120px;">
-        <p id="smartmoney-logs">—</p>
+    <p id="timestamp" style="color:#bbb;font-size:.9em;margin:5px 0;"></p>
+    <button onclick="checkStatus()">Έλεγχος τώρα</button>
+    <div id="log-box">
+      <strong>📜 Log:</strong><br />
+      <div id="logs"></div>
     </div>
+  </div>
 
-    <footer>
-        EURO_GOALS v8.9g – Asianconnect Integration (Full Dashboard View)
-    </footer>
+  <!-- ======== BACKGROUND JOBS ======== -->
+  <h2 class="section-title">⚙️ Background Jobs</h2>
+  <table>
+    <thead><tr><th>ΕΡΓΑΣΙΑ</th><th>ΚΑΤΑΣΤΑΣΗ</th><th>ΕΠΟΜΕΝΗ ΕΚΤΕΛΕΣΗ</th></tr></thead>
+    <tbody>
+      <tr><td>SmartMoney Checker</td><td>🕒 Scheduled</td><td>Every 5 min</td></tr>
+      <tr><td>Auto Backup</td><td>🟢 Active</td><td>Daily 03:00</td></tr>
+    </tbody>
+  </table>
 
-    <script>
-        async function checkStatus() {
-            try {
-                const res = await fetch("/check_asianconnect");
-                const data = await res.json();
-                const indicator = document.querySelector(".status-indicator");
-                const text = document.getElementById("status-text");
-                const time = document.getElementById("timestamp");
-                const logsDiv = document.getElementById("logs");
+  <!-- ======== LIVE LOGS ======== -->
+  <h2 class="section-title">📡 Live Logs</h2>
+  <div class="card" style="text-align:left;max-width:1100px;margin:auto;min-height:120px;">
+    <p id="live-logs">—</p>
+  </div>
 
-                indicator.className = "status-indicator";
-                if (data.status === "OK") indicator.classList.add("ok");
-                else if (data.status === "DOWN") indicator.classList.add("down");
-                else indicator.classList.add("no-key");
+  <!-- ======== SMART MONEY LOG ======== -->
+  <h2 class="section-title">💰 Smart Money Log</h2>
+  <div class="card" style="text-align:left;max-width:1100px;margin:auto;min-height:120px;">
+    <p id="smartmoney-logs">—</p>
+  </div>
 
-                text.textContent = data.message;
-                time.textContent = "Τελευταίος έλεγχος: " + data.timestamp;
-                logsDiv.innerHTML = data.logs.map(l => "• " + l).join("<br>");
-            } catch (e) {
-                document.getElementById("status-text").textContent = "Σφάλμα σύνδεσης.";
-            }
+  <footer>EURO_GOALS v8.9h – Asianconnect Integration (Fallback-aware)</footer>
+
+  <script>
+    async function checkStatus(){
+      try{
+        const res = await fetch("/check_asianconnect");
+        const data = await res.json();
+
+        const dot = document.getElementById("ac-dot");
+        const text = document.getElementById("status-text");
+        const time = document.getElementById("timestamp");
+        const logsDiv = document.getElementById("logs");
+        const card = document.getElementById("ac-card");
+        const banner = document.getElementById("alert-banner");
+
+        // reset classes
+        dot.className = "status-indicator";
+        card.classList.remove("ok-card","down-card","nokey-card");
+        banner.classList.remove("show");
+
+        // set visual state
+        if (data.status === "OK"){
+          dot.classList.add("ok");
+          card.classList.add("ok-card");
+        } else if (data.status === "DOWN"){
+          dot.classList.add("down");
+          card.classList.add("down-card");
+          if (data.banner){ banner.textContent = data.banner; banner.classList.add("show"); }
+        } else {
+          dot.classList.add("no-key");
+          card.classList.add("nokey-card");
+          if (data.banner){ banner.textContent = data.banner; banner.classList.add("show"); }
         }
 
-        checkStatus();
-        setInterval(checkStatus, 60000);
-    </script>
+        text.textContent = (data.fallback ? (data.message + " — Auto-Fallback ενεργό") : data.message);
+        time.textContent = "Τελευταίος έλεγχος: " + data.timestamp;
+        logsDiv.innerHTML = (data.logs || []).map(l => "• " + l).join("<br>");
+      }catch(e){
+        document.getElementById("status-text").textContent = "Σφάλμα σύνδεσης.";
+      }
+    }
+
+    // First load + auto-refresh κάθε 60"
+    checkStatus();
+    setInterval(checkStatus, 60000);
+  </script>
 </body>
 </html>
