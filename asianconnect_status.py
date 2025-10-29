@@ -1,9 +1,7 @@
-# ==============================================
-# asianconnect_status.py – v3
-# EURO_GOALS – Asianconnect / Asianodds API Status Panel
-# - Auto fallback ON/OFF όταν API είναι DOWN/OK
-# - Logs + recent entries
-# ==============================================
+# ============================================================
+# asianconnect_status.py – v4
+# EURO_GOALS – Asianconnect API Monitor + Auto-Recovery
+# ============================================================
 
 import os
 import requests
@@ -13,18 +11,16 @@ from dotenv import load_dotenv
 load_dotenv()
 
 API_KEY = os.getenv("ASIANCONNECT_API_KEY")
-BASE_URL = "https://api.asianodds88.com"  # placeholder μέχρι να δοθούν πραγματικά endpoints
+BASE_URL = "https://api.asianodds88.com"     # placeholder
 
 LOG_FILE = "EURO_GOALS_log.txt"
 DATA_DIR = "data"
 STATE_FILE = os.path.join(DATA_DIR, "fallback_asianconnect.state")
+LAST_GOOD_FILE = os.path.join(DATA_DIR, "asianconnect_last_good.txt")
 
-# --------------------------------------------------
-# Helpers
-# --------------------------------------------------
+# ------------------------------------------------------------
 def _ensure_data_dir():
-    if not os.path.isdir(DATA_DIR):
-        os.makedirs(DATA_DIR, exist_ok=True)
+    os.makedirs(DATA_DIR, exist_ok=True)
 
 def _now():
     return datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -32,10 +28,33 @@ def _now():
 def log_event(msg: str):
     with open(LOG_FILE, "a", encoding="utf-8") as f:
         f.write(f"[{_now()}] {msg}\n")
-    # Επίσης εκτύπωση στην κονσόλα Render
     print(msg)
 
-def get_recent_logs(n=5):
+def _write_state(on: bool):
+    _ensure_data_dir()
+    with open(STATE_FILE, "w", encoding="utf-8") as f:
+        f.write("ON" if on else "OFF")
+
+def _read_state() -> bool:
+    try:
+        with open(STATE_FILE, "r", encoding="utf-8") as f:
+            return f.read().strip().upper() == "ON"
+    except FileNotFoundError:
+        return False
+
+def _write_last_good():
+    _ensure_data_dir()
+    with open(LAST_GOOD_FILE, "w", encoding="utf-8") as f:
+        f.write(_now())
+
+def _read_last_good() -> str:
+    try:
+        with open(LAST_GOOD_FILE, "r", encoding="utf-8") as f:
+            return f.read().strip()
+    except FileNotFoundError:
+        return "—"
+
+def get_recent_logs(n=6):
     try:
         with open(LOG_FILE, "r", encoding="utf-8") as f:
             lines = [ln.strip() for ln in f.readlines() if "[ASIANCONNECT]" in ln]
@@ -43,30 +62,16 @@ def get_recent_logs(n=5):
     except FileNotFoundError:
         return []
 
-def _write_fallback_state(on: bool):
-    _ensure_data_dir()
-    with open(STATE_FILE, "w", encoding="utf-8") as f:
-        f.write("ON" if on else "OFF")
-
-def _read_fallback_state() -> bool:
-    try:
-        with open(STATE_FILE, "r", encoding="utf-8") as f:
-            return f.read().strip().upper() == "ON"
-    except FileNotFoundError:
-        return False
-
-# --------------------------------------------------
-# Core check
-# --------------------------------------------------
+# ------------------------------------------------------------
 def check_asianconnect_status():
     """
-    Ελέγχει τη σύνδεση με το Asianodds API.
-    Επιστρέφει JSON για το UI + ενημερώνει fallback state και log.
+    Ελέγχει το Asianodds API – χειρίζεται fallback, recovery και logging.
     """
+    _ensure_data_dir()
     try:
         if not API_KEY:
-            msg = "[ASIANCONNECT] ⚠️ No API key set in environment (.env) – Auto-Fallback ON"
-            _write_fallback_state(True)
+            _write_state(True)
+            msg = "[ASIANCONNECT] ⚠️ No API key – Auto-Fallback ON"
             log_event(msg)
             return {
                 "status": "NO_KEY",
@@ -74,43 +79,45 @@ def check_asianconnect_status():
                 "timestamp": _now(),
                 "logs": get_recent_logs(),
                 "fallback": True,
-                "banner": "Asianconnect: NO KEY – Auto-Fallback ενεργό"
+                "banner": "Asianconnect: NO KEY – Auto-Fallback ενεργό",
+                "last_good": _read_last_good(),
             }
 
-        # Placeholder δοκιμαστικό endpoint (θα αλλαχθεί όταν δοθεί επίσημο)
+        # --- δοκιμαστικό endpoint (mock) ---
         test_url = f"{BASE_URL}/status?apiKey={API_KEY}"
-        resp = requests.get(test_url, timeout=10)
+        resp = requests.get(test_url, timeout=8)
 
         if resp.status_code == 200:
-            if _read_fallback_state():
-                log_event("[ASIANCONNECT] ✅ API restored – Auto-Fallback OFF")
-            _write_fallback_state(False)
-            msg = "[ASIANCONNECT] ✅ API reachable"
-            log_event(msg)
+            if _read_state():
+                log_event("[ASIANCONNECT] ✅ API RESTORED – Auto-Fallback OFF")
+            _write_state(False)
+            _write_last_good()
+            log_event("[ASIANCONNECT] ✅ API reachable")
             return {
                 "status": "OK",
                 "message": "API reachable",
                 "timestamp": _now(),
                 "logs": get_recent_logs(),
                 "fallback": False,
-                "banner": ""
+                "banner": "",
+                "last_good": _read_last_good(),
             }
 
-        # Μη-200 απάντηση
-        _write_fallback_state(True)
-        msg = f"[ASIANCONNECT] ⚠️ API responded with code {resp.status_code} – Auto-Fallback ON"
+        _write_state(True)
+        msg = f"[ASIANCONNECT] ⚠️ API responded {resp.status_code} – Auto-Fallback ON"
         log_event(msg)
         return {
             "status": "DOWN",
-            "message": f"API responded with code {resp.status_code}",
+            "message": f"API responded {resp.status_code}",
             "timestamp": _now(),
             "logs": get_recent_logs(),
             "fallback": True,
-            "banner": "Asianconnect: DOWN – Auto-Fallback ενεργό"
+            "banner": "Asianconnect: DOWN – Auto-Fallback ενεργό",
+            "last_good": _read_last_good(),
         }
 
     except Exception as e:
-        _write_fallback_state(True)
+        _write_state(True)
         msg = f"[ASIANCONNECT] ❌ Connection error: {e} – Auto-Fallback ON"
         log_event(msg)
         return {
@@ -119,5 +126,6 @@ def check_asianconnect_status():
             "timestamp": _now(),
             "logs": get_recent_logs(),
             "fallback": True,
-            "banner": "Asianconnect: DOWN – Auto-Fallback ενεργό"
+            "banner": "Asianconnect: DOWN – Auto-Fallback ενεργό",
+            "last_good": _read_last_good(),
         }
