@@ -1,6 +1,6 @@
 # ============================================================
 # EURO_GOALS v8_9k_smartmoney.py
-# SmartMoney Monitor – targeted European leagues (Render fix)
+# SmartMoney Monitor – targeted European leagues (Render debug)
 # ============================================================
 
 from fastapi import FastAPI, Request
@@ -36,25 +36,9 @@ START_ODDS = {}
 LAST_REFRESH = None
 
 # ------------------------------------------------------------
-# LEAGUES – selected Europe + Greece
+# LEAGUES
 # ------------------------------------------------------------
-LEAGUE_IDS = [
-    39,40,41,42,       # England 1–4
-    78,79,80,           # Germany 1–3
-    135,136,            # Italy 1–2
-    140,141,            # Spain 1–2
-    61,62,              # France 1–2
-    197,566,            # Greece 1–2
-    94,95,              # Portugal 1–2
-    88,89,              # Netherlands 1–2
-    144,145,            # Belgium 1–2
-    203,204,            # Turkey 1–2
-    207,208,            # Switzerland 1–2
-    103,104,            # Denmark 1–2
-    113,114,            # Norway 1–2
-    120,121,            # Sweden 1–2
-    106,107,            # Poland 1–2
-]
+LEAGUE_IDS = [39,40,41,42,78,79,80,135,136,140,141,61,62,197,566,94,95,88,89,144,145,203,204,207,208,103,104,113,114,120,121,106,107]
 
 # ------------------------------------------------------------
 # HELPERS
@@ -201,6 +185,15 @@ def root(request:Request):
     <p>✅ Service Active</p><p>Last Refresh: {last}</p>
     <p><a href='/smartmoney_monitor'>Open Dashboard →</a></p></body></html>"""
     return HTMLResponse(html)
+
+# ------------------------------------------------------------
+# DEBUG ROUTE
+# ------------------------------------------------------------
+@app.get("/debug_templates")
+def debug_templates():
+    folder = BASE_DIR / "templates"
+    files = [f.name for f in folder.glob("*.html")]
+    return {"found_templates": files, "base_dir": str(folder)}
 
 # ------------------------------------------------------------
 # STARTUP
