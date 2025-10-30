@@ -187,12 +187,13 @@ def root(request:Request):
     return HTMLResponse(html)
 
 # ------------------------------------------------------------
-# DEBUG ROUTE
+# DEBUG ROUTE (v8.9k verified)
 # ------------------------------------------------------------
 @app.get("/debug_templates")
 def debug_templates():
     folder = BASE_DIR / "templates"
     files = [f.name for f in folder.glob("*.html")]
+    print("[DEBUG] Templates found:", files)
     return {"found_templates": files, "base_dir": str(folder)}
 
 # ------------------------------------------------------------
