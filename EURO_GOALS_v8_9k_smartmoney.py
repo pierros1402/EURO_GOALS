@@ -1,6 +1,6 @@
 # ============================================================
 # EURO_GOALS v8_9k_smartmoney.py
-# SmartMoney Monitor – targeted European leagues (API-Football)
+# SmartMoney Monitor – targeted European leagues (Render fix)
 # ============================================================
 
 from fastapi import FastAPI, Request
@@ -10,6 +10,7 @@ from fastapi.templating import Jinja2Templates
 from dotenv import load_dotenv
 from datetime import datetime
 from threading import Thread
+from pathlib import Path
 import os, requests, random, time
 
 # ------------------------------------------------------------
@@ -19,15 +20,12 @@ load_dotenv()
 APIFOOTBALL_API_KEY = os.getenv("APIFOOTBALL_API_KEY", "")
 
 # ------------------------------------------------------------
-# FASTAPI
+# PATH FIX FOR RENDER
 # ------------------------------------------------------------
-app = FastAPI(title="EURO_GOALS SmartMoney v8.9k")
-from pathlib import Path
 BASE_DIR = Path(__file__).resolve().parent
-
 templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
+app = FastAPI(title="EURO_GOALS SmartMoney v8.9k")
 app.mount("/static", StaticFiles(directory=str(BASE_DIR / "static")), name="static")
-
 
 # ------------------------------------------------------------
 # CONFIG
