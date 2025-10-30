@@ -22,8 +22,12 @@ APIFOOTBALL_API_KEY = os.getenv("APIFOOTBALL_API_KEY", "")
 # FASTAPI
 # ------------------------------------------------------------
 app = FastAPI(title="EURO_GOALS SmartMoney v8.9k")
-templates = Jinja2Templates(directory="templates")
-app.mount("/static", StaticFiles(directory="static"), name="static")
+from pathlib import Path
+BASE_DIR = Path(__file__).resolve().parent
+
+templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
+app.mount("/static", StaticFiles(directory=str(BASE_DIR / "static")), name="static")
+
 
 # ------------------------------------------------------------
 # CONFIG
