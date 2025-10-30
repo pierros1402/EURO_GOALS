@@ -1,7 +1,7 @@
 # ============================================================
 # EURO_GOALS v8_9g_smartmoney.py
 # Smart Money – Odds Tracker με Start / Current / Movement
-# + HTML Root Status Page για Render health check (auto-refresh)
+# + HTML Root Status Page (auto-refresh + feed indicator)
 # ============================================================
 
 from fastapi import FastAPI, Request
@@ -106,7 +106,7 @@ def smartmoney_monitor(request: Request):
     return templates.TemplateResponse("smartmoney_monitor.html", {"request": request})
 
 # ------------------------------------------------------------
-# ROOT STATUS PAGE (HTML + Auto-refresh + Favicon)
+# ROOT STATUS PAGE (HTML + Auto-refresh + Feed Status)
 # ------------------------------------------------------------
 @app.get("/", response_class=HTMLResponse)
 def root_status(request: Request):
@@ -153,6 +153,12 @@ def root_status(request: Request):
                 border: 1px solid #00b0ff;
                 box-shadow: 0 0 12px rgba(0, 176, 255, 0.35);
             }}
+            #feedStatus {{
+                font-weight: bold;
+                margin-top: 10px;
+            }}
+            .ok {{ color: #00ff88; }}
+            .fail {{ color: #ff5555; }}
             footer {{
                 position: absolute;
                 bottom: 10px;
@@ -167,8 +173,29 @@ def root_status(request: Request):
             <p><b>Status:</b> Running normally</p>
             <p><b>Last update:</b> {last_update}</p>
             <p><a href="/smartmoney_monitor">Go to SmartMoney Monitor →</a></p>
+            <p id="feedStatus">Checking feed...</p>
         </div>
         <footer>Auto-refresh every 60s • Render Health OK</footer>
+
+        <script>
+            async function checkFeed() {{
+                try {{
+                    const res = await fetch('/smartmoney_feed');
+                    if (res.ok) {{
+                        document.getElementById('feedStatus').innerHTML = '🟢 SmartMoney Feed Active ✅';
+                        document.getElementById('feedStatus').className = 'ok';
+                    }} else {{
+                        document.getElementById('feedStatus').innerHTML = '🔴 SmartMoney Feed Offline ❌';
+                        document.getElementById('feedStatus').className = 'fail';
+                    }}
+                }} catch (e) {{
+                    document.getElementById('feedStatus').innerHTML = '🔴 SmartMoney Feed Offline ❌';
+                    document.getElementById('feedStatus').className = 'fail';
+                }}
+            }}
+            checkFeed();
+            setInterval(checkFeed, 30000);
+        </script>
     </body>
     </html>
     """
