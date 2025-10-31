@@ -82,3 +82,9 @@ logs/
 # --- Ignore user-specific / OS-specific items ---
 Thumbs.db
 desktop.ini
+
+# --- Local monitoring scripts ---
+modules/render_status_monitor.py
+Run_RenderMonitor.bat
+
+

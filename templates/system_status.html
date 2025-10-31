@@ -30,7 +30,6 @@
     tr.alert {background:rgba(255,0,0,0.08);}
     tr.normal:hover {background:rgba(255,255,255,0.05);}
 
-    /* 📋 DIAGNOSTICS BOX */
     #diagnostics {
       display:none;
       margin:25px auto;
@@ -76,13 +75,46 @@
       margin-left:auto;
       margin-right:auto;
     }
+
+    /* 🟠 Asianconnect Panel */
+    #asian-panel {
+      background:#161b22;
+      border:1px solid #333;
+      border-radius:10px;
+      width:340px;
+      margin:30px auto;
+      text-align:center;
+      padding:20px;
+      box-shadow:0 0 10px rgba(0,176,255,0.15);
+    }
+    #asian-panel h2 { color:#00b0ff; margin-bottom:10px; }
+    #asian-indicator {
+      display:inline-block;
+      width:16px;
+      height:16px;
+      border-radius:50%;
+      background:orange;
+      box-shadow:0 0 6px orange;
+      margin-bottom:10px;
+    }
+    #asian-time { color:#ccc; font-size:14px; display:block; margin-bottom:10px; }
+    #asian-btn {
+      background:#007bff;
+      color:#fff;
+      border:none;
+      border-radius:6px;
+      padding:6px 12px;
+      cursor:pointer;
+      font-weight:bold;
+    }
+    #asian-btn:hover { background:#00e6a0; color:#000; }
   </style>
 </head>
+
 <body>
 
   <h1 style="text-align:center;">🖥️ System Status Panel</h1>
 
-  <!-- 🔔 Alert Control Bar -->
   <div id="alert-controls">
     <label><input type="checkbox" id="alertSmartMoney" checked> SmartMoney Alerts</label>
     <label><input type="checkbox" id="alertSystem" checked> System Alerts</label>
@@ -90,7 +122,6 @@
     <label><input type="checkbox" id="alertBrowser" checked> Browser Notifications</label>
   </div>
 
-  <!-- Πίνακας κατάστασης -->
   <table id="statusTable">
     <thead>
       <tr>
@@ -109,12 +140,22 @@
   <button id="health-btn">🔍 Εκτέλεση Health Check</button>
   <div id="lastHealth">🩺 Τελευταίος πλήρης έλεγχος:</div>
   <div id="diagnostics"></div>
+
+  <!-- 🟠 Asianconnect API Status Panel -->
+  <div id="asian-panel">
+    <h2>Asianconnect API Status</h2>
+    <div id="asian-indicator"></div>
+    <span id="asian-time">Τελευταίος έλεγχος: undefined</span><br>
+    <button id="asian-btn" onclick="checkAsianconnect()">Έλεγχος τώρα</button>
+  </div>
+
   <div class="status-bar" style="text-align:center;margin-top:15px;">Αυτόματος έλεγχος κατάστασης κάθε 60 δευτερόλεπτα</div>
 
   <audio id="alertSound" src="/static/sounds/smartmoney_alert.mp3" preload="auto"></audio>
   <audio id="beepSound" src="/static/sounds/beep_soft.mp3" preload="auto"></audio>
 
   <script>
+    // === Alert controls ===
     const controls=["alertSmartMoney","alertSystem","alertFeeds","alertBrowser"];
     controls.forEach(id=>{
       const cb=document.getElementById(id);
@@ -131,17 +172,22 @@
 
     document.getElementById("health-btn").addEventListener("click",()=>runHealthCheck(true));
 
+    // === HEALTH CHECK (includes Asianconnect now) ===
     async function runHealthCheck(manual){
       try{
         const res=await fetch("/health");
         const data=await res.json();
         showDiagnostics(data,manual);
+        if(data.components && data.components.Asianconnect){
+          updateAsianPanel(data.components.Asianconnect);
+        }
       }catch(err){
         diagBox.style.display="block";
         diagBox.innerHTML=`<h3>❌ Health check error</h3><p>${err}</p>`;
       }
     }
 
+    // === Render Diagnostics ===
     function showDiagnostics(data,manual){
       const comp=data.components||{};
       let html=`<h3>🩺 Health Diagnostics (${data.timestamp})</h3>`;
@@ -156,17 +202,39 @@
       diagBox.innerHTML=html;
       diagBox.style.display="block";
 
-      // Ενημέρωση timestamp
       lastHealth.style.display="block";
       lastHealth.innerHTML=`🩺 Τελευταίος πλήρης έλεγχος: ${new Date().toLocaleTimeString("el-GR")}`;
+      if(data.status==="FAIL"){ beep.currentTime=0; beep.play().catch(()=>{}); }
+    }
 
-      // Ήχος beep μόνο αν FAIL
-      if(data.status==="FAIL"){
-        beep.currentTime=0;
-        beep.play().catch(()=>{});
+    // === Asianconnect indicator ===
+    function updateAsianPanel(status){
+      const indicator=document.getElementById("asian-indicator");
+      const time=document.getElementById("asian-time");
+      if(status==="OK"){
+        indicator.style.background="#00ff66";
+        indicator.style.boxShadow="0 0 6px #00ff66";
+      }else if(status==="FAIL"){
+        indicator.style.background="#ff3333";
+        indicator.style.boxShadow="0 0 6px #ff3333";
+      }else{
+        indicator.style.background="orange";
+        indicator.style.boxShadow="0 0 6px orange";
+      }
+      time.textContent="Τελευταίος έλεγχος: "+new Date().toISOString().slice(0,19);
+    }
+
+    async function checkAsianconnect(){
+      try{
+        const res=await fetch("/check_asianconnect");
+        const data=await res.json();
+        updateAsianPanel(data.status==="ok"?"OK":"FAIL");
+      }catch{
+        updateAsianPanel("FAIL");
       }
     }
 
+    // === Status Table Auto Update ===
     async function updateStatusTable(){
       try{
         const response=await fetch("/status_feed");
@@ -197,12 +265,7 @@
           tbody.appendChild(row);
         });
 
-        // Αν FAIL → αυτόματο health check
-        if(hasFail){
-          const res=await fetch("/health");
-          const data=await res.json();
-          showDiagnostics(data,false);
-        }
+        if(hasFail){ await runHealthCheck(false); }
 
         document.getElementById("timestamp").innerText="Τελευταίος έλεγχος: "+new Date().toLocaleTimeString("el-GR");
       }catch(err){
@@ -210,13 +273,15 @@
       }
     }
 
+    // === Initial load + intervals ===
     updateStatusTable();
+    runHealthCheck(false);
     setInterval(updateStatusTable,60000);
+    setInterval(runHealthCheck,120000);
   </script>
 
   <div class="footer" style="text-align:center;margin-top:25px;color:#777;">
     EURO_GOALS System Status v8.9m © 2025
   </div>
-
 </body>
 </html>

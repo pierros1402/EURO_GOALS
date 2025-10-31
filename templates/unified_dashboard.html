@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="el">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EURO_GOALS Unified Dashboard</title>
+    <link rel="icon" href="/static/icons/ball.png">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+
+    <style>
+        body {
+            background-color: #0d1117;
+            color: #e6edf3;
+            font-family: 'Segoe UI', sans-serif;
+        }
+        .nav-tabs .nav-link.active {
+            background-color: #161b22;
+            color: #00e676;
+            border-color: #00e676;
+        }
+        .nav-tabs .nav-link {
+            color: #9ca3af;
+        }
+        .panel {
+            background-color: #161b22;
+            border-radius: 10px;
+            box-shadow: 0 0 10px #00e67633;
+            padding: 20px;
+            margin-top: 20px;
+        }
+        h1 {
+            color: #00e676;
+        }
+        .refresh-btn {
+            background-color: #00e676;
+            border: none;
+            color: black;
+            font-weight: bold;
+        }
+        .refresh-btn:hover {
+            background-color: #03c36b;
+        }
+        .status-indicator {
+            height: 12px;
+            width: 12px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+        .status-ok { background-color: #00e676; }
+        .status-fail { background-color: #ff5252; }
+    </style>
+</head>
+
+<body>
+    <div class="container mt-4">
+        <h1 class="text-center mb-4">⚽ EURO_GOALS Unified Dashboard</h1>
+
+        <ul class="nav nav-tabs justify-content-center" id="mainTabs">
+            <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" href="#system">System Status</a></li>
+            <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#smartmoney">SmartMoney</a></li>
+            <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#goal">GoalMatrix</a></li>
+        </ul>
+
+        <div class="tab-content mt-4">
+            <!-- SYSTEM STATUS -->
+            <div class="tab-pane fade show active" id="system">
+                <div class="panel" id="systemPanel">
+                    <h4>🖥️ System Status</h4>
+                    <div id="systemData">Φόρτωση...</div>
+                    <button class="btn refresh-btn mt-3" onclick="loadSystem()">🔄 Εκτέλεση Health Check</button>
+                    <button class="btn btn-outline-light mt-3 ms-2" onclick="restartRender()">⚙️ Επανεκκίνηση Render</button>
+                </div>
+            </div>
+
+            <!-- SMART MONEY -->
+            <div class="tab-pane fade" id="smartmoney">
+                <div class="panel" id="smartPanel">
+                    <h4>💰 SmartMoney Detector</h4>
+                    <p>Παρακολούθηση έντονων μεταβολών σε Ασιατικές αγορές (Pinnacle, SBOBET, 188BET).</p>
+                    <div id="smartData">Φόρτωση...</div>
+                </div>
+            </div>
+
+            <!-- GOAL MATRIX -->
+            <div class="tab-pane fade" id="goal">
+                <div class="panel" id="goalPanel">
+                    <h4>📊 Goal Matrix Trends</h4>
+                    <p>Πίνακας επιδόσεων ομάδων σε BTTS, Over 2.5 και SmartMoney.</p>
+                    <div id="goalData">Φόρτωση...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function loadSystem() {
+            try {
+                const res = await axios.get('/health');
+                const data = res.data.components;
+                let html = '<table class="table table-dark table-sm mt-3"><tr><th>Υπηρεσία</th><th>Κατάσταση</th></tr>';
+                for (let [name, status] of Object.entries(data)) {
+                    html += `<tr><td>${name}</td><td><span class="status-indicator ${status === "OK" ? "status-ok" : "status-fail"}"></span> ${status}</td></tr>`;
+                }
+                html += '</table>';
+                document.getElementById('systemData').innerHTML = html;
+            } catch {
+                document.getElementById('systemData').innerHTML = '<span class="text-danger">Σφάλμα φόρτωσης δεδομένων</span>';
+            }
+        }
+
+        async function loadGoalMatrix() {
+            try {
+                const res = await axios.get('/goal_matrix');
+                document.getElementById('goalData').innerHTML = res.data ? JSON.stringify(res.data, null, 2) : 'Δεν υπάρχουν δεδομένα.';
+            } catch {
+                document.getElementById('goalData').innerHTML = '<span class="text-danger">Αποτυχία φόρτωσης GoalMatrix</span>';
+            }
+        }
+
+        async function restartRender() {
+            alert("🔄 Επανεκκίνηση Render Service (προσομοίωση)...");
+        }
+
+        // Αυτόματη αρχική φόρτωση
+        loadSystem();
+        loadGoalMatrix();
+    </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

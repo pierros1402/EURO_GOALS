@@ -1,181 +1,137 @@
-# ============================================================
-# EURO_GOALS v8_9l_smartmoney.py
-# FastAPI main app — SmartMoney Monitor (real APIs) + Manual League Updates
-# ============================================================
-
-from fastapi import FastAPI, Request, Path
-from fastapi.responses import HTMLResponse, JSONResponse, PlainTextResponse
+# ================================================
+# EURO_GOALS v8.9l – SmartMoney + Health + GoalMatrix + Unified Dashboard
+# ================================================
+from fastapi import FastAPI, Request
+from fastapi.responses import JSONResponse, HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
-from pathlib import Path
-from dotenv import load_dotenv
-from threading import Thread
 from datetime import datetime
 import os
 
 # Modules
-from modules.smartmoney_monitor import SmartMoneyMonitor
-from modules.api_reader import SUPPORTED_LEAGUES, update_single_league
+from modules.health_check import run_full_healthcheck, check_asianconnect
+from modules.goal_matrix import get_goal_matrix_data
 
-# ------------------------------------------------------------
-# ENV
-# ------------------------------------------------------------
-load_dotenv()
-APIFOOTBALL_API_KEY   = os.getenv("APIFOOTBALL_API_KEY", "")
-SPORTMONKS_API_KEY    = os.getenv("SPORTMONKS_API_KEY", "")
-FOOTBALLDATA_API_KEY  = os.getenv("FOOTBALLDATA_API_KEY", "")
-THESPORTSDB_API_KEY   = os.getenv("THESPORTSDB_API_KEY", "")
-SMARTMONEY_REFRESH_INTERVAL = int(os.getenv("SMARTMONEY_REFRESH_INTERVAL", "60"))
+# ------------------------------------------------
+# 1️⃣  FastAPI initialization
+# ------------------------------------------------
+app = FastAPI(title="EURO_GOALS – SmartMoney Server")
 
-# ------------------------------------------------------------
-# FASTAPI + PATHS (Render-safe)
-# ------------------------------------------------------------
-BASE_DIR = Path(__file__).resolve().parent
-templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+templates = Jinja2Templates(directory=os.path.join(BASE_DIR, "templates"))
 
-app = FastAPI(title="EURO_GOALS v8.9l – Main App")
-app.mount("/static", StaticFiles(directory=str(BASE_DIR / "static")), name="static")
+# Serve static assets
+app.mount("/static", StaticFiles(directory=os.path.join(BASE_DIR, "static")), name="static")
 
-# ------------------------------------------------------------
-# GLOBALS
-# ------------------------------------------------------------
-monitor: SmartMoneyMonitor | None = None
-STARTED_AT = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-
-# ------------------------------------------------------------
-# STARTUP
-# ------------------------------------------------------------
+# ------------------------------------------------
+# 2️⃣  STARTUP EVENT
+# ------------------------------------------------
 @app.on_event("startup")
-def _startup():
-    global monitor
-    print("[EURO_GOALS] 🚀 Boot v8.9l")
-    monitor = SmartMoneyMonitor(
-        refresh_interval=SMARTMONEY_REFRESH_INTERVAL,
-        apifootball_key=APIFOOTBALL_API_KEY,
-        sportmonks_key=SPORTMONKS_API_KEY
-    )
-    t = Thread(target=monitor.run_forever, daemon=True)
-    t.start()
-    print(f"[EURO_GOALS] ✅ SmartMoney loop: every {SMARTMONEY_REFRESH_INTERVAL}s")
-    print("[EURO_GOALS] ✅ Endpoints: /smartmoney_monitor  /smartmoney_feed  /leagues  /update_league/{code}  /health  /debug_templates  /")
+def startup_event():
+    print("===================================================")
+    print("🚀 EURO_GOALS SmartMoney Server ξεκίνησε επιτυχώς")
+    print("===================================================")
+    print(f"[{datetime.now().strftime('%H:%M:%S')}] Εκκίνηση εφαρμογής...")
+    print("[SYSTEM] ✅ System ready for SmartMoney, Health, GoalMatrix & Unified Dashboard")
 
-# ------------------------------------------------------------
-# ROOT – mini status
-# ------------------------------------------------------------
+# ------------------------------------------------
+# 3️⃣  MAIN ROUTES
+# ------------------------------------------------
 @app.get("/", response_class=HTMLResponse)
-def root(request: Request):
-    last = monitor.last_refresh_str() if monitor else "—"
-    html = f"""
-    <html><head>
-      <meta charset="utf-8"><meta http-equiv="refresh" content="60">
-      <title>EURO_GOALS v8.9l</title>
-      <style>
-        body {{ background:#0d1117;color:#e6e6e6;font-family:'Segoe UI',Arial; display:flex;align-items:center;justify-content:center;height:100vh;flex-direction:column;}}
-        h1 {{ color:#00b0ff;margin:0 0 6px }}
-        a {{ color:#00d4ff; text-decoration:none; font-weight:600 }}
-        .card {{ background:#161b22; border:1px solid #243041; border-radius:12px; padding:18px 24px; box-shadow:0 0 10px rgba(0,0,0,.35); text-align:center }}
-        .muted {{ color:#9aa4ad; font-size:13px; margin-top:10px }}
-      </style>
-    </head><body>
-      <div class="card">
-        <h1>EURO_GOALS v8.9l</h1>
-        <p>✅ Service running since <b>{STARTED_AT}</b></p>
-        <p>SmartMoney last refresh: <b>{last}</b></p>
-        <p><a href="/smartmoney_monitor">Open SmartMoney Monitor →</a></p>
-        <p><a href="/leagues">Λίστες Λιγκών (χειροκίνητη ενημέρωση) →</a></p>
-        <p class="muted">Auto-refresh every 60s</p>
-      </div>
-    </body></html>
-    """
-    return HTMLResponse(html)
+async def home(request: Request):
+    """Αρχική σελίδα - System Status Panel"""
+    print(f"[{datetime.now().strftime('%H:%M:%S')}] 🌍 User accessed System Dashboard")
+    return templates.TemplateResponse("system_status.html", {"request": request})
 
-# ------------------------------------------------------------
-# HEALTH
-# ------------------------------------------------------------
-@app.get("/health", response_class=PlainTextResponse)
-def health():
-    return "OK"
+@app.get("/status_feed", response_class=JSONResponse)
+async def status_feed():
+    """Δοκιμαστικό feed υπηρεσιών (μπορεί να συνδεθεί με DB αργότερα)"""
+    now = datetime.utcnow().isoformat()
+    data = [
+        {"name": "Render Service", "status": "OK", "timestamp": now, "details": "Running"},
+        {"name": "Database", "status": "OK", "timestamp": now, "details": "Active connection"},
+        {"name": "SmartMoney Detector", "status": "OK", "timestamp": now, "details": "Stable"},
+        {"name": "Asianconnect", "status": "OK", "timestamp": now, "details": "Included in Health Monitor"},
+    ]
+    return JSONResponse(data)
 
-# ------------------------------------------------------------
-# SMARTMONEY – UI + FEED
-# ------------------------------------------------------------
-@app.get("/smartmoney_monitor", response_class=HTMLResponse)
-def smartmoney_monitor_page(request: Request):
-    return templates.TemplateResponse("smartmoney_monitor.html", {"request": request})
+# ------------------------------------------------
+# 4️⃣  HEALTH CHECK ENDPOINTS
+# ------------------------------------------------
+@app.get("/health")
+def health_status():
+    """Επιστρέφει συνολική κατάσταση όλων των modules."""
+    result = run_full_healthcheck()
+    print("---------------------------------------------------")
+    print(f"[{datetime.now().strftime('%H:%M:%S')}] 🩺 Health Check Executed:")
+    for comp, status in result["components"].items():
+        icon = "✅" if status == "OK" else ("⚠️" if status == "PENDING" else "❌")
+        print(f"   {icon} {comp}: {status}")
+    print(f"   ➤ Summary: {result['summary']}")
+    print("---------------------------------------------------")
+    return result
 
-@app.get("/smartmoney_feed")
-def smartmoney_feed():
-    if not monitor:
-        return JSONResponse([])
-    return JSONResponse(monitor.get_feed())
+@app.get("/check_asianconnect")
+def health_asianconnect():
+    """Επιστρέφει άμεσο έλεγχο Asianconnect API"""
+    status = check_asianconnect()
+    print(f"[{datetime.now().strftime('%H:%M:%S')}] 🔍 Asianconnect direct check → {status}")
+    return {
+        "status": "ok" if status == "OK" else "fail",
+        "timestamp": datetime.utcnow().isoformat()
+    }
 
-# ------------------------------------------------------------
-# LEAGUES – UI
-# ------------------------------------------------------------
-@app.get("/leagues", response_class=HTMLResponse)
-def leagues_page(request: Request):
-    rows = []
-    for code, meta in SUPPORTED_LEAGUES.items():
-        rows.append(f"""
-            <tr>
-              <td>{meta['country']}</td>
-              <td>{meta['name']}</td>
-              <td>{meta['tier']}</td>
-              <td><a href="/update_league/{code}" style="color:#00d4ff;text-decoration:none;font-weight:600">🔄 Ενημέρωση</a></td>
-            </tr>
-        """)
-    html = f"""
-    <html><head><meta charset="utf-8"><title>Λίγκες</title>
-    <style>
-      body{{background:#0d1117;color:#e6e6e6;font-family:'Segoe UI',Arial}}
-      h1{{color:#00b0ff}}
-      table{{width:100%;max-width:980px;margin:20px auto;border-collapse:collapse}}
-      th,td{{border-bottom:1px solid #243041;padding:10px 8px}}
-      th{{text-align:left;color:#8ccfff}}
-    </style></head>
-    <body>
-      <div style="max-width:980px;margin:32px auto">
-        <h1>Λίγκες – Χειροκίνητη Ενημέρωση</h1>
-        <table>
-          <thead><tr><th>Χώρα</th><th>Λίγκα</th><th>Tier</th><th>Ενέργεια</th></tr></thead>
-          <tbody>{''.join(rows)}</tbody>
-        </table>
-        <p><a href="/" style="color:#00d4ff;text-decoration:none">← Επιστροφή</a></p>
-      </div>
-    </body></html>
-    """
-    return HTMLResponse(html)
+# ------------------------------------------------
+# 5️⃣  GOAL MATRIX PAGE
+# ------------------------------------------------
+@app.get("/goal_matrix", response_class=HTMLResponse)
+async def goal_matrix(request: Request):
+    """Σελίδα ανάλυσης Goal Trends / SmartMoney"""
+    data = get_goal_matrix_data()
+    print(f"[{datetime.now().strftime('%H:%M:%S')}] ⚽ Goal Matrix page loaded")
+    return templates.TemplateResponse("goal_matrix.html", {"request": request, **data})
 
-# ------------------------------------------------------------
-# UPDATE SINGLE LEAGUE (manual)
-# ------------------------------------------------------------
-@app.get("/update_league/{code}")
-def update_league(code: str = Path(..., description="Κωδικός π.χ. ENG1, GER2, GRE1")):
-    code = code.upper().strip()
-    if code not in SUPPORTED_LEAGUES:
-        return JSONResponse({"ok": False, "error": f"Άγνωστος κωδικός λίγκας: {code}"}, status_code=404)
-    meta = SUPPORTED_LEAGUES[code]
-    print(f"[API_READER] 🔄 Manual update: {code} – {meta['name']}")
-    try:
-        result = update_single_league(
-            league_code=code,
-            meta=meta,
-            apifootball_key=APIFOOTBALL_API_KEY,
-            footballdata_key=FOOTBALLDATA_API_KEY,
-            sportmonks_key=SPORTMONKS_API_KEY,
-            thesportsdb_key=THESPORTSDB_API_KEY
-        )
-        return JSONResponse({"ok": True, "code": code, "meta": meta, "summary": result})
-    except Exception as e:
-        print("[API_READER] ❌ Update error:", e)
-        return JSONResponse({"ok": False, "error": str(e)}, status_code=500)
+# ------------------------------------------------
+# 5B️⃣  UNIFIED DASHBOARD PAGE (όλα τα modules μαζί)
+# ------------------------------------------------
+@app.get("/unified", response_class=HTMLResponse)
+async def unified_dashboard(request: Request):
+    """Ενοποιημένο Dashboard που περιλαμβάνει όλα τα modules"""
+    print(f"[{datetime.now().strftime('%H:%M:%S')}] 🧭 Unified Dashboard loaded")
+    return templates.TemplateResponse("unified_dashboard.html", {"request": request})
 
-# ------------------------------------------------------------
-# DEBUG ROUTE (για έλεγχο templates στο Render)
-# ------------------------------------------------------------
-@app.get("/debug_templates")
-def debug_templates():
-    folder = BASE_DIR / "templates"
-    files = [f.name for f in folder.glob("*.html")]
-    print("[DEBUG] Templates found:", files)
-    return {"found_templates": files, "base_dir": str(folder)}
+# ------------------------------------------------
+# 6️⃣  ERROR HANDLER
+# ------------------------------------------------
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    print(f"[ERROR] ❌ {exc}")
+    return JSONResponse(
+        status_code=500,
+        content={"error": str(exc), "message": "Internal Server Error"}
+    )
+
+print("🧭 ROUTE /unified registered successfully!")
+# ------------------------------------------------
+# 7️⃣  UNIFIED DASHBOARD PAGE
+# ------------------------------------------------
+print("🧭 ROUTE /unified registered successfully!")
+
+@app.get("/unified", response_class=HTMLResponse)
+async def unified_dashboard(request: Request):
+    """Ενιαία σελίδα EURO_GOALS – System + GoalMatrix + SmartMoney"""
+    print(f"[{datetime.now().strftime('%H:%M:%S')}] 🧭 Unified Dashboard opened")
+    return templates.TemplateResponse("unified_dashboard.html", {"request": request})
+
+# ------------------------------------------------
+# 8️⃣ LOCAL TEST SERVER (SAFE MODE)
+# ------------------------------------------------
+if __name__ == "__main__":
+    import uvicorn
+    print("🚀 Starting EURO_GOALS Unified Dashboard server on http://127.0.0.1:10000 ...")
+    uvicorn.run(
+        "EURO_GOALS_v8_9l_smartmoney:app",
+        host="127.0.0.1",
+        port=10000,
+        reload=False
+    )

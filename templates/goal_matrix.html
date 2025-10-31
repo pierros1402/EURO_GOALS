@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="el">
+<head>
+  <meta charset="UTF-8">
+  <title>⚽ EURO_GOALS – Goal Matrix</title>
+  <link rel="stylesheet" href="/static/css/style_dark.css">
+  <style>
+    body { background:#0d1117; color:#fff; font-family:'Segoe UI',Arial,sans-serif; }
+    h1 { text-align:center; color:#00b0ff; margin-top:25px; }
+    table { width:90%; margin:auto; border-collapse:collapse; margin-top:20px; }
+    th, td { text-align:center; padding:10px; border-bottom:1px solid #222; }
+    th { background:#111927; color:#00b0ff; }
+    tr:hover { background:rgba(255,255,255,0.05); }
+    .flag-ok { color:#00ff66; }
+    .flag-warn { color:#ffcc00; }
+    .flag-fail { color:#ff4444; }
+    .timestamp { text-align:center; color:#888; margin-top:15px; font-size:14px; }
+    .nav { text-align:center; margin-top:15px; }
+    .nav a { color:#00b0ff; margin:0 10px; text-decoration:none; font-weight:bold; }
+    .nav a:hover { color:#00e6a0; }
+  </style>
+</head>
+<body>
+
+  <h1>📊 Goal Matrix Dashboard</h1>
+
+  <div class="nav">
+    <a href="/">🏠 System Status</a> |
+    <a href="/goal_matrix">⚽ Goal Matrix</a>
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Ομάδα</th>
+        <th>Λίγκα</th>
+        <th>Μ.Ο. Υπέρ</th>
+        <th>Μ.Ο. Κατά</th>
+        <th>BTTS%</th>
+        <th>Over 2.5%</th>
+        <th>SmartMoney</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for row in rows %}
+      <tr>
+        <td>{{ row.team }}</td>
+        <td>{{ row.league }}</td>
+        <td>{{ row.avg_goals_for }}</td>
+        <td>{{ row.avg_goals_against }}</td>
+        <td>{{ row.btts }}</td>
+        <td>{{ row.over25 }}</td>
+        <td>{{ row.smart_flag }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <div class="timestamp">
+    Τελευταία ενημέρωση: {{ timestamp }}
+  </div>
+
+</body>
+</html>
