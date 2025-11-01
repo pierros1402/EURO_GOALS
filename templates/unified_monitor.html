@@ -1,0 +1,124 @@
+<!-- ==========================================================
+     EURO_GOALS v9.3 – Unified Monitoring Panel
+     Tabs: System | SmartMoney | GoalMatrix
+     ========================================================== -->
+
+<!DOCTYPE html>
+<html lang="el">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Unified Monitor – EURO_GOALS v9.3</title>
+    <link rel="stylesheet" href="/static/styles.css">
+</head>
+
+<body>
+<header>
+    <h1>🧭 EURO_GOALS v9.3 – Unified Monitoring Panel</h1>
+    <p>Ενοποιημένη εποπτεία συστημάτων, αγορών και δεδομένων</p>
+</header>
+
+<main>
+    <!-- Tab Navigation -->
+    <div class="tabs">
+        <button class="tab-button active" onclick="openTab('system')">🖥️ System Status</button>
+        <button class="tab-button" onclick="openTab('smartmoney')">💰 Smart Money</button>
+        <button class="tab-button" onclick="openTab('goalmatrix')">🎯 GoalMatrix</button>
+    </div>
+
+    <!-- SYSTEM TAB -->
+    <div id="system" class="tab-content active">
+        <div class="status-grid">
+            <div class="status-card">Database<br><span id="db">--</span></div>
+            <div class="status-card">Render<br><span id="render">--</span></div>
+            <div class="status-card">FootballData<br><span id="footballdata">--</span></div>
+            <div class="status-card">SportMonks<br><span id="sportmonks">--</span></div>
+            <div class="status-card">BeSoccer<br><span id="besoccer">--</span></div>
+        </div>
+        <div class="timestamp">Last update: <span id="system_time">--</span></div>
+    </div>
+
+    <!-- SMARTMONEY TAB -->
+    <div id="smartmoney" class="tab-content">
+        <div class="status-grid">
+            <div class="status-card">Pinnacle<br><span id="pinnacle">--</span></div>
+            <div class="status-card">SBOBET<br><span id="sbobet">--</span></div>
+            <div class="status-card">188BET<br><span id="bet188">--</span></div>
+        </div>
+        <div class="timestamp">Last refresh: <span id="smartmoney_time">--</span></div>
+    </div>
+
+    <!-- GOALMATRIX TAB -->
+    <div id="goalmatrix" class="tab-content">
+        <div class="status-grid">
+            <div class="status-card">SOFASCORE<br><span id="sofascore">--</span></div>
+            <div class="status-card">FLASHCORE<br><span id="flashcore">--</span></div>
+            <div class="status-card">BESOCCER<br><span id="besoccer_gm">--</span></div>
+        </div>
+        <div class="timestamp">Last update: <span id="gm_time">--</span></div>
+    </div>
+
+    <div id="loader"></div>
+</main>
+
+<footer>
+    EURO_GOALS v9.3 © 2025 | Unified Monitoring Module
+</footer>
+
+<script>
+    // Tabs
+    function openTab(tabId) {
+        document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+        document.querySelector(`.tab-button[onclick*="${tabId}"]`).classList.add('active');
+        document.getElementById(tabId).classList.add('active');
+    }
+
+    // Refresh System
+    async function refreshSystem() {
+        document.body.classList.add("loading");
+        const r = await fetch("/system_status_data");
+        const d = await r.json();
+        ["db","render","footballdata","sportmonks","besoccer"].forEach(k=>{
+            document.getElementById(k).innerHTML = colorize(d[k]);
+        });
+        document.getElementById("system_time").innerHTML = d.last_update;
+        document.body.classList.remove("loading");
+    }
+
+    // Refresh SmartMoney
+    async function refreshSmart() {
+        const r = await fetch("/smartmoney_data");
+        const d = await r.json();
+        document.getElementById("pinnacle").innerHTML = colorize(d.pinnacle);
+        document.getElementById("sbobet").innerHTML = colorize(d.sbobet);
+        document.getElementById("bet188").innerHTML = colorize(d["188bet"]);
+        document.getElementById("smartmoney_time").innerHTML = d.last_refresh;
+    }
+
+    // Refresh GoalMatrix
+    async function refreshGoalMatrix() {
+        const r = await fetch("/goalmatrix_data");
+        const d = await r.json();
+        document.getElementById("sofascore").innerHTML = colorize(d.sources.SOFASCORE);
+        document.getElementById("flashcore").innerHTML = colorize(d.sources.FLASHCORE);
+        document.getElementById("besoccer_gm").innerHTML = colorize(d.sources.BESOCCER);
+        document.getElementById("gm_time").innerHTML = d.last_update;
+    }
+
+    // Auto refresh intervals
+    setInterval(refreshSystem, 30000);
+    setInterval(refreshSmart, 60000);
+    setInterval(refreshGoalMatrix, 45000);
+    window.onload = () => { refreshSystem(); refreshSmart(); refreshGoalMatrix(); }
+
+    // Colorize
+    function colorize(txt) {
+        if (txt.includes("✅")) return `<span style='color:#3fb950;font-weight:bold;'>${txt}</span>`;
+        if (txt.includes("⚠️")) return `<span style='color:#d29922;font-weight:bold;'>${txt}</span>`;
+        if (txt.includes("❌")) return `<span style='color:#f85149;font-weight:bold;'>${txt}</span>`;
+        return txt;
+    }
+</script>
+</body>
+</html>

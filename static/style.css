@@ -1,7 +1,6 @@
-/* ==============================
-   EURO_GOALS v6f - Dark UI Style
-   ============================== */
-
+/* ==========================================================
+   EURO_GOALS v9.3 – Unified Dark Theme + Tabs
+   ========================================================== */
 body {
     font-family: "Segoe UI", Roboto, sans-serif;
     margin: 0;
@@ -9,87 +8,63 @@ body {
     background-color: #0d1117;
     color: #e6edf3;
 }
-
-/* --- Header --- */
 header {
     text-align: center;
     background-color: #161b22;
     padding: 25px 10px;
     border-bottom: 2px solid #30363d;
 }
+header h1 { color: #58a6ff; margin: 0; }
+header p { color: #8b949e; margin: 5px 0 0; }
 
-header h1 {
-    font-size: 1.8em;
-    margin: 0;
-    color: #58a6ff;
+main { padding: 25px; }
+
+.status-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 15px;
 }
-
-header p {
-    font-size: 1em;
-    color: #8b949e;
-}
-
-/* --- Controls --- */
-#controls {
-    margin: 20px auto;
-    text-align: center;
-}
-
-label {
-    font-weight: bold;
-    margin-right: 5px;
-}
-
-select, button {
-    background-color: #21262d;
-    color: #e6edf3;
-    border: 1px solid #30363d;
-    padding: 8px 14px;
-    margin: 5px;
-    border-radius: 6px;
-    cursor: pointer;
-    font-size: 0.95em;
-}
-
-select:hover, button:hover {
-    background-color: #30363d;
-}
-
-/* --- Table --- */
-table {
-    width: 90%;
-    margin: 20px auto;
-    border-collapse: collapse;
+.status-card {
     background-color: #161b22;
     border: 1px solid #30363d;
     border-radius: 10px;
-    overflow: hidden;
-}
-
-thead {
-    background-color: #21262d;
-}
-
-th, td {
-    padding: 10px 12px;
-    border-bottom: 1px solid #30363d;
-    text-align: center;
-}
-
-th {
-    color: #58a6ff;
-}
-
-tr:hover {
-    background-color: #1f242d;
-}
-
-/* --- Footer --- */
-footer {
-    text-align: center;
     padding: 15px;
-    color: #8b949e;
-    font-size: 0.9em;
-    border-top: 1px solid #30363d;
-    margin-top: 40px;
+    text-align: center;
+    box-shadow: 0 0 8px rgba(0,0,0,0.3);
+}
+.timestamp { color: #8b949e; margin-top: 15px; text-align:center; }
+
+/* Loader spinner */
+#loader {
+    position: fixed; top: 12px; right: 18px;
+    width: 22px; height: 22px;
+    border: 3px solid #58a6ff; border-top: 3px solid transparent;
+    border-radius: 50%; animation: spin 0.8s linear infinite;
+    display: none; z-index: 1000;
+}
+@keyframes spin { from {transform:rotate(0);} to {transform:rotate(360deg);} }
+.loading #loader { display:block; }
+
+/* Tabs */
+.tabs { text-align:center; margin-bottom:20px; }
+.tab-button {
+    background-color: #21262d; color: #e6edf3;
+    border: 1px solid #30363d; padding: 10px 18px;
+    margin: 4px; border-radius: 6px; cursor: pointer;
+    font-weight:bold; transition: all 0.2s;
+}
+.tab-button:hover { background-color: #30363d; }
+.tab-button.active {
+    background-color: #58a6ff; color:#0d1117; border-color:#58a6ff;
+}
+.tab-content { display:none; }
+.tab-content.active { display:block; }
+
+footer {
+    text-align:center; color:#8b949e; font-size:0.9em;
+    border-top:1px solid #30363d; margin-top:40px; padding:15px;
+}
+@media (max-width:768px){
+    main{padding:15px;}
+    .status-grid{grid-template-columns:repeat(auto-fill,minmax(180px,1fr));}
 }

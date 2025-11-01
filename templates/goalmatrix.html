@@ -1,0 +1,67 @@
+<!-- ======================================================
+     EURO_GOALS v9.2.1 – GoalMatrix Monitor
+     Παρακολουθεί τις πηγές δεδομένων γκολ (Flashscore κ.λπ.)
+     ====================================================== -->
+
+<!DOCTYPE html>
+<html lang="el">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GoalMatrix – EURO_GOALS v9.2.1</title>
+    <link rel="stylesheet" href="/static/styles.css">
+</head>
+
+<body>
+    <header>
+        <h1>🎯 EURO_GOALS – GoalMatrix Engine</h1>
+        <p>Ανάλυση και παρακολούθηση δεδομένων από Sofascore, Flashscore και BeSoccer</p>
+    </header>
+
+    <main>
+        <div class="card">
+            <h2>GoalMatrix Sources</h2>
+            <div class="status-grid" id="sources_grid">
+                <div class="status-card">SOFASCORE<br><span id="sofascore">--</span></div>
+                <div class="status-card">FLASHCORE<br><span id="flashcore">--</span></div>
+                <div class="status-card">BESOCCER<br><span id="besoccer">--</span></div>
+            </div>
+            <div class="timestamp">
+                Alert Threshold: <span id="threshold">--</span> | Τελευταία ενημέρωση: <span id="last_update">--</span>
+            </div>
+            <div style="text-align:center; margin-top:20px;">
+                <a class="button" href="/">🔙 Επιστροφή στην αρχική</a>
+                <button class="link" onclick="manualRefresh()">🔄 Χειροκίνητη ανανέωση</button>
+            </div>
+        </div>
+    </main>
+
+    <div id="loader"></div>
+
+    <script>
+        async function refreshGoalMatrix() {
+            try {
+                document.body.classList.add("loading");
+                const res = await fetch("/goalmatrix_data");
+                const data = await res.json();
+                document.getElementById("sofascore").innerHTML = data.sources.SOFASCORE;
+                document.getElementById("flashcore").innerHTML = data.sources.FLASHCORE;
+                document.getElementById("besoccer").innerHTML = data.sources.BESOCCER;
+                document.getElementById("threshold").innerHTML = data.alert_threshold;
+                document.getElementById("last_update").innerHTML = data.last_update;
+            } catch (e) {
+                console.error("[GoalMatrix Error]", e);
+            } finally {
+                document.body.classList.remove("loading");
+            }
+        }
+        function manualRefresh() { refreshGoalMatrix(); }
+        setInterval(refreshGoalMatrix, 45000);
+        window.onload = refreshGoalMatrix;
+    </script>
+
+    <footer>
+        EURO_GOALS v9.2.1 © 2025 | GoalMatrix Integration Module
+    </footer>
+</body>
+</html>

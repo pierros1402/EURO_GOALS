@@ -1,139 +1,71 @@
+<!-- ======================================================
+     EURO_GOALS v9.2.1 – System Status Panel
+     Προστέθηκε GoalMatrix Engine status
+     ====================================================== -->
+
 <!DOCTYPE html>
 <html lang="el">
 <head>
-  <meta charset="UTF-8">
-  <title>⚽ EURO_GOALS v9.1 – System Status Panel</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="icon" type="image/png" href="/static/icon_blue.png">
-  <link rel="stylesheet" href="/static/css/style_dark.css">
-
-  <style>
-    body { color:#fff; background:#0d1117; font-family:'Segoe UI',Arial,sans-serif; }
-
-    .led { display:inline-block;width:12px;height:12px;border-radius:50%;margin-right:8px;box-shadow:0 0 5px rgba(0,0,0,0.4); }
-    .led.ok { background:#00ff66;box-shadow:0 0 6px #00ff66; }
-    .led.fail { background:#ff3333;box-shadow:0 0 6px #ff3333; }
-    .led.pending { background:#ffcc00;box-shadow:0 0 6px #ffcc00; }
-
-    table {width:90%;margin:auto;border-collapse:collapse;}
-    th,td {padding:8px 10px;text-align:center;border-bottom:1px solid #222;}
-    th {background:#111927;color:#00b0ff;}
-    tr.alert {background:rgba(255,0,0,0.08);}
-    tr.normal:hover {background:rgba(255,255,255,0.05);}
-
-    #alert-panel {
-      background:#161b22;
-      border:1px solid #333;
-      border-radius:10px;
-      width:90%;
-      margin:30px auto;
-      padding:10px 20px;
-      box-shadow:0 0 10px rgba(0,176,255,0.15);
-    }
-    #alert-panel h2 {
-      color:#00b0ff;
-      margin-bottom:10px;
-      text-align:center;
-    }
-    #alertList {
-      list-style:none;
-      padding:0;
-      margin:0;
-      max-height:250px;
-      overflow-y:auto;
-    }
-    #alertList li {
-      padding:6px 10px;
-      border-bottom:1px solid #222;
-      font-size:14px;
-    }
-    .smart { color:#00ff99; }
-    .goal { color:#00b0ff; }
-    .system { color:#ffcc00; }
-
-    .timestamp {
-      color:#777;
-      font-size:12px;
-      margin-left:10px;
-    }
-
-    #timestamp {text-align:center;margin-top:10px;color:#00b0ff;}
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>System Status – EURO_GOALS v9.2.1</title>
+    <link rel="stylesheet" href="/static/styles.css">
 </head>
 
 <body>
-  <h1 style="text-align:center;">🧠 EURO_GOALS v9.1 – Dual Data Engine</h1>
+    <header>
+        <h1>⚙️ EURO_GOALS v9.2.1 – System Status Panel</h1>
+        <p>Παρακολούθηση όλων των κύριων υπηρεσιών & δεδομένων</p>
+    </header>
 
-  <table id="statusTable">
-    <thead>
-      <tr>
-        <th>Μηχανή</th>
-        <th>Κατάσταση</th>
-        <th>Τελευταία ενημέρωση</th>
-      </tr>
-    </thead>
-    <tbody id="statusBody">
-      <tr><td colspan="3">Φόρτωση δεδομένων...</td></tr>
-    </tbody>
-  </table>
+    <main>
+        <div class="status-grid">
+            <div class="status-card">Database<br><span id="db">--</span></div>
+            <div class="status-card">Render Health<br><span id="render">--</span></div>
+            <div class="status-card">FootballData API<br><span id="footballdata">--</span></div>
+            <div class="status-card">SportMonks API<br><span id="sportmonks">--</span></div>
+            <div class="status-card">BeSoccer API<br><span id="besoccer">--</span></div>
+            <div class="status-card">Smart Money Monitor<br><span id="smartmoney">--</span></div>
+            <div class="status-card">GoalMatrix Engine<br><span id="goalmatrix">--</span></div>
+        </div>
 
-  <div id="timestamp">Αναμονή δεδομένων...</div>
+        <div class="timestamp">Τελευταία ενημέρωση: <span id="last_update">--</span></div>
 
-  <!-- 🧩 Recent Alerts Panel -->
-  <div id="alert-panel">
-    <h2>📡 Recent Alerts (SmartMoney + GoalMatrix)</h2>
-    <ul id="alertList"><li>Φόρτωση ειδοποιήσεων...</li></ul>
-  </div>
+        <div style="text-align:center; margin-top:20px;">
+            <a class="button" href="/">🔙 Επιστροφή στην αρχική</a>
+            <button class="link" onclick="manualRefresh()">🔄 Χειροκίνητη ανανέωση</button>
+        </div>
+    </main>
 
-  <script>
-    async function updateStatus(){
-      try {
-        const res = await fetch("/status");
-        const data = await res.json();
-        const tbody = document.getElementById("statusBody");
-        tbody.innerHTML = "";
-        for(const [engine, info] of Object.entries(data)){
-          const row=document.createElement("tr");
-          let ledClass="pending";
-          if(info.status==="active") ledClass="ok";
-          else if(info.status==="error") ledClass="fail";
-          row.innerHTML = `
-            <td>${engine}</td>
-            <td><span class="led ${ledClass}"></span>${info.status}</td>
-            <td>${info.last_update}</td>
-          `;
-          tbody.appendChild(row);
+    <div id="loader"></div>
+
+    <script>
+        async function refreshStatus() {
+            try {
+                document.body.classList.add("loading");
+                const res = await fetch("/system_status_data");
+                const data = await res.json();
+                document.getElementById("db").innerHTML = data.db;
+                document.getElementById("render").innerHTML = data.render;
+                document.getElementById("footballdata").innerHTML = data.footballdata;
+                document.getElementById("sportmonks").innerHTML = data.sportmonks;
+                document.getElementById("besoccer").innerHTML = data.besoccer;
+                document.getElementById("smartmoney").innerHTML = data.smartmoney;
+                document.getElementById("goalmatrix").innerHTML = data.goalmatrix;
+                document.getElementById("last_update").innerHTML = data.last_update;
+            } catch (err) {
+                console.error("[STATUS ERROR]", err);
+            } finally {
+                document.body.classList.remove("loading");
+            }
         }
-        document.getElementById("timestamp").innerText = "Τελευταίος έλεγχος: "+new Date().toLocaleTimeString("el-GR");
-      } catch (err){
-        console.error("Σφάλμα στο /status:",err);
-      }
-    }
+        function manualRefresh() { refreshStatus(); }
+        setInterval(refreshStatus, 30000);
+        window.onload = refreshStatus;
+    </script>
 
-    async function updateAlerts(){
-      try{
-        const res = await fetch("/alerts");
-        const data = await res.json();
-        const list = document.getElementById("alertList");
-        list.innerHTML = "";
-        data.slice(0,10).forEach(a=>{
-          const li=document.createElement("li");
-          const cls = a.source.toLowerCase();
-          li.className = cls;
-          li.innerHTML = `<b>${a.source}</b>: ${a.message}<span class="timestamp">${a.timestamp}</span>`;
-          list.appendChild(li);
-        });
-      }catch(err){
-        console.error("Σφάλμα στο /alerts:",err);
-      }
-    }
-
-    updateStatus();
-    updateAlerts();
-    setInterval(updateStatus, 60000);
-    setInterval(updateAlerts, 90000);
-  </script>
-
-  <div style="text-align:center;color:#777;margin-top:20px;">EURO_GOALS v9.1 © 2025</div>
+    <footer>
+        EURO_GOALS v9.2.1 © 2025 | System Status & Dual Engine Monitor
+    </footer>
 </body>
 </html>
