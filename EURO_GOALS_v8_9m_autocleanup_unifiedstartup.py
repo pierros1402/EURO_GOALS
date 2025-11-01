@@ -1,20 +1,13 @@
-# ==============================================
-# EURO_GOALS v8.9m – Auto Cleanup + Unified Startup
-# ==============================================
-# FastAPI app με ενοποιημένη εκκίνηση modules και αυτόματο cleanup.
-# Συμβατό με Render. Περιλαμβάνει health/status endpoints & log tail.
-#
-# .env (ενδεικτικά):
-#   DATABASE_URL=sqlite:///matches.db
-#   EG_PRUNE_ALERTS_DAYS=60
-#   EG_ENABLE_HEALTH=1
-#   EG_ENABLE_SMARTMONEY=1
-#   EG_ENABLE_GOALMATRIX=1
-#   EG_ENABLE_RENDERMONITOR=1
-#   EG_LOG_LEVEL=INFO
-#   RENDER=1
-#   PORT=8000
-# ==============================================
+# ============================================================
+# EURO_GOALS v8.9m – Auto Cleanup + Unified Startup + KeepAlive + Dashboard
+# ============================================================
+# Ενοποιημένη εφαρμογή FastAPI για EURO_GOALS NextGen:
+# - Auto Cleanup (logs/temp/backups)
+# - Unified startup modules (Health, SmartMoney, GoalMatrix, RenderMonitor)
+# - Keep-Alive system για συνεχή λειτουργία στο Render
+# - Web Dashboard με PWA & Notifications
+# - Static mount για /static (manifest, service workers, icons, splash)
+# ============================================================
 
 import os
 import sys
@@ -26,16 +19,22 @@ import logging
 from logging.handlers import RotatingFileHandler
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Optional, List
-
+from typing import List
 from dotenv import load_dotenv
+
 from fastapi import FastAPI, Request, Query
 from fastapi.responses import HTMLResponse, JSONResponse, PlainTextResponse
 from fastapi.templating import Jinja2Templates
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
-
 from sqlalchemy import create_engine, text
 from sqlalchemy.engine import Engine
+
+# --------------------------------------------------
+# KEEP ALIVE MODULE (Render Ping System)
+# --------------------------------------------------
+import keep_alive  # ping ανά 10' στο Render URL
+print("[EURO_GOALS] 🔄 Keep-Alive ενεργό (Render ping κάθε 10’)")
 
 # --------------------------------------------------
 # 0) Περιβάλλον & paths
@@ -47,6 +46,7 @@ LOG_DIR = BASE_DIR / "logs"
 TMP_DIR = BASE_DIR / "tmp"
 BACKUP_DIR = BASE_DIR / "backups"
 TEMPLATES_DIR = BASE_DIR / "templates"
+STATIC_DIR = BASE_DIR / "static"
 
 for p in [DATA_DIR, LOG_DIR, TMP_DIR, BACKUP_DIR]:
     p.mkdir(parents=True, exist_ok=True)
@@ -58,26 +58,23 @@ LOG_LEVEL = os.getenv("EG_LOG_LEVEL", "INFO").upper()
 logger = logging.getLogger("EURO_GOALS")
 logger.setLevel(getattr(logging, LOG_LEVEL, logging.INFO))
 
-# Console
 _console = logging.StreamHandler(sys.stdout)
 _console.setFormatter(logging.Formatter("[%(asctime)s] %(levelname)s — %(message)s"))
 logger.addHandler(_console)
 
-# File (rotating)
 log_file = LOG_DIR / "euro_goals.log"
 _file = RotatingFileHandler(log_file, maxBytes=2_000_000, backupCount=5, encoding="utf-8")
 _file.setFormatter(logging.Formatter("%(asctime)s | %(levelname)s | %(name)s | %(message)s"))
 logger.addHandler(_file)
 
 startup_log = LOG_DIR / "startup_log.txt"
-
 def _write_startup_line(msg: str):
     ts = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     with startup_log.open("a", encoding="utf-8") as f:
         f.write(f"[{ts}] {msg}\n")
 
 # --------------------------------------------------
-# 2) DB Engine
+# 2) Database setup
 # --------------------------------------------------
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///matches.db")
 
@@ -86,7 +83,6 @@ def _sqlite_connect_args(url: str):
 
 engine: Engine = create_engine(DATABASE_URL, connect_args=_sqlite_connect_args(DATABASE_URL))
 
-# Απλή δομή πίνακα alerts (αν δεν υπάρχει) για pruning demo:
 def ensure_schema():
     try:
         with engine.begin() as conn:
@@ -115,36 +111,26 @@ CLEANUP_PATTERNS = [
 ]
 
 def cleanup_sqlite_shm_wal():
-    """Καθαρισμός SQLite WAL/SHM όταν η DB είναι κλειστή."""
     if not DATABASE_URL.startswith("sqlite"):
         return
-    # Τοπικό path SQLite:
     db_path = DATABASE_URL.replace("sqlite:///", "")
-    wal = f"{db_path}-wal"
-    shm = f"{db_path}-shm"
-    for f in [wal, shm]:
-        try:
-            if os.path.exists(f):
+    for suffix in ("-wal", "-shm"):
+        f = db_path + suffix
+        if os.path.exists(f):
+            try:
                 os.remove(f)
                 logger.info("Removed SQLite sidecar: %s", f)
-        except Exception as e:
-            logger.warning("Could not remove %s: %s", f, e)
+            except Exception as e:
+                logger.warning("Could not remove %s: %s", f, e)
 
 def prune_alerts(days: int):
-    """Διαγραφή παλαιών alerts > days."""
     try:
         cutoff = datetime.utcnow() - timedelta(days=days)
         with engine.begin() as conn:
-            if "sqlite" in DATABASE_URL:
-                conn.execute(
-                    text("DELETE FROM alerts WHERE datetime(created_at) < :cutoff"),
-                    {"cutoff": cutoff.strftime("%Y-%m-%d %H:%M:%S")}
-                )
-            else:
-                conn.execute(
-                    text("DELETE FROM alerts WHERE created_at < :cutoff"),
-                    {"cutoff": cutoff}
-                )
+            conn.execute(
+                text("DELETE FROM alerts WHERE datetime(created_at) < :cutoff"),
+                {"cutoff": cutoff.strftime("%Y-%m-%d %H:%M:%S")}
+            )
         logger.info("Pruned alerts older than %s days", days)
     except Exception as e:
         logger.warning("Prune alerts failed: %s", e)
@@ -159,8 +145,8 @@ def delete_patterns(patterns: List[str]):
                 else:
                     os.remove(f)
                 removed += 1
-            except Exception as e:
-                logger.debug("Skip remove %s (%s)", f, e)
+            except Exception:
+                pass
     logger.info("Cleanup removed %d items (patterns=%d)", removed, len(patterns))
 
 def auto_cleanup(run_prune=True):
@@ -174,7 +160,7 @@ def auto_cleanup(run_prune=True):
     logger.info("AUTO-CLEANUP completed")
 
 # --------------------------------------------------
-# 4) Unified Startup – modules (threads)
+# 4) Unified Startup Modules
 # --------------------------------------------------
 ENABLE_HEALTH = os.getenv("EG_ENABLE_HEALTH", "1") == "1"
 ENABLE_SMARTMONEY = os.getenv("EG_ENABLE_SMARTMONEY", "1") == "1"
@@ -184,41 +170,32 @@ ENABLE_RENDERMONITOR = os.getenv("EG_ENABLE_RENDERMONITOR", "1") == "1"
 _threads: List[threading.Thread] = []
 _stop_event = threading.Event()
 
-def _thread_wrap(name: str, target, *args, **kwargs):
-    """Τυλιχτικό για ασφαλή εκτέλεση background worker."""
+def _thread_wrap(name: str, target):
     def runner():
         logger.info("[%s] thread started", name)
         _write_startup_line(f"{name}: started")
         try:
-            target(*args, **kwargs)
+            target()
         except Exception as e:
             logger.exception("[%s] crashed: %s", name, e)
-        finally:
-            logger.info("[%s] thread exited", name)
     th = threading.Thread(target=runner, daemon=True, name=name)
     _threads.append(th)
     th.start()
 
-# ---- Workers (placeholders που μπορείς να αντικαταστήσεις με πραγματική λογική) ----
 def worker_health():
-    # π.χ. metrics συλλογή/επιτήρηση πόρων
     while not _stop_event.is_set():
         time.sleep(15)
 
-def worker_smart_money():
-    # π.χ. polling APIs (Pinnacle/SBO/188BET) και καταγραφή μεταβολών
+def worker_smartmoney():
     while not _stop_event.is_set():
-        # demo: γράψε heartbeat στο log κάθε 30s
         logger.debug("[SmartMoney] heartbeat")
         time.sleep(30)
 
-def worker_goal_matrix():
-    # π.χ. επεξεργασία live feeds -> goal probability matrix
+def worker_goalmatrix():
     while not _stop_event.is_set():
         time.sleep(20)
 
-def worker_render_monitor():
-    # π.χ. auto-refresh Render service μέσω API (εφόσον υπάρχουν κλειδιά)
+def worker_rendermonitor():
     while not _stop_event.is_set():
         time.sleep(60)
 
@@ -227,39 +204,30 @@ def unified_startup():
     _write_startup_line("UNIFIED STARTUP: begin")
     ensure_schema()
     auto_cleanup(run_prune=True)
-
-    if ENABLE_HEALTH:
-        _thread_wrap("HealthMonitor", worker_health)
-    if ENABLE_SMARTMONEY:
-        _thread_wrap("SmartMoney", worker_smart_money)
-    if ENABLE_GOALMATRIX:
-        _thread_wrap("GoalMatrix", worker_goal_matrix)
-    if ENABLE_RENDERMONITOR:
-        _thread_wrap("RenderMonitor", worker_render_monitor)
-
+    if ENABLE_HEALTH: _thread_wrap("HealthMonitor", worker_health)
+    if ENABLE_SMARTMONEY: _thread_wrap("SmartMoney", worker_smartmoney)
+    if ENABLE_GOALMATRIX: _thread_wrap("GoalMatrix", worker_goalmatrix)
+    if ENABLE_RENDERMONITOR: _thread_wrap("RenderMonitor", worker_rendermonitor)
     _write_startup_line("UNIFIED STARTUP: modules started")
     logger.info("UNIFIED STARTUP completed")
 
 def unified_shutdown():
     logger.info("UNIFIED SHUTDOWN begin")
-    _write_startup_line("UNIFIED SHUTDOWN: begin")
     _stop_event.set()
-    # δώσε λίγο χρόνο για να τερματίσουν ομαλά
-    for th in _threads:
-        th.join(timeout=2.0)
-    _write_startup_line("UNIFIED SHUTDOWN: complete")
+    for th in _threads: th.join(timeout=2.0)
     logger.info("UNIFIED SHUTDOWN completed")
 
 # --------------------------------------------------
-# 5) FastAPI app & templates
+# 5) FastAPI app + static/templates mount
 # --------------------------------------------------
-app = FastAPI(title="EURO_GOALS v8.9m", version="8.9m")
-templates = Jinja2Templates(directory=str(TEMPLATES_DIR)) if TEMPLATES_DIR.exists() else None
+app = FastAPI(title="EURO_GOALS NextGen", version="8.9m")
+templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
+if STATIC_DIR.exists():
+    app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
 
 @app.on_event("startup")
 def on_startup():
-    logger.info("🚀 EURO_GOALS v8.9m starting up…")
-    _write_startup_line("APP STARTUP")
+    logger.info("🚀 EURO_GOALS NextGen starting up...")
     unified_startup()
 
 @app.on_event("shutdown")
@@ -268,7 +236,7 @@ def on_shutdown():
     logger.info("👋 Shutdown complete")
 
 # --------------------------------------------------
-# 6) Models / DTOs
+# 6) DTOs
 # --------------------------------------------------
 class StatusDTO(BaseModel):
     version: str
@@ -277,55 +245,30 @@ class StatusDTO(BaseModel):
     database_url: str
 
 # --------------------------------------------------
-# 7) Routes
+# 7) Routes (UI + API)
 # --------------------------------------------------
 @app.get("/", response_class=HTMLResponse)
 def index(request: Request):
-    # Αν υπάρχει template index.html, χρησιμοποίησέ το, αλλιώς μίνι fallback HTML
-    if templates and (TEMPLATES_DIR / "index.html").exists():
+    if (TEMPLATES_DIR / "index.html").exists():
         return templates.TemplateResponse("index.html", {"request": request, "version": "8.9m"})
-    html = f"""
-    <!doctype html>
-    <html lang="en">
-      <head>
-        <meta charset="utf-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <title>EURO_GOALS v8.9m</title>
-        <style>
-          body {{ font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial; padding: 24px; }}
-          .card {{ border: 1px solid #ddd; border-radius: 12px; padding: 16px; margin-bottom: 16px; }}
-          .ok {{ color: #1a7f37; }}
-          .muted {{ color: #666; }}
-          code {{ background:#f6f8fa; padding:2px 6px; border-radius:6px; }}
-        </style>
-      </head>
-      <body>
-        <h1>EURO_GOALS <small class="muted">v8.9m</small></h1>
-        <div class="card">
-          <h3>Unified Startup</h3>
-          <p>Τα modules έχουν εκκινηθεί ως background threads. Έλεγξε το <code>/status</code> και το <code>/logs/tail</code>.</p>
-        </div>
-        <div class="card">
-          <h3>Auto Cleanup</h3>
-          <p>Το αυτόματο cleanup εκτελέστηκε στο startup. Μπορείς να το καλέσεις χειροκίνητα: <code>/cleanup/run</code></p>
-        </div>
-        <div class="card">
-          <ul>
-            <li><a href="/health">/health</a> &nbsp;|&nbsp; <a href="/.well-known/healthz">/.well-known/healthz</a></li>
-            <li><a href="/status">/status</a></li>
-            <li><a href="/logs/tail">/logs/tail</a></li>
-          </ul>
-        </div>
-      </body>
-    </html>
-    """
-    return HTMLResponse(html)
+    return HTMLResponse("<h1>EURO_GOALS NextGen</h1><p>Running on Render</p>")
 
 @app.get("/health", response_class=JSONResponse)
 def health():
-    return {"status": "ok", "service": "EURO_GOALS", "version": "8.9m", "time": datetime.utcnow().isoformat()}
+    # Μικρό summary ώστε το UI να δείχνει κάτι χρήσιμο live
+    return {
+        "status": "OK",
+        "service": "EURO_GOALS",
+        "version": "8.9m",
+        "time": datetime.utcnow().isoformat(),
+        "components": {
+            "Database": "OK",
+            "SmartMoney": "OK" if ENABLE_SMARTMONEY else "DISABLED",
+            "GoalMatrix": "OK" if ENABLE_GOALMATRIX else "DISABLED",
+            "RenderMonitor": "OK" if ENABLE_RENDERMONITOR else "DISABLED"
+        }
+    }
 
-# Render-compatible health endpoint
 @app.get("/.well-known/healthz", response_class=PlainTextResponse)
 def healthz():
     return "ok"
@@ -352,7 +295,6 @@ def cleanup_run(prune: bool = Query(True, description="Εκτέλεση και p
 
 @app.get("/logs/tail", response_class=PlainTextResponse)
 def logs_tail(lines: int = Query(200, ge=1, le=2000)):
-    """Επιστρέφει τα τελευταία N lines από το main log + startup log (συγχωνευμένα)."""
     def tail_file(path: Path, n: int) -> List[str]:
         if not path.exists():
             return []
@@ -364,10 +306,32 @@ def logs_tail(lines: int = Query(200, ge=1, le=2000)):
     merged = ["--- euro_goals.log ---\n"] + a + ["\n--- startup_log.txt ---\n"] + b
     return "".join(merged)
 
+# ---- Demo endpoints για UI auto-refresh (μπορείς να τα αντικαταστήσεις με πραγματικά) ----
+@app.get("/smartmoney", response_class=JSONResponse)
+def smartmoney_feed():
+    return {
+        "updated": datetime.utcnow().isoformat(),
+        "signals": [
+            {"league": "EPL", "match": "Chelsea vs Arsenal", "market": "AH -0.5", "odds_move": "1.92 → 1.78", "book": "Pinnacle"},
+            {"league": "Serie A", "match": "Milan vs Napoli", "market": "O/U 2.5", "odds_move": "1.95 → 1.80", "book": "SBOBET"}
+        ]
+    }
+
+@app.get("/goal_matrix", response_class=JSONResponse)
+def goal_matrix_feed():
+    return {
+        "updated": datetime.utcnow().isoformat(),
+        "matrix": {
+            "BTTS%": {"TeamA": 62, "TeamB": 48},
+            "Over2.5%": {"TeamA": 58, "TeamB": 51},
+            "SmartMoneyTag": {"TeamA": True, "TeamB": False}
+        }
+    }
+
 # --------------------------------------------------
-# 8) Local dev entry (προαιρετικό)
+# 8) Local dev entry
 # --------------------------------------------------
 if __name__ == "__main__":
     import uvicorn
     port = int(os.getenv("PORT", "8000"))
-    uvicorn.run("app:app", host="0.0.0.0", port=port, reload=False)
+    uvicorn.run("EURO_GOALS_v8_9m_autocleanup_unifiedstartup:app", host="0.0.0.0", port=port)

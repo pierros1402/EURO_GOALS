@@ -1,20 +1,36 @@
 {
   "name": "EURO_GOALS NextGen",
   "short_name": "EURO_GOALS",
+  "description": "Unified football analytics dashboard for SmartMoney, System Health & GoalMatrix.",
   "start_url": "/",
+  "scope": "/",
   "display": "standalone",
+  "orientation": "portrait",
   "background_color": "#0d1117",
   "theme_color": "#00e676",
-  "orientation": "portrait",
   "icons": [
     {
       "src": "/static/icons/eurogoals_192.png",
       "sizes": "192x192",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
     },
     {
       "src": "/static/icons/eurogoals_512.png",
       "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/static/icons/splash_720x1280.png",
+      "sizes": "720x1280",
+      "type": "image/png"
+    },
+    {
+      "src": "/static/icons/splash_1080x1920.png",
+      "sizes": "1080x1920",
       "type": "image/png"
     }
   ]
