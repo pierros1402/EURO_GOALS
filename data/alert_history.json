@@ -1,0 +1,607 @@
+[
+    {
+        "timestamp": "2025-11-01 19:33:11",
+        "source": "GOALMATRIX",
+        "message": "[GoalMatrix] Πιθανό γκολ εντός 5’ (19:33:11)"
+    },
+    {
+        "timestamp": "2025-11-01 19:32:40",
+        "source": "SMARTMONEY",
+        "message": "[SmartMoney] Εντοπίστηκε sharp move στις 19:32:40"
+    },
+    {
+        "timestamp": "2025-11-01 19:32:23",
+        "source": "GOALMATRIX",
+        "message": "[GoalMatrix] Πιθανό γκολ εντός 5’ (19:32:23)"
+    },
+    {
+        "timestamp": "2025-11-01 19:31:38",
+        "source": "SMARTMONEY",
+        "message": "[SmartMoney] Εντοπίστηκε sharp move στις 19:31:38"
+    },
+    {
+        "timestamp": "2025-11-01 19:31:35",
+        "source": "GOALMATRIX",
+        "message": "[GoalMatrix] Πιθανό γκολ εντός 5’ (19:31:35)"
+    },
+    {
+        "timestamp": "2025-11-01 19:30:47",
+        "source": "GOALMATRIX",
+        "message": "[GoalMatrix] Πιθανό γκολ εντός 5’ (19:30:47)"
+    },
+    {
+        "timestamp": "2025-11-01 19:30:36",
+        "source": "SMARTMONEY",
+        "message": "[SmartMoney] Εντοπίστηκε sharp move στις 19:30:36"
+    },
+    {
+        "timestamp": "2025-11-01 19:29:59",
+        "source": "GOALMATRIX",
+        "message": "[GoalMatrix] Πιθανό γκολ εντός 5’ (19:29:59)"
+    },
+    {
+        "timestamp": "2025-11-01 19:29:34",
+        "source": "SMARTMONEY",
+        "message": "[SmartMoney] Εντοπίστηκε sharp move στις 19:29:34"
+    },
+    {
+        "timestamp": "2025-11-01 19:29:11",
+        "source": "GOALMATRIX",
+        "message": "[GoalMatrix] Πιθανό γκολ εντός 5’ (19:29:11)"
+    },
+    {
+        "timestamp": "2025-11-01 19:28:32",
+        "source": "SMARTMONEY",
+        "message": "[SmartMoney] Εντοπίστηκε sharp move στις 19:28:32"
+    },
+    {
+        "timestamp": "2025-11-01 19:28:23",
+        "source": "GOALMATRIX",
+        "message": "[GoalMatrix] Πιθανό γκολ εντός 5’ (19:28:23)"
+    },
+    {
+        "timestamp": "2025-11-01 19:27:35",
+        "source": "GOALMATRIX",
+        "message": "[GoalMatrix] Πιθανό γκολ εντός 5’ (19:27:35)"
+    },
+    {
+        "timestamp": "2025-11-01 19:27:30",
+        "source": "SMARTMONEY",
+        "message": "[SmartMoney] Εντοπίστηκε sharp move στις 19:27:30"
+    },
+    {
+        "timestamp": "2025-11-01 19:26:47",
+        "source": "GOALMATRIX",
+        "message": "[GoalMatrix] Πιθανό γκολ εντός 5’ (19:26:47)"
+    },
+    {
+        "timestamp": "2025-11-01 19:26:28",
+        "source": "SMARTMONEY",
+        "message": "[SmartMoney] Εντοπίστηκε sharp move στις 19:26:28"
+    },
+    {
+        "timestamp": "2025-11-01 19:25:59",
+        "source": "GOALMATRIX",
+        "message": "[GoalMatrix] Πιθανό γκολ εντός 5’ (19:25:59)"
+    },
+    {
+        "timestamp": "2025-11-01 19:25:26",
+        "source": "SMARTMONEY",
+        "message": "[SmartMoney] Εντοπίστηκε sharp move στις 19:25:26"
+    },
+    {
+        "timestamp": "2025-11-01 19:25:11",
+        "source": "GOALMATRIX",
+        "message": "[GoalMatrix] Πιθανό γκολ εντός 5’ (19:25:11)"
+    },
+    {
+        "timestamp": "2025-11-01 19:24:24",
+        "source": "SMARTMONEY",
+        "message": "[SmartMoney] Εντοπίστηκε sharp move στις 19:24:24"
+    },
+    {
+        "timestamp": "2025-11-01 19:24:23",
+        "source": "GOALMATRIX",
+        "message": "[GoalMatrix] Πιθανό γκολ εντός 5’ (19:24:23)"
+    },
+    {
+        "timestamp": "2025-11-01 19:23:35",
+        "source": "GOALMATRIX",
+        "message": "[GoalMatrix] Πιθανό γκολ εντός 5’ (19:23:35)"
+    },
+    {
+        "timestamp": "2025-11-01 19:23:22",
+        "source": "SMARTMONEY",
+        "message": "[SmartMoney] Εντοπίστηκε sharp move στις 19:23:21"
+    },
+    {
+        "timestamp": "2025-11-01 19:22:47",
+        "source": "GOALMATRIX",
+        "message": "[GoalMatrix] Πιθανό γκολ εντός 5’ (19:22:47)"
+    },
+    {
+        "timestamp": "2025-11-01 19:22:19",
+        "source": "SMARTMONEY",
+        "message": "[SmartMoney] Εντοπίστηκε sharp move στις 19:22:19"
+    },
+    {
+        "timestamp": "2025-11-01 19:21:58",
+        "source": "GOALMATRIX",
+        "message": "[GoalMatrix] Πιθανό γκολ εντός 5’ (19:21:58)"
+    },
+    {
+        "timestamp": "2025-11-01 19:21:17",
+        "source": "SMARTMONEY",
+        "message": "[SmartMoney] Εντοπίστηκε sharp move στις 19:21:17"
+    },
+    {
+        "timestamp": "2025-11-01 19:21:10",
+        "source": "GOALMATRIX",
+        "message": "[GoalMatrix] Πιθανό γκολ εντός 5’ (19:21:10)"
+    },
+    {
+        "timestamp": "2025-11-01 19:20:22",
+        "source": "GOALMATRIX",
+        "message": "[GoalMatrix] Πιθανό γκολ εντός 5’ (19:20:22)"
+    },
+    {
+        "timestamp": "2025-11-01 19:20:15",
+        "source": "SMARTMONEY",
+        "message": "[SmartMoney] Εντοπίστηκε sharp move στις 19:20:15"
+    },
+    {
+        "timestamp": "2025-11-01 19:19:34",
+        "source": "GOALMATRIX",
+        "message": "[GoalMatrix] Πιθανό γκολ εντός 5’ (19:19:34)"
+    },
+    {
+        "timestamp": "2025-11-01 19:19:13",
+        "source": "SMARTMONEY",
+        "message": "[SmartMoney] Εντοπίστηκε sharp move στις 19:19:13"
+    },
+    {
+        "timestamp": "2025-11-01 19:18:46",
+        "source": "GOALMATRIX",
+        "message": "[GoalMatrix] Πιθανό γκολ εντός 5’ (19:18:46)"
+    },
+    {
+        "timestamp": "2025-11-01 19:18:11",
+        "source": "SMARTMONEY",
+        "message": "[SmartMoney] Εντοπίστηκε sharp move στις 19:18:11"
+    },
+    {
+        "timestamp": "2025-11-01 19:17:58",
+        "source": "GOALMATRIX",
+        "message": "[GoalMatrix] Πιθανό γκολ εντός 5’ (19:17:58)"
+    },
+    {
+        "timestamp": "2025-11-01 19:17:10",
+        "source": "GOALMATRIX",
+        "message": "[GoalMatrix] Πιθανό γκολ εντός 5’ (19:17:10)"
+    },
+    {
+        "timestamp": "2025-11-01 19:17:09",
+        "source": "SMARTMONEY",
+        "message": "[SmartMoney] Εντοπίστηκε sharp move στις 19:17:09"
+    },
+    {
+        "timestamp": "2025-11-01 19:14:46",
+        "source": "SMARTMONEY",
+        "message": "[SmartMoney] Εντοπίστηκε sharp move στις 19:14:46"
+    },
+    {
+        "timestamp": "2025-11-01 19:14:33",
+        "source": "GOALMATRIX",
+        "message": "[GoalMatrix] Πιθανό γκολ εντός 5’ (19:14:33)"
+    },
+    {
+        "timestamp": "2025-11-01 19:13:45",
+        "source": "GOALMATRIX",
+        "message": "[GoalMatrix] Πιθανό γκολ εντός 5’ (19:13:45)"
+    },
+    {
+        "timestamp": "2025-11-01 19:13:44",
+        "source": "SMARTMONEY",
+        "message": "[SmartMoney] Εντοπίστηκε sharp move στις 19:13:44"
+    },
+    {
+        "timestamp": "2025-11-01 19:12:57",
+        "source": "GOALMATRIX",
+        "message": "[GoalMatrix] Πιθανό γκολ εντός 5’ (19:12:57)"
+    },
+    {
+        "timestamp": "2025-11-01 19:12:22",
+        "source": "SMARTMONEY",
+        "message": "[SmartMoney] Εντοπίστηκε sharp move στις 19:12:22"
+    },
+    {
+        "timestamp": "2025-11-01 19:12:09",
+        "source": "GOALMATRIX",
+        "message": "[GoalMatrix] Πιθανό γκολ εντός 5’ (19:12:09)"
+    },
+    {
+        "timestamp": "2025-11-01 19:11:21",
+        "source": "GOALMATRIX",
+        "message": "[GoalMatrix] Πιθανό γκολ εντός 5’ (19:11:21)"
+    },
+    {
+        "timestamp": "2025-11-01 19:11:20",
+        "source": "SMARTMONEY",
+        "message": "[SmartMoney] Εντοπίστηκε sharp move στις 19:11:20"
+    },
+    {
+        "timestamp": "2025-11-01 19:04:51",
+        "source": "GOALMATRIX",
+        "message": "[GoalMatrix] Πιθανό γκολ εντός 5’ (19:04:51)"
+    },
+    {
+        "timestamp": "2025-11-01 19:04:50",
+        "source": "SMARTMONEY",
+        "message": "[SmartMoney] Εντοπίστηκε sharp move στις 19:04:50"
+    },
+    {
+        "timestamp": "2025-11-01 19:04:27",
+        "source": "GOALMATRIX",
+        "message": "[GoalMatrix] Πιθανό γκολ εντός 5’ (19:04:27)"
+    },
+    {
+        "timestamp": "2025-11-01 19:04:26",
+        "source": "SMARTMONEY",
+        "message": "[SmartMoney] Εντοπίστηκε sharp move στις 19:04:26"
+    },
+    {
+        "timestamp": "2025-11-01 19:04:03",
+        "source": "SMARTMONEY",
+        "message": "[SmartMoney] Εντοπίστηκε sharp move στις 19:04:03"
+    },
+    {
+        "timestamp": "2025-11-01 19:03:50",
+        "source": "GOALMATRIX",
+        "message": "[GoalMatrix] Πιθανό γκολ εντός 5’ (19:03:50)"
+    },
+    {
+        "timestamp": "2025-11-01 19:03:02",
+        "source": "GOALMATRIX",
+        "message": "[GoalMatrix] Πιθανό γκολ εντός 5’ (19:03:02)"
+    },
+    {
+        "timestamp": "2025-11-01 19:03:01",
+        "source": "SMARTMONEY",
+        "message": "[SmartMoney] Εντοπίστηκε sharp move στις 19:03:01"
+    },
+    {
+        "timestamp": "2025-11-01 19:02:16",
+        "source": "GOALMATRIX",
+        "message": "[GoalMatrix] Πιθανό γκολ εντός 5’ (19:02:16)"
+    },
+    {
+        "timestamp": "2025-11-01 19:02:03",
+        "source": "SMARTMONEY",
+        "message": "[SmartMoney] Εντοπίστηκε sharp move στις 19:02:03"
+    },
+    {
+        "timestamp": "2025-11-01 19:01:28",
+        "source": "GOALMATRIX",
+        "message": "[GoalMatrix] Πιθανό γκολ εντός 5’ (19:01:28)"
+    },
+    {
+        "timestamp": "2025-11-01 19:01:01",
+        "source": "SMARTMONEY",
+        "message": "[SmartMoney] Εντοπίστηκε sharp move στις 19:01:01"
+    },
+    {
+        "timestamp": "2025-11-01 19:00:40",
+        "source": "GOALMATRIX",
+        "message": "[GoalMatrix] Πιθανό γκολ εντός 5’ (19:00:40)"
+    },
+    {
+        "timestamp": "2025-11-01 18:59:59",
+        "source": "SMARTMONEY",
+        "message": "[SmartMoney] Εντοπίστηκε sharp move στις 18:59:59"
+    },
+    {
+        "timestamp": "2025-11-01 18:59:52",
+        "source": "GOALMATRIX",
+        "message": "[GoalMatrix] Πιθανό γκολ εντός 5’ (18:59:52)"
+    },
+    {
+        "timestamp": "2025-11-01 18:59:04",
+        "source": "GOALMATRIX",
+        "message": "[GoalMatrix] Πιθανό γκολ εντός 5’ (18:59:04)"
+    },
+    {
+        "timestamp": "2025-11-01 18:58:57",
+        "source": "SMARTMONEY",
+        "message": "[SmartMoney] Εντοπίστηκε sharp move στις 18:58:57"
+    },
+    {
+        "timestamp": "2025-11-01 18:58:16",
+        "source": "GOALMATRIX",
+        "message": "[GoalMatrix] Πιθανό γκολ εντός 5’ (18:58:16)"
+    },
+    {
+        "timestamp": "2025-11-01 18:57:55",
+        "source": "SMARTMONEY",
+        "message": "[SmartMoney] Εντοπίστηκε sharp move στις 18:57:55"
+    },
+    {
+        "timestamp": "2025-11-01 18:57:28",
+        "source": "GOALMATRIX",
+        "message": "[GoalMatrix] Πιθανό γκολ εντός 5’ (18:57:28)"
+    },
+    {
+        "timestamp": "2025-11-01 18:56:53",
+        "source": "SMARTMONEY",
+        "message": "[SmartMoney] Εντοπίστηκε sharp move στις 18:56:53"
+    },
+    {
+        "timestamp": "2025-11-01 18:56:40",
+        "source": "GOALMATRIX",
+        "message": "[GoalMatrix] Πιθανό γκολ εντός 5’ (18:56:40)"
+    },
+    {
+        "timestamp": "2025-11-01 18:55:52",
+        "source": "GOALMATRIX",
+        "message": "[GoalMatrix] Πιθανό γκολ εντός 5’ (18:55:52)"
+    },
+    {
+        "timestamp": "2025-11-01 18:55:51",
+        "source": "SMARTMONEY",
+        "message": "[SmartMoney] Εντοπίστηκε sharp move στις 18:55:51"
+    },
+    {
+        "timestamp": "2025-11-01 18:54:45",
+        "source": "GOALMATRIX",
+        "message": "[GoalMatrix] Πιθανό γκολ εντός 5’ (18:54:45)"
+    },
+    {
+        "timestamp": "2025-11-01 18:54:24",
+        "source": "SMARTMONEY",
+        "message": "[SmartMoney] Εντοπίστηκε sharp move στις 18:54:24"
+    },
+    {
+        "timestamp": "2025-11-01 18:53:57",
+        "source": "GOALMATRIX",
+        "message": "[GoalMatrix] Πιθανό γκολ εντός 5’ (18:53:57)"
+    },
+    {
+        "timestamp": "2025-11-01 18:53:22",
+        "source": "SMARTMONEY",
+        "message": "[SmartMoney] Εντοπίστηκε sharp move στις 18:53:22"
+    },
+    {
+        "timestamp": "2025-11-01 18:53:09",
+        "source": "GOALMATRIX",
+        "message": "[GoalMatrix] Πιθανό γκολ εντός 5’ (18:53:09)"
+    },
+    {
+        "timestamp": "2025-11-01 18:52:21",
+        "source": "GOALMATRIX",
+        "message": "[GoalMatrix] Πιθανό γκολ εντός 5’ (18:52:21)"
+    },
+    {
+        "timestamp": "2025-11-01 18:52:20",
+        "source": "SMARTMONEY",
+        "message": "[SmartMoney] Εντοπίστηκε sharp move στις 18:52:20"
+    },
+    {
+        "timestamp": "2025-11-01 18:48:52",
+        "source": "GOALMATRIX",
+        "message": "[GoalMatrix] Πιθανό γκολ εντός 5’ (18:48:52)"
+    },
+    {
+        "timestamp": "2025-11-01 18:48:05",
+        "source": "SMARTMONEY",
+        "message": "[SmartMoney] Εντοπίστηκε sharp move στις 18:48:05"
+    },
+    {
+        "timestamp": "2025-11-01 18:48:04",
+        "source": "GOALMATRIX",
+        "message": "[GoalMatrix] Πιθανό γκολ εντός 5’ (18:48:04)"
+    },
+    {
+        "timestamp": "2025-11-01 18:47:16",
+        "source": "GOALMATRIX",
+        "message": "[GoalMatrix] Πιθανό γκολ εντός 5’ (18:47:16)"
+    },
+    {
+        "timestamp": "2025-11-01 18:47:03",
+        "source": "SMARTMONEY",
+        "message": "[SmartMoney] Εντοπίστηκε sharp move στις 18:47:03"
+    },
+    {
+        "timestamp": "2025-11-01 18:46:27",
+        "source": "GOALMATRIX",
+        "message": "[GoalMatrix] Πιθανό γκολ εντός 5’ (18:46:27)"
+    },
+    {
+        "timestamp": "2025-11-01 18:46:01",
+        "source": "SMARTMONEY",
+        "message": "[SmartMoney] Εντοπίστηκε sharp move στις 18:46:01"
+    },
+    {
+        "timestamp": "2025-11-01 18:45:39",
+        "source": "GOALMATRIX",
+        "message": "[GoalMatrix] Πιθανό γκολ εντός 5’ (18:45:39)"
+    },
+    {
+        "timestamp": "2025-11-01 18:44:58",
+        "source": "SMARTMONEY",
+        "message": "[SmartMoney] Εντοπίστηκε sharp move στις 18:44:58"
+    },
+    {
+        "timestamp": "2025-11-01 18:44:51",
+        "source": "GOALMATRIX",
+        "message": "[GoalMatrix] Πιθανό γκολ εντός 5’ (18:44:51)"
+    },
+    {
+        "timestamp": "2025-11-01 18:44:03",
+        "source": "GOALMATRIX",
+        "message": "[GoalMatrix] Πιθανό γκολ εντός 5’ (18:44:03)"
+    },
+    {
+        "timestamp": "2025-11-01 18:43:56",
+        "source": "SMARTMONEY",
+        "message": "[SmartMoney] Εντοπίστηκε sharp move στις 18:43:56"
+    },
+    {
+        "timestamp": "2025-11-01 18:43:15",
+        "source": "GOALMATRIX",
+        "message": "[GoalMatrix] Πιθανό γκολ εντός 5’ (18:43:15)"
+    },
+    {
+        "timestamp": "2025-11-01 18:42:54",
+        "source": "SMARTMONEY",
+        "message": "[SmartMoney] Εντοπίστηκε sharp move στις 18:42:54"
+    },
+    {
+        "timestamp": "2025-11-01 18:42:27",
+        "source": "GOALMATRIX",
+        "message": "[GoalMatrix] Πιθανό γκολ εντός 5’ (18:42:27)"
+    },
+    {
+        "timestamp": "2025-11-01 18:41:52",
+        "source": "SMARTMONEY",
+        "message": "[SmartMoney] Εντοπίστηκε sharp move στις 18:41:52"
+    },
+    {
+        "timestamp": "2025-11-01 18:41:39",
+        "source": "GOALMATRIX",
+        "message": "[GoalMatrix] Πιθανό γκολ εντός 5’ (18:41:39)"
+    },
+    {
+        "timestamp": "2025-11-01 18:40:51",
+        "source": "GOALMATRIX",
+        "message": "[GoalMatrix] Πιθανό γκολ εντός 5’ (18:40:51)"
+    },
+    {
+        "timestamp": "2025-11-01 18:40:50",
+        "source": "SMARTMONEY",
+        "message": "[SmartMoney] Εντοπίστηκε sharp move στις 18:40:50"
+    },
+    {
+        "timestamp": "2025-11-01 18:38:54",
+        "source": "GOALMATRIX",
+        "message": "[GoalMatrix] Πιθανό γκολ εντός 5’ (18:38:54)"
+    },
+    {
+        "timestamp": "2025-11-01 18:38:13",
+        "source": "SMARTMONEY",
+        "message": "[SmartMoney] Εντοπίστηκε sharp move στις 18:38:13"
+    },
+    {
+        "timestamp": "2025-11-01 18:38:06",
+        "source": "GOALMATRIX",
+        "message": "[GoalMatrix] Πιθανό γκολ εντός 5’ (18:38:06)"
+    },
+    {
+        "timestamp": "2025-11-01 18:37:18",
+        "source": "GOALMATRIX",
+        "message": "[GoalMatrix] Πιθανό γκολ εντός 5’ (18:37:18)"
+    },
+    {
+        "timestamp": "2025-11-01 18:37:11",
+        "source": "SMARTMONEY",
+        "message": "[SmartMoney] Εντοπίστηκε sharp move στις 18:37:11"
+    },
+    {
+        "timestamp": "2025-11-01 18:36:30",
+        "source": "GOALMATRIX",
+        "message": "[GoalMatrix] Πιθανό γκολ εντός 5’ (18:36:30)"
+    },
+    {
+        "timestamp": "2025-11-01 18:36:09",
+        "source": "SMARTMONEY",
+        "message": "[SmartMoney] Εντοπίστηκε sharp move στις 18:36:09"
+    },
+    {
+        "timestamp": "2025-11-01 18:35:42",
+        "source": "GOALMATRIX",
+        "message": "[GoalMatrix] Πιθανό γκολ εντός 5’ (18:35:42)"
+    },
+    {
+        "timestamp": "2025-11-01 18:35:07",
+        "source": "SMARTMONEY",
+        "message": "[SmartMoney] Εντοπίστηκε sharp move στις 18:35:07"
+    },
+    {
+        "timestamp": "2025-11-01 18:34:54",
+        "source": "GOALMATRIX",
+        "message": "[GoalMatrix] Πιθανό γκολ εντός 5’ (18:34:54)"
+    },
+    {
+        "timestamp": "2025-11-01 18:34:06",
+        "source": "GOALMATRIX",
+        "message": "[GoalMatrix] Πιθανό γκολ εντός 5’ (18:34:06)"
+    },
+    {
+        "timestamp": "2025-11-01 18:34:05",
+        "source": "SMARTMONEY",
+        "message": "[SmartMoney] Εντοπίστηκε sharp move στις 18:34:05"
+    },
+    {
+        "timestamp": "2025-11-01 18:33:50",
+        "source": "GOALMATRIX",
+        "message": "[GoalMatrix] Πιθανό γκολ εντός 5’ (18:33:50)"
+    },
+    {
+        "timestamp": "2025-11-01 18:33:02",
+        "source": "GOALMATRIX",
+        "message": "[GoalMatrix] Πιθανό γκολ εντός 5’ (18:33:02)"
+    },
+    {
+        "timestamp": "2025-11-01 18:32:55",
+        "source": "SMARTMONEY",
+        "message": "[SmartMoney] Εντοπίστηκε sharp move στις 18:32:55"
+    },
+    {
+        "timestamp": "2025-11-01 18:32:14",
+        "source": "GOALMATRIX",
+        "message": "[GoalMatrix] Πιθανό γκολ εντός 5’ (18:32:14)"
+    },
+    {
+        "timestamp": "2025-11-01 18:31:53",
+        "source": "SMARTMONEY",
+        "message": "[SmartMoney] Εντοπίστηκε sharp move στις 18:31:53"
+    },
+    {
+        "timestamp": "2025-11-01 18:31:26",
+        "source": "GOALMATRIX",
+        "message": "[GoalMatrix] Πιθανό γκολ εντός 5’ (18:31:26)"
+    },
+    {
+        "timestamp": "2025-11-01 18:30:51",
+        "source": "SMARTMONEY",
+        "message": "[SmartMoney] Εντοπίστηκε sharp move στις 18:30:51"
+    },
+    {
+        "timestamp": "2025-11-01 18:30:38",
+        "source": "GOALMATRIX",
+        "message": "[GoalMatrix] Πιθανό γκολ εντός 5’ (18:30:38)"
+    },
+    {
+        "timestamp": "2025-11-01 18:29:50",
+        "source": "GOALMATRIX",
+        "message": "[GoalMatrix] Πιθανό γκολ εντός 5’ (18:29:50)"
+    },
+    {
+        "timestamp": "2025-11-01 18:29:49",
+        "source": "SMARTMONEY",
+        "message": "[SmartMoney] Εντοπίστηκε sharp move στις 18:29:49"
+    },
+    {
+        "timestamp": "2025-11-01 18:30:00",
+        "source": "SYSTEM",
+        "message": "EURO_GOALS v9.1 initialized (Dual Data Engine active)"
+    },
+    {
+        "timestamp": "2025-11-01 18:35:00",
+        "source": "SMARTMONEY",
+        "message": "SmartMoney Engine started – monitoring Asian markets..."
+    },
+    {
+        "timestamp": "2025-11-01 18:35:05",
+        "source": "GOALMATRIX",
+        "message": "GoalMatrix Engine started – tracking live matches..."
+    }
+]
