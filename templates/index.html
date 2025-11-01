@@ -3,6 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <title>EURO_GOALS – System Dashboard</title>
+
+    <!-- ✅ PWA Manifest & Service Worker -->
+    <link rel="manifest" href="/static/manifest.json">
+    <meta name="theme-color" content="#00b0ff">
+    <script>
+        if ("serviceWorker" in navigator) {
+            window.addEventListener("load", () => {
+                navigator.serviceWorker.register("/static/service-worker.js")
+                    .then(() => console.log("✅ EURO_GOALS PWA ενεργό"))
+                    .catch((err) => console.error("❌ Σφάλμα PWA:", err));
+            });
+        }
+    </script>
+
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -51,6 +65,7 @@
         }
     </style>
 </head>
+
 <body>
     <h1>⚽ EURO_GOALS – System Dashboard</h1>
 
