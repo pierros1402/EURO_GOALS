@@ -1,11 +1,12 @@
 {
   "name": "EURO_GOALS NextGen",
   "short_name": "EURO_GOALS",
+  "description": "Unified SmartMoney + GoalMatrix + HealthMonitor Dashboard",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#111111",
-  "theme_color": "#00b0ff",
-  "orientation": "portrait",
+  "background_color": "#0d1117",
+  "theme_color": "#00e676",
+  "orientation": "portrait-primary",
   "icons": [
     {
       "src": "/static/icons/eurogoals_192.png",
